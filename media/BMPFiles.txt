@@ -1,0 +1,7 @@
+Change the photo to following configuration -
+
+Colors - 256 color
+Resolution - 320x200
+
+using MSPaint or GIMP or any other tool.
+Img-256colors-320x200

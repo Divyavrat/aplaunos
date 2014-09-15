@@ -1,0 +1,25 @@
+talk app impoved by two bytes as address to jump
+z list
+alias
+faults
+GUI
+edit :: delete_line
+display limits
+AAP PIC
+memory size and manager
+EXE
+games - invaders, cards, reversi, pinball, pacman, mario, chess
+font hindi,unicode
+new shell
+multitasking debug
+font size support
+monokernel
+tiny editor com,bmp 25, 18
+java class - bytecode
+tutor
+ascii attribute cells using int 10h
+mem view in ascii view of all interconnected sectors
+usb or lan for chat
+encryption in files
+paint editor - fix
+swap files, virtual memory

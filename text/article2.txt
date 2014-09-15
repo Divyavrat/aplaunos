@@ -1,0 +1,3 @@
+React OS -
+ReactOS is an open sourcecomputer operating systemintended to be binary compatiblewith application softwareand device driversmade for Microsoft Windows NTversions 5.x and up ( Windows 2000and its successors). A spin-off of a previous attempt to clone Windows 95, development started in early 1998, and has continued with the incremental addition of features already found in Windows.
+ReactOS is primarily written in C, with some elements, such as ReactOS Explorer, written in C++.

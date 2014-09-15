@@ -1,0 +1,12 @@
+cmp ah,0x01
+je int64_getsize
+cmp ah,0x02
+je int64_getcolor
+cmp ah,0x03
+je int64_getcolor2
+cmp ah,0x04
+je int64_getscrolllen
+cmp ah,0x05
+je int64_getpage
+cmp ah,0x06
+je int64_getbytesize

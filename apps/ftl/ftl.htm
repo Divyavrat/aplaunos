@@ -1,0 +1,219 @@
+<h1>FTL - a Fast Tiny Life program by Dave Mitchell</h1>
+<p>
+FTL is a <b>very small</b> (5K) version of John Horton Conway's LIFE that
+runs in medium resolution CGA mode, giving a 200 by 200 cell
+universe (which has dead edges).
+It will run on CGA's, EGA's, VGA's, MCGA's
+and anything else which can pretend to be a CGA.
+<p>
+As well as being small, it's also quite fast. The code has been
+carefully optimised so that values are kept in registers where
+possible.
+Special features include:
+<ol>
+<li>
+ability to set a breakpoint at which FTL will stop
+(useful when you know that something interesting
+starts to happen at a particular generation.
+<li>
+magnified view of 13 by 13 area around the current
+cell (useful when setting up a complex pattern)
+<li>
+cut and paste commands which let rectangular portions of
+the board be stored in or restored from one of two buffers
+<li>
+rotate and reflect commands to manipulate stored patterns
+<li>
+save and load commands which let buffer contents be saved
+to or loaded from a file
+<li>
+built-in help via F1
+</ol>
+<p>
+The screen looks like this:
+<p>
+<image src="images/ftl.gif" width=652 height=459>
+<p>Where:
+<pre>
+  Tick:    3      shows that 3 generations have elapsed since
+                  this pattern was started.
+
+  Limit:  15      says that if FTL is set to run freely (by
+                  pressing G for Go), it will stop with a beep
+                  at tick 15.
+
+  X=103 Y= 106    indicates the position of the current cell
+                  which is near the middle of the universe
+                  (the top left corner is 0,0). You can see
+                  this cell highlighted as a small yellow dot.
+
+  Box(1) 50* 67   indicates the current size of the cut/paste
+                  buffer. The "1" symbol shows the current box
+                  and orientation (see the <a href="#manip">Manipulate</a> command).
+</pre>
+<p>
+Detail mode is initially on, which means that the Detail area will
+show a magnified version of the area around the current cell. When
+detail mode is on, FTL takes longer to cycle a generation (typically
+50% longer).
+It can be useful to set up a pattern with Detail on
+(them pesky pixels is jus too durn fuzzy on my battered ole CGA!), then
+toggle it off before pressing G (go).
+This leaves the detail box
+showing the starting pattern - somehow when interesting things
+start to happen I've usually forgotten how they started.
+<p>
+Pressing F1 at any time will display the help about commands (over
+the top of the universe).
+<h3>Commands</h3>
+<p>
+The commands, all single keystrokes, are:
+<pre>
+    space     sets cells on/off
+    A         adjusts board centre
+    B         cycles background
+    C         cuts and stores a box
+    D         toggles detail on/off
+    G         go - run cycles freely (Esc stops)
+    L         loads box from file
+    K         sets a breakpoint
+    M         manipulate box (reflect/rotate it)
+    P         pastes a stored box
+    Q         quits to DOS
+    S         saves box to file
+    T         advances one tick or cycle
+    Z         zeros the board
+    1         selects box buffer 1
+    2         selects box buffer 2
+    +         toggles palette
+</pre>
+<p>The following keys all move the current position (or a box
+corner during CUT):
+<pre>
+    Left       left one
+    Right      right one
+    C-Left     left ten
+    Shift-Tab  left ten
+    C-Right    right ten
+    Tab        right ten
+    Up         up one
+    Down       down one
+    PgUp       up ten
+    PgDn       down ten
+    Home       start of line (X=0)
+    End        end of line (X=199)
+</pre>
+<p>Pressing shift and either Up, Down, Left or Right cursor keys causes
+the same effect as pressing space, then the cursor key.
+This lets you "paint" a horizontal or vertical line very quickly
+<p>Note that while FTL is running freely, most of these commands
+can be used without causing FTL to stop - thus you can scroll
+around with detail mode on while FTL is actually running.
+<h3>The Adjust Command</h3>
+<p>This lets you move the current pattern about within the universe.
+What it does is make the spot at the current position the new centre
+of the board (the centre is cell 100,100).
+Cells that move off the board are lost, and any new cells are
+left empty.
+<p>Thus if the current position is 98,101, then pressing "A"
+will move the current pattern two cells to the right
+and one cell upward.
+Since the current position is not altered, repeated pressing
+of the "A" key will continue to move the pattern right and up.
+<p>The main purpose of this command is to allow you to follow
+interesting patterns that would otherwise flow off the edge.
+Note that if the current position is some distance from
+the centre this command can have a drastic effect!
+<h3><a name="manip">Cut, Paste, Save, Load, Manipulate (and 1 and 2)</h3>
+<p>
+These commands all operate on buffers, which logically sit between
+the FTL board and the disk.
+Cut and Paste move cells between the
+board and a buffer, while Save and Load move cells between a
+buffer and the disk.
+Thus to save a particular configuration you must
+first Cut it into a buffer, then Save the buffer to disk.
+Similarly to get a pattern from the disk onto the board
+you must first Load it
+into a buffer and then Paste the buffer onto the board.
+<p>
+This may seem like extra work, but it has some real benefits. For
+example, if there's a nice pattern in a buffer you can quickly paste
+copies all over the board using just the cursor keys and the P key.
+You can also use a buffer to save parts of the board for later
+restoration without having to bother saving it to disk.
+<p>Note that there are two independent buffers, so you can have
+two patterns stored away simultaneously.
+The "1" and "2" commands select which buffer is currently used
+for cut, paste, save, load and manipulate commands.
+<p>
+FTL saved buffers have a simple format:
+<pre>
+   2 byte (in normal Intel binary format) holding
+          the box width (x)
+   2 byte holding the box depth (y)
+   (x*y) bits (rounded up to a byte) in row
+          major order.
+</pre>
+<p>
+Thus the 4 by 3 pattern:
+<pre>
+        oooo
+        o  o
+        oooo
+</pre>
+<p>
+would be stored as:
+<pre>
+        X'0400'
+        X'0300'
+        X'f9f0'
+</pre>
+<p>
+When cutting, a red box shows the area being cut. You can adjust
+the active corner (which starts off as the bottom right corner)
+using the cursor keys.
+The "/" key toggles the active corner
+between bottom right and top left, which lets you move the cutting
+box where you like.
+You can also clear the boxed area by pressing Del.
+<p>
+Pasting takes the current cell as the top left corner of the box.
+Make sure you move the current position so that there's room for
+the whole box before you paste, since
+FTL truncates at the right and bottom boundaries.
+<p>The Manipulate command lets you rotate and reflect a
+stored box, using the cursor keys.
+The small icon after the word "Box" at the top right shows
+the current buffer and its orientation.
+The starting position is "1".
+<h3>Supplied Files</h3>
+<p>The FTL package contains three files:
+<ol>
+<li>the program, FTL.COM
+<li>it's source code, FTL.ASM
+<li>the documentation, FTL.HTM - this file
+<li>a sample colony, FTL.BOX
+</ol>
+<p>The sample colony is 50 by 67 cells in size and contains:
+<ul>
+<li>a row of 3 mathematicians
+<li>a row of 3 pentadecathlons
+<li>a row of 5 tumblers
+<li>a set of 13 gliders which collide to form a glider gun
+</ul>
+<p>So to try out FTL:
+<pre>
+    FTL         - run FTL
+    L           - load the buffer ...
+    FTL.BOX     - with the sample colony
+    P           - paste the sample colony at the centre
+    G           - start it running
+</pre>
+<p>or you could just:
+<pre>
+    FTL FTL.BOX - run FTL, loading the buffer with the sample colony
+    P           - paste the sample colony at the centre
+    G           - start it running
+</pre>
+<p>Have fun!

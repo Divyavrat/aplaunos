@@ -1,0 +1,15 @@
+org 0x6000
+use16
+mov ax,0x0003
+int 0x10
+mov ax,0x0500
+int 0x10
+mov ah,0x06
+int 0x61
+xor dx,dx
+dec dh
+xor bh,bh
+mov ah,0x02
+int 0x10
+ret
+times 512-($-$$) db 0

@@ -1,0 +1,71 @@
+INT 0x13/AH=0x02 - DISK : READ SECTOR(S) INTO MEMORY
+AH = 0x02
+AL = Number of sectors to read
+CH = Low eight bits of cylinder number
+CL = Sector Number (Bits 0-5). Bits 6-7 are for hard disks only
+DH = Head Number
+DL = Drive Number (Bit 7 set for hard disks)
+ES:BX = Buffer to read sectors to
+
+Returns:
+AH = Status Code
+AL = Number of sectors read
+CF = set if failure, cleared is successfull
+bpbBytesPerSector:  	DW 512
+bpbSectorsPerCluster: 	DB 1
+bpbReservedSectors: 	DW 1
+bpbNumberOfFATs: 	    DB 2
+bpbRootEntries: 	    DW 224
+bpbTotalSectors: 	    DW 2880
+bpbMedia: 	            DB 0xF0
+bpbSectorsPerFAT: 	    DW 9
+bpbSectorsPerTrack: 	DW 18
+bpbHeadsPerCylinder: 	DW 2
+bpbHiddenSectors: 	    DD 0
+bpbTotalSectorsBig:     DD 0
+bsDriveNumber: 	        DB 0
+bsUnused: 	            DB 0
+bsExtBootSignature: 	DB 0x29
+bsSerialNumber:	        DD 0xa0a1a2a3
+bsVolumeLabel: 	        DB "MOS FLOPPY "
+bsFileSystem: 	        DB "FAT12   "
+Fd2Ww7KW4Sa3
+Value marks free cluster : 0x00
+Value marks Reserved cluster : 0x01
+This cluster is in use--the value represents next cluster : 0x002 through 0xFEF
+Reserved values : 0xFF0 through 0xFF6
+Value marks bad clusters : 0xFF7
+Value marks this cluster as the last in the file : 0xFF8 through 0xFFF
+Bytes 0-7 : DOS File name (Padded with spaces)
+Bytes 8-10 : DOS File extension (Padded with spaces)
+Bytes 11 : File attributes. This is a bit pattern:
+Bit 0 : Read Only
+Bit 1 : Hidden
+Bit 2 : System
+Bit 3 : Volume Label
+Bit 4 : This is a subdirectory
+Bit 5 : Archive
+Bit 6 : Device (Internal use)
+Bit 6 : Unused
+Bytes 12 : Unused
+Bytes 13 : Create time in ms
+Bytes 14-15 : Created time, using the following format:
+Bit 0-4 : Seconds (0-29)
+Bit 5-10 : Minutes (0-59)
+Bit 11-15 : Hours (0-23)
+Bytes 16-17 : Created year in the following format:
+Bit 0-4 : Year (0=1980; 127=2107
+Bit 5-8 : Month (1=January; 12=December)
+Bit 9-15 : Hours (0-23)
+Bytes 18-19 : Last access date (Uses same format as above)
+Bytes 20-21 : EA Index (Used in OS/2 and NT, dont worry about it)
+Bytes 22-23 : Last Modified time (See byte 14-15 for format)
+Bytes 24-25 : Last modified date (See bytes 16-17 for format)
+Bytes 26-27 : First Cluster
+Bytes 28-32 : File Size
+
+Windows applications stores a new line as: carriage return and line feed (CR+LF).
+
+ Unix and Mac OSX uses LF.
+
+Old Mac systems uses CR.

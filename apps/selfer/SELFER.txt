@@ -1,0 +1,35 @@
+Selfer - Shikhin
+BwtSecOS - DavidCooper
+
+First of all, Selfer assumes 0x7C00 to represent LBA 0, 0x7E00 to represent LBA 1, and so on. It then displays a byte stream from 0x7C00 to 0x7E00, makes the first byte "green" in color, displays the address of the first byte down below, and enters into an input loop, which, for the following characters, behaves as mentioned:
+
+Left, or right arrow key. You can move between offsets into the sector, like this. Left key for previous byte; right key for next byte. I display a nice green color to indicate which is the "current" byte, but don't really change the cursor position. It also wraps around, and displays the address of the current byte down below.
+Down, or up arrow key. You can move between sectors, like this. Up key for previous sector, and down key for next sector. Moving between sectors automatically writes the current one to disk. Also, note that the lower bound is 0x7C00; the upper bound is 0x80000. If you look at the hexdump, it's pretty easy to change these values yourself.
+'j'. This jumps to whatever the current address 0xYXXXX is, like 0xY000:0xXXXX. It also pushes a return address, so you can do a 'ret', and get back into the loop.
+'r' & 'p'. 'r' copies the current value of the byte we're at, while 'p' pastes the value you copied last. It's supposed to paste 0x00, if you copied nothing.
+'w'. That writes the current sector. Just in case you don't want to go the next/previous sector for writing.
+'>' & '<'. '>' increments the current byte (greater than), while '<' decrements it (smaller than).
+Input. Other than that, you can directly input hexadecimal values (both upper and lowercase accepted). It takes in the input, and moves to the next byte. It's not exactly safe, so try only to enter hexadecimal values.
+
+Selfer - Gist ver 2
+
+Hi,
+
+I updated the Gist, with the following features added/modified/removed:
+
+'>' & '<' was removed, as rightly suggested by DavidCooper.
+'r' and 'p' functionality was modified, a bit. How they function now is: at any address, you press 'r' and it "retains" the current address. Then, wherever you press 'p', it copies the value, and moves one cell behind. You press 'p' again, and it copies the value from behind the address you retained, and then moves one cell behind too. It's a bit like memcpy in case you want to move some buffer *ahead*, when the two buffers are overlapping. Someone might want to copy normally (i.e., cells move forward); in that case, you can simply look into the source and change the two decrements in the paste handling to increments.
+Now, unless you write some hexadecimal value or paste something, sectors won't be written to disk.
+
+Do note that the 'r' and 'p' handling for inter-segments is poor. If you're at address 0x10000 for example, it's going to fail horribly. Try to keep things simple, alright?   I'm open to suggestions, and everything. Please keep 'em coming.
+
+Selfer - Gist ver 3
+
+The changelog is as follows:
+
+You get colors to indicate bytes!
+'k' and 'p' is copy&paste. 'r' is run. 'w' is write. I hope that works with all.
+It doesn't clear the value of EBP and ESI, which means that the if you "far ret" back into the loop, you land into the same sector. Thus, you can now observe changes and such that you write in the same sector. Obviously, this would mean placing a restriction on the user code -- while, now, you can mess with the stack as much as you want, you'd need to save and restore EBP and ESI. You shouldn't have much of an urge to modify EBP in the first place. If you want to modify ESI, just push and pop it back? This, though, means that you can debug and the like.
+If you enter one keypress (NOT a special function), and then press ESC, the first keypress is ignored. I couldn't add any more safety, unfortunately.
+
+So, can we call it a day? 

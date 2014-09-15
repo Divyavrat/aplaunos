@@ -1,0 +1,64 @@
+You Might Be A Programmer If:
+
+1.  You immediately complain that this should be subscripted as zero.
+
+2.  Most people say "Go To Hell," but you tell people to redirect to
+/dev/null.
+
+3.  By the time you've gotten here in the document, you've run Tidy
+or a similar app to check my X/HTML skills.
+
+4.  Point 3 annoys you, since this document is obviously plaintext
+without html formatting.
+
+5.  The statement (0x2b||!0x2b) makes sense to you.
+
+6.  You find 5 funny.
+
+7.  You note with disgust that it always evaluates to true, since
+0x2b != 0.
+
+8.  Point 7 disgusts you, because under other languages than C++
+(Java, for one), it would throw an exception, runtime error, etc.
+
+9.  Both points 7 and 8 disgust you, because (0x2b||!0x2b) isn't 
+a statement.
+
+10.  You wonder why there's so much religious debate.  After all,
+can't they just type man life?
+
+11.  Point 10 disgusts you, because your PDP-10 does not have man pages.
+
+12.  When you think of Blowfish, the stuff described on www.blowfish.com
+has no relation to what comes to mind.
+
+13.  You can write formal grammar statements for C, C++, C#, Java,
+Perl, Python, PHP, HTML, any XML schema, Assembly, Obj-C, QBASIC,
+XBASIC, OO.o BASIC, StarMath, and just about anything else I could
+throw at you, and yet the question, "Is our children learning?"
+raises no red flags.
+
+14.  You wonder why point 13 is making a reference to John Kerry.
+
+15.  You quit drinking coffee; caffeine I/Vs are easier.
+
+16.  Your root@localhost password is the chemical formula for caffeine.
+
+17.  You didn't know that there was a war in Iraq: too busy preparing
+for the next gcc compiler release.
+
+18.  You wrote the GPL.
+
+19.  You think a "pipe dream" involves bash scripting.
+
+20.  Point 19 disgusts you, since zsh is so much more powerful.
+
+Disclaimer:
+
+This joke was obtained from the FSF's email archives of the GNU
+Project.  The Free Software Foundation claims no copyrights on
+this joke.
+
+Further jokes (by Scott Lawrence) were added later on.
+
+$Date: 2010/11/17 01:55:50 $

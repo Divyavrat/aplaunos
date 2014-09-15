@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)http://en.wikipedia.org/wiki/Brainfuck -->
+<html lang="en" dir="ltr" class="client-js ve-not-available"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Brainfuck - Wikipedia, the free encyclopedia</title>
+<meta name="generator" content="MediaWiki 1.24wmf8">
+<link rel="alternate" href="android-app://org.wikipedia/http/en.m.wikipedia.org/wiki/Brainfuck">
+<link rel="alternate" type="application/x-wiki" title="Edit this page" href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit">
+<link rel="edit" title="Edit this page" href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit">
+<link rel="apple-touch-icon" href="http://bits.wikimedia.org/apple-touch/wikipedia.png">
+<link rel="shortcut icon" href="http://bits.wikimedia.org/favicon/wikipedia.ico">
+<link rel="search" type="application/opensearchdescription+xml" href="http://en.wikipedia.org/w/opensearch_desc.php" title="Wikipedia (en)">
+<link rel="EditURI" type="application/rsd+xml" href="http://en.wikipedia.org/w/api.php?action=rsd">
+<link rel="copyright" href="http://creativecommons.org/licenses/by-sa/3.0/">
+<link rel="alternate" type="application/atom+xml" title="Wikipedia Atom feed" href="http://en.wikipedia.org/w/index.php?title=Special:RecentChanges&feed=atom">
+<link rel="canonical" href="./brainf_files/brainf.htm">
+<link rel="stylesheet" href="http://bits.wikimedia.org/en.wikipedia.org/load.php?debug=false&lang=en&modules=ext.gadget.DRN-wizard%2CReferenceTooltips%2Ccharinsert%2CrefToolbar%2Cteahouse%7Cext.geshi.language.bf%2Cc%7Cext.geshi.local%7Cext.rtlcite%2Cwikihiero%7Cext.uls.nojs%7Cext.visualEditor.viewPageTarget.noscript%7Cmediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.skinning.interface%7Cmediawiki.ui.button%7Cskins.vector.styles%7Cwikibase.client.init&only=styles&skin=vector&*">
+<style>
+@-webkit-keyframes centralAuthPPersonalAnimation{0%{opacity:0;-webkit-transform:translateY(-20px)}100%{opacity:1;-webkit-transform:translateY(0)}}@-moz-keyframes centralAuthPPersonalAnimation{0%{opacity:0;-moz-transform:translateY(-20px)}100%{opacity:1;-moz-transform:translateY(0)}}@-o-keyframes centralAuthPPersonalAnimation{0%{opacity:0;-o-transform:translateY(-20px)}100%{opacity:1;-o-transform:translateY(0)}}@keyframes centralAuthPPersonalAnimation{0%{opacity:0;transform:translateY(-20px)}100%{opacity:1;transform:translateY(0)}}.centralAuthPPersonalAnimation{-webkit-animation-duration:1s;-moz-animation-duration:1s;-o-animation-duration:1s;animation-duration:1s;-webkit-animation-fill-mode:both;-moz-animation-fill-mode:both;-o-animation-fill-mode:both;animation-fill-mode:both;-webkit-animation-name:centralAuthPPersonalAnimation;-moz-animation-name:centralAuthPPersonalAnimation;-o-animation-name:centralAuthPPersonalAnimation;animation-name:centralAuthPPersonalAnimation}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:0dcacc990dd02e7db9669ab3090b80f1 */
+.mw-editsection{white-space:nowrap; unicode-bidi:-moz-isolate;unicode-bidi:-webkit-isolate;unicode-bidi:isolate}.mw-editsection-divider{color:#555}.ve-tabmessage-appendix{font-size:0.7em;vertical-align:top;line-height:1.43em;padding-left:0.5em; background-image:none !important;display:inline !important}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:50c6a67a11952da7c9e5053046d794ee */
+.uls-menu a{cursor:pointer}.uls-menu.callout .caret-before{border-top:20px solid transparent;border-right:20px solid #C9C9C9;border-bottom:20px solid transparent;display:inline-block;left:-21px;top:30px;position:absolute}.uls-menu.callout .caret-after{border-top:20px solid transparent;border-right:20px solid #FCFCFC;border-bottom:20px solid transparent;display:inline-block;left:-20px;top:30px;position:absolute}.uls-ui-languages button{width:23%;text-overflow:ellipsis;margin-right:4%}button.uls-more-languages{width:auto}.settings-title{font-size:11pt}.settings-text{color:#555555;font-size:9pt}div.display-settings-block:hover .settings-text{color:#252525}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:22d1681fa868b4ff4fbcb1ec1e58a9ea */
+.tipsy{padding:5px;position:absolute;z-index:100000;cursor:default}.tipsy-inner{padding:5px 8px 4px 8px; background-color:#ffffff;border:solid 1px #a7d7f9;color:black;max-width:15em;border-radius:4px; }.tipsy-arrow{position:absolute;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALAgMAAADUwp+1AAAACVBMVEX5+fmn1/n///9s6BFKAAAAAXRSTlMAQObYZgAAACpJREFUCB1jZBD4wMiQMoeRcUU4I9uSaYxSE54xZjn8AtMgPkgcJA9UBwAeDw1Qrb3pVAAAAABJRU5ErkJggg==) no-repeat top left;background:url(//bits.wikimedia.org/static-1.24wmf9/resources/src/jquery.tipsy/images/tipsy.png?2014-06-12T16:58:20Z) no-repeat top left!ie;width:11px;height:6px} .tipsy-n .tipsy-arrow{top:0px;left:50%;margin-left:-5px} .tipsy-nw .tipsy-arrow{top:1px;left:10px} .tipsy-ne .tipsy-arrow{top:1px;right:10px} .tipsy-s .tipsy-arrow{bottom:0px;left:50%;margin-left:-5px;background-position:bottom left} .tipsy-sw .tipsy-arrow{bottom:0px;left:10px;background-position:bottom left} .tipsy-se .tipsy-arrow{bottom:0px;right:10px;background-position:bottom left} .tipsy-e .tipsy-arrow{top:50%;margin-top:-5px;right:1px;width:5px;height:11px;background-position:top right} .tipsy-w .tipsy-arrow{top:50%;margin-top:-5px;left:0px;width:6px;height:11px}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:4589160b9409b417774c1062cbe0bc57 */
+@media print{#centralNotice{display:none}}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:ddb0c98a055632ae8e349c9cf48ac703 */</style><style>
+.postedit-container{margin:0 auto;position:fixed;top:0;height:0;left:50%;z-index:1000;font-size:13px}.postedit-container:hover{cursor:pointer}.postedit{position:relative;top:0.6em;left:-50%;padding:.6em 3.6em .6em 1.1em;line-height:1.5625em;color:#626465;background-color:#f4f4f4;border:1px solid #dcd9d9;text-shadow:0 0.0625em 0 rgba(255,255,255,0.5);border-radius:5px;box-shadow:0 2px 5px 0 #ccc;-webkit-transition:all 0.25s ease-in-out;-moz-transition:all 0.25s ease-in-out;-ms-transition:all 0.25s ease-in-out;-o-transition:all 0.25s ease-in-out;transition:all 0.25s ease-in-out}.skin-monobook .postedit{top:6em !important}.postedit-faded{opacity:0}.postedit-icon{padding-left:41px;  line-height:25px;background-repeat:no-repeat;background-position:8px 50%}.postedit-icon-checkmark{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABblBMVEUAAAD///////9PfTf///80aRdTgjn///9Feij///////////9Rfzf///////////9PfjZRgDh1o1xOfTb///////+bwYqLtnj///////9PfTa82K////9WhT6YxIL///9QgDdTgzr////////j7uDl7eLq8efi693k7OH///////9UhjuBr2rp9uRUhjr///9YljVKgir///9WiTlYjT3////9/v57vFlbkT5PjC9dlD/5/fhuq09stUTs9uhxuElctCpfnT1huDFloEZloUZmpENmvDZpvDxpvTxqvjxrvT5rvT9rwTxsqktswD5uwkBvuUdxw0NztFBztU9ztVBzwkp0tlJ1xkd2t1R3uVR4w1F4xk54x014yE15uVZ5v1R5xVB6v1R7yFJ8wVh9xVl9yFR9yVd9ylN+xVh+yFd/x1l/yFeAylmEx1+Ny2uY0Hqe04Wj1Ymv3Ze33qLD47TJ5L3O6cPU7Mrq9eb2+/Q4j37OAAAAQHRSTlMAAQIEBAUFBQwPFB4fJCUoKiosQEhJS01RUlZZXmdydXaChYuSlJSWmJmoq6uur8LExcvM19fg5ejt8fX2+Pr7SljgewAAAKpJREFUGBkFwQNCAwAAAMDLtl3LtrG4rWXbtvX77gAgZ6grFwC0bhwNVgKgdPZx8b0dgLi+s7Wn0VoAqpfOI9+BNADZI7fLrz2pSEwGHZuH+78lSK8ZLkLezF3ooyUG3VPXq2USei9WngeyoG195yBYWDF3E/2pAhl1e9Gr8bGT+bfOFCC2fnvh4X7rcqIAQNNu+HT6sxkAjceTL/2ZAIhv+PorBwBJxfkA//dFHSCBy/UTAAAAAElFTkSuQmCC);background-image:url(//bits.wikimedia.org/static-1.24wmf9/resources/src/mediawiki.action/images/green-checkmark.png?2014-06-12T16:58:20Z)!ie;background-position:left}.postedit-close{position:absolute;padding:0 .8em;right:0;top:0;font-size:1.25em;font-weight:bold;line-height:2.3em;color:black;text-shadow:0 0.0625em 0 white;text-decoration:none;opacity:0.2;filter:alpha(opacity=20)}.postedit-close:hover{color:black;text-decoration:none;opacity:0.4;filter:alpha(opacity=40)}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:3530414c4dd10de46471f4c6277dd024 */
+.mw-collapsible-toggle{float:right;-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;user-select:none}.mw-customtoggle,.mw-collapsible-toggle{cursor:pointer} caption .mw-collapsible-toggle{float:none} li .mw-collapsible-toggle{float:none} .mw-collapsible-toggle-li{list-style:none}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:869aa9133c31e6040d4830b259da96a8 */
+.suggestions{overflow:hidden;position:absolute;top:0;left:0;width:0;border:none;z-index:1099;padding:0;margin:-1px -1px 0 0} html > body .suggestions{margin:-1px 0 0 0}.suggestions-special{position:relative;background-color:white;cursor:pointer;border:solid 1px #aaaaaa;padding:0;margin:0;margin-top:-2px;display:none;padding:0.25em 0.25em;line-height:1.25em}.suggestions-results{background-color:white;cursor:pointer;border:solid 1px #aaaaaa;padding:0;margin:0}.suggestions-result{color:black;margin:0;line-height:1.5em;padding:0.01em 0.25em;text-align:left; overflow:hidden;-o-text-overflow:ellipsis; text-overflow:ellipsis;white-space:nowrap}.suggestions-result-current{background-color:#4C59A6;color:white}.suggestions-special .special-label{color:gray;text-align:left}.suggestions-special .special-query{color:black;font-style:italic;text-align:left}.suggestions-special .special-hover{background-color:silver}.suggestions-result-current .special-label,.suggestions-result-current .special-query{color:white}.highlight{font-weight:bold}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:9f9511aa4ef920d34591113e825e6a1e */
+.wp-teahouse-question-form{position:absolute;margin-left:auto;margin-right:auto;background-color:#f4f3f0;border:1px solid #a7d7f9;padding:1em}#wp-th-question-ask{float:right}.wp-teahouse-ask a.external{background-image:none !important}.wp-teahouse-respond-form{position:absolute;margin-left:auto;margin-right:auto;background-color:#f4f3f0;border:1px solid #a7d7f9;padding:1em}.wp-th-respond{float:right}.wp-teahouse-respond a.external{background-image:none !important}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:8614dfa7ef847fc9bfcc2d1c9f720197 */
+.referencetooltip{position:absolute;list-style:none;list-style-image:none;opacity:0;font-size:10px;margin:0;z-index:5;padding:0}.referencetooltip li{border:#080086 2px solid;max-width:260px;padding:10px 8px 13px 8px;margin:0px;background-color:#F7F7F7;box-shadow:2px 4px 2px rgba(0,0,0,0.3);-moz-box-shadow:2px 4px 2px rgba(0,0,0,0.3);-webkit-box-shadow:2px 4px 2px rgba(0,0,0,0.3)}.referencetooltip li+li{margin-left:7px;margin-top:-2px;border:0;padding:0;height:3px;width:0px;background-color:transparent;box-shadow:none;-moz-box-shadow:none;-webkit-box-shadow:none;border-top:12px #080086 solid;border-right:7px transparent solid;border-left:7px transparent solid}.referencetooltip>li+li::after{content:'';border-top:8px #F7F7F7 solid;border-right:5px transparent solid;border-left:5px transparent solid;margin-top:-12px;margin-left:-5px;z-index:1;height:0px;width:0px;display:block}.client-js body .referencetooltip li li{border:none;box-shadow:none;-moz-box-shadow:none;-webkit-box-shadow:none;height:auto;width:auto;margin:auto;padding:0;position:static}.RTflipped{padding-top:13px}.referencetooltip.RTflipped li+li{position:absolute;top:2px;border-top:0;border-bottom:12px #080086 solid}.referencetooltip.RTflipped li+li::after{border-top:0;border-bottom:8px #F7F7F7 solid;position:absolute;margin-top:7px}.RTsettings{float:right;height:16px;width:16px;cursor:pointer;background-image:url(//upload.wikimedia.org/wikipedia/commons/e/ed/Cog.png);margin-top:-9px;margin-right:-7px;-webkit-transition:opacity 0.15s;-moz-transition:opacity 0.15s;-o-transition:opacity 0.15s;-ms-transition:opacity 0.15s;transition:opacity 0.15s;opacity:0.6;filter:alpha(opacity=60)}.RTsettings:hover{opacity:1;filter:alpha(opacity=100)}.RTTarget{border:#080086 2px solid}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:0f4d07a31beacf248a470098a9070e70 */
+#container{position:relative;min-height:100%}#container,video{width:100%;height:100%}#playerContainer{overflow:hidden;position:relative;height:100%;background:#000}#videoHolder{position:relative;overflow:hidden}.fullscreen #playerContainer{position:absolute !important;width:100% !important;height:100%! important;z-index:9999;min-height:100%;top:0;left:0;margin:0}.mwEmbedPlayer{width:100%;height:100%;overflow:hidden;position:absolute;top:0;left:0}.modal_editor{ left:10px;top:10px;right:10px;bottom:10px;position:fixed;z-index:100}.displayHTML a:visited{color:white}.loadingSpinner{width:32px;height:32px;display:block;padding:0px;background-image:url(//bits.wikimedia.org/static-1.24wmf9/extensions/MwEmbedSupport/MwEmbedModules/MwEmbedSupport/skins/common/images/loading_ani.gif?2014-06-12T17:00:00Z)}.mw-imported-resource{border:thin solid black}.kaltura-icon{background-image:url(//bits.wikimedia.org/static-1.24wmf9/extensions/MwEmbedSupport/MwEmbedModules/MwEmbedSupport/skins/common/images/kaltura_logo_sm_transparent.png?2014-06-12T17:00:00Z) !important;background-repeat:no-repeat;display:block;height:12px;width:12px;margin-top:2px !important;margin-left:3px !important}.mw-fullscreen-overlay{background:rgb(0,0,0) none repeat scroll 0% 0%;position:fixed;top:0pt;left:0pt;width:100%;height:100%;-moz-background-clip:border;-moz-background-origin:padding;-moz-background-inline-policy:continuous} .play-btn-large{width:70px;height:53px;background :url(//bits.wikimedia.org/static-1.24wmf9/extensions/MwEmbedSupport/MwEmbedModules/MwEmbedSupport/skins/common/images/player_big_play_button.png?2014-06-12T17:00:00Z);position :absolute;cursor :pointer;border :none !important;z-index :1}.play-btn-large:hover{background :url(//bits.wikimedia.org/static-1.24wmf9/extensions/MwEmbedSupport/MwEmbedModules/MwEmbedSupport/skins/common/images/player_big_play_button_hover.png?2014-06-12T17:00:00Z)}.carouselContainer{position :absolute;width :100%;z-index :2}.carouselVideoTitle{position :absolute;top :0px;left :0px;width :100%;background :rgba(0,0,0,0.8);color :white;font-size :small;font-weight :bold;z-index :2}.carouselVideoTitleText{display :block;padding :10px 10px 10px 20px}.carouselTitleDuration{position :absolute;top :0px;right :0px;padding :2px;background-color :#5A5A5A;color :#D9D9D9;font-size :smaller;z-index :2}.carouselImgTitle{position :absolute;width :100%;text-align :center;color :white;font-size :small;background :rgba(0,0,0,0.4)}.carouselImgDuration{position :absolute;top :2px;left :2px;background :rgba( 0,0,0,0.7 );color :white;padding :1px 6px;font-size :small}.carouselPrevButton,.carouselNextButton{display :block;position :absolute;bottom:23px}.carouselPrevButton{left :5px}.carouselNextButton{right:6px}.alert-container{-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;background-image:linear-gradient(bottom,rgb(215,215,215) 4%,rgb(230,230,230) 55%,rgb(255,255,255) 100%);background-image:-o-linear-gradient(bottom,rgb(215,215,215) 4%,rgb(230,230,230) 55%,rgb(255,255,255) 100%);background-image:-moz-linear-gradient(bottom,rgb(215,215,215) 4%,rgb(230,230,230) 55%,rgb(255,255,255) 100%);background-image:-webkit-linear-gradient(bottom,rgb(215,215,215) 4%,rgb(230,230,230) 55%,rgb(255,255,255) 100%);background-image:-ms-linear-gradient(bottom,rgb(215,215,215) 4%,rgb(230,230,230) 55%,rgb(255,255,255) 100%);background-image:-webkit-gradient(linear,left bottom,left top,color-stop(0.04,rgb(215,215,215)),color-stop(0.55,rgb(230,230,230)),color-stop(1,rgb(255,255,255)));margin:auto;position:absolute;top:0;left:0;right:0;bottom:0;max-width:80%;max-height:30%}.alert-title{background-color :#E6E6E6;padding :5px;border-bottom :1px solid #D1D1D1;font-weight :normal !important;font-size:14px !important;-webkit-border-top-left-radius:3px;-moz-border-radius-topleft:3px;border-top-left-radius:3px;-webkit-border-top-right-radius:3px;-moz-border-radius-topright:3px;border-top-right-radius:3px }.alert-message{padding :5px;font-weight :normal !important;text-align:center;font-size:14px !important}.alert-buttons-container{text-align:center;padding-bottom:5px}.alert-button{background-color:#474747;color:white;-webkit-border-radius:.5em;-moz-border-radius:.5em;border-radius:.5em;padding:2px 10px;background-image:linear-gradient(bottom,rgb(25,25,25) 4%,rgb(47,47,47) 55%,rgb(71,71,71) 68%);background-image:-o-linear-gradient(bottom,rgb(25,25,25) 4%,rgb(47,47,47) 55%,rgb(71,71,71) 68%);background-image:-moz-linear-gradient(bottom,rgb(25,25,25) 4%,rgb(47,47,47) 55%,rgb(71,71,71) 68%);background-image:-webkit-linear-gradient(bottom,rgb(25,25,25) 4%,rgb(47,47,47) 55%,rgb(71,71,71) 68%);background-image:-ms-linear-gradient(bottom,rgb(25,25,25) 4%,rgb(47,47,47) 55%,rgb(71,71,71) 68%);background-image:-webkit-gradient( linear,left bottom,left top,color-stop(0.04,rgb(25,25,25)),color-stop(0.55,rgb(47,47,47)),color-stop(0.68,rgb(71,71,71)) )}.alert-text{color :black !important}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:3c86f6028b71caf018186e46eff6c00e */
+#p-lang .uls-settings-trigger{background:transparent url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAgCAMAAAAVMLmlAAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAALpQTFRF////W1tbgICAWVlZgICAUVFRgICAWVlZhYWFUlJShYWFVFRUgYGBVVVVgYGBVVVVgICAVFRUVVVVVlZWgYGBgICAVFRUgYGBVFRUgICAgYGBVVVVVVVVgYGBVlZWgYGBVFRUgICAVFRUgICAVVVVgICAVlZWgICAVFRUgICAVVVVgICAVFRUgICAVlZWgICAVVVVgICAVVVVgICAVVVVgICAVVVVgICAVVVVgICAVVVVgICAVVVVgICA9Fa9bgAAADx0Uk5TAA4OFBQWFhcXGRlJSUtLWlpbXV9fYGFhZGRlZmlpa2twcIiIioqPj5GRn5+goKGh6+vv7/Dw+fn8/P7+YuRUVgAAAOlJREFUGBmNwcdWAgEURMFLFCUaAcWAEhQYHBRmCN3//1u+BYcVC6s4p2U3OLrrVxN7Xn7uELoH5w65Dx1g6JNnoLazfz++VnZehkZir4pQ3NjzBg5TwtgBhzFh6kDr294UobiykxZc7ezVdLyx8yrw6pM+8GjnDjsf7gj3/WpiJ7Vhl6OW3eC/mlKdo5teZSHNSoM24XqvTCHTvg0MdDIASpn08/6ZSlkJ6jMpLUBhLc3qKEwIIwUURoSJAs2ltC5AIZUWTbjcSulktJayCvCikx7wJG0VttrfEp5eLpfS4uLtgaOmVOeMP8BAM9RClMO9AAAAAElFTkSuQmCC) no-repeat right top;background:transparent url(//bits.wikimedia.org/static-1.24wmf9/extensions/UniversalLanguageSelector/resources/css/../images/cog-sprite.png?2014-06-12T17:01:40Z) no-repeat right top!ie;background-image:-webkit-linear-gradient(transparent,transparent),url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIxNCIgaGVpZ2h0PSIzMiI+PGRlZnM+PHBhdGggZD0iTTEzLjU4MiA2LjYzMmgtMS4wNjRjLS4xMzMtLjUzOC0uMzU0LTEuMDY1LS42NDUtMS41NTJsLjc1LS43NWMuMTY0LS4xNjQuMTY0LS40MjkgMC0uNTkzbC0xLjM1OS0xLjM2Yy0uMTY0LS4xNjQtLjQzLS4xNjQtLjU5NCAwbC0uNzUuNzVjLS40OS0uMjk0LTEuMDEyLS41MTItMS41NTEtLjY0NXYtMS4wNjRjMC0uMjMxLS4xODctLjQxOC0uNDE5LS40MThoLTEuOTE4Yy0uMjMxIDAtLjQxOC4xODctLjQxOC40MTh2MS4wNjNjLS41NDEuMTM1LTEuMDYyLjM1Mi0xLjU1Mi42NDZsLS43NS0uNzVjLS4xNjQtLjE2NC0uNDI5LS4xNjQtLjU5MyAwbC0xLjM2IDEuMzZjLS4xNjQuMTY0LS4xNjQuNDI5IDAgLjU5M2wuNzUuNzVjLS4yOTIuNDg4LS40OTQgMS4wMTUtLjYyNyAxLjU1MWgtMS4wNjRjLS4yMzEgMC0uNDE4LjE4Ny0uNDE4LjQxOXYxLjkxOGMwIC4yMzEuMTg3LjQxOC40MTguNDE4aDEuMDQ2Yy4xMzQuNTQyLjM1MSAxLjA2Mi42NDUgMS41NTFsLS43NS43NWMtLjE2NC4xNjQtLjE2NC40MjkgMCAuNTkzbDEuMzYgMS4zNmMuMTY0LjE2NC40MjkuMTY0LjU5MyAwbC43NS0uNzVjLjQ5MS4yOTYgMS4wMS40OTMgMS41NTEuNjI3djEuMDYzYy4wMDEuMjMzLjE4OC40Mi40MTkuNDJoMS45MThjLjIzMSAwIC40MTktLjE4Ny40MTktLjQxOHYtMS4wNjNjLjU0Mi0uMTM0IDEuMDYxLS4zMzMgMS41NTEtLjYyN2wuNzUuNzVjLjE2NC4xNjQuNDMuMTY0LjU5NCAwbDEuMzU5LTEuMzZjLjE2NC0uMTY0LjE2NC0uNDI5IDAtLjU5M2wtLjc1LS43NWMuMjk1LS40ODkuNTEtMS4wMTMuNjQ1LTEuNTUxaDEuMDY0Yy4yMy0uMDAyLjQxOC0uMTg5LjQxOC0uNDJ2LTEuOTE4YzAtLjIzMi0uMTg4LS40MTgtLjQxOC0uNDE4em0tNi41ODIgNC4wMTJjLTEuNDYxIDAtMi42NDUtMS4xODQtMi42NDUtMi42NDRzMS4xODQtMi42NDQgMi42NDUtMi42NDQgMi42NDUgMS4xODQgMi42NDUgMi42NDQtMS4xODQgMi42NDQtMi42NDUgMi42NDR6IiBpZD0iYSIvPjwvZGVmcz48dXNlIHhsaW5rOmhyZWY9IiNhIiBmaWxsPSIjODA4MDgwIi8+PHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAxNikiIGZpbGw9IiM1NTUiLz48L3N2Zz4=);background-image:-webkit-linear-gradient(transparent,transparent),url(//bits.wikimedia.org/static-1.24wmf9/extensions/UniversalLanguageSelector/resources/css/../images/cog-sprite.svg?2014-06-12T17:01:40Z)!ie;background-image:linear-gradient(transparent,transparent),url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIxNCIgaGVpZ2h0PSIzMiI+PGRlZnM+PHBhdGggZD0iTTEzLjU4MiA2LjYzMmgtMS4wNjRjLS4xMzMtLjUzOC0uMzU0LTEuMDY1LS42NDUtMS41NTJsLjc1LS43NWMuMTY0LS4xNjQuMTY0LS40MjkgMC0uNTkzbC0xLjM1OS0xLjM2Yy0uMTY0LS4xNjQtLjQzLS4xNjQtLjU5NCAwbC0uNzUuNzVjLS40OS0uMjk0LTEuMDEyLS41MTItMS41NTEtLjY0NXYtMS4wNjRjMC0uMjMxLS4xODctLjQxOC0uNDE5LS40MThoLTEuOTE4Yy0uMjMxIDAtLjQxOC4xODctLjQxOC40MTh2MS4wNjNjLS41NDEuMTM1LTEuMDYyLjM1Mi0xLjU1Mi42NDZsLS43NS0uNzVjLS4xNjQtLjE2NC0uNDI5LS4xNjQtLjU5MyAwbC0xLjM2IDEuMzZjLS4xNjQuMTY0LS4xNjQuNDI5IDAgLjU5M2wuNzUuNzVjLS4yOTIuNDg4LS40OTQgMS4wMTUtLjYyNyAxLjU1MWgtMS4wNjRjLS4yMzEgMC0uNDE4LjE4Ny0uNDE4LjQxOXYxLjkxOGMwIC4yMzEuMTg3LjQxOC40MTguNDE4aDEuMDQ2Yy4xMzQuNTQyLjM1MSAxLjA2Mi42NDUgMS41NTFsLS43NS43NWMtLjE2NC4xNjQtLjE2NC40MjkgMCAuNTkzbDEuMzYgMS4zNmMuMTY0LjE2NC40MjkuMTY0LjU5MyAwbC43NS0uNzVjLjQ5MS4yOTYgMS4wMS40OTMgMS41NTEuNjI3djEuMDYzYy4wMDEuMjMzLjE4OC40Mi40MTkuNDJoMS45MThjLjIzMSAwIC40MTktLjE4Ny40MTktLjQxOHYtMS4wNjNjLjU0Mi0uMTM0IDEuMDYxLS4zMzMgMS41NTEtLjYyN2wuNzUuNzVjLjE2NC4xNjQuNDMuMTY0LjU5NCAwbDEuMzU5LTEuMzZjLjE2NC0uMTY0LjE2NC0uNDI5IDAtLjU5M2wtLjc1LS43NWMuMjk1LS40ODkuNTEtMS4wMTMuNjQ1LTEuNTUxaDEuMDY0Yy4yMy0uMDAyLjQxOC0uMTg5LjQxOC0uNDJ2LTEuOTE4YzAtLjIzMi0uMTg4LS40MTgtLjQxOC0uNDE4em0tNi41ODIgNC4wMTJjLTEuNDYxIDAtMi42NDUtMS4xODQtMi42NDUtMi42NDRzMS4xODQtMi42NDQgMi42NDUtMi42NDQgMi42NDUgMS4xODQgMi42NDUgMi42NDQtMS4xODQgMi42NDQtMi42NDUgMi42NDR6IiBpZD0iYSIvPjwvZGVmcz48dXNlIHhsaW5rOmhyZWY9IiNhIiBmaWxsPSIjODA4MDgwIi8+PHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAxNikiIGZpbGw9IiM1NTUiLz48L3N2Zz4=);background-image:linear-gradient(transparent,transparent),url(//bits.wikimedia.org/static-1.24wmf9/extensions/UniversalLanguageSelector/resources/css/../images/cog-sprite.svg?2014-06-12T17:01:40Z)!ie;height:16px;width:14px;float:right;cursor:pointer}.skin-vector #p-lang .uls-settings-trigger{ margin-top:3px}#p-lang .uls-settings-trigger:hover{background-position:right -16px}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:57a732ff726385cf127655dc38b86449 */</style><style>
+.suggestions a.mw-searchSuggest-link,.suggestions a.mw-searchSuggest-link:hover,.suggestions a.mw-searchSuggest-link:active,.suggestions a.mw-searchSuggest-link:focus{color:black;text-decoration:none}.suggestions-result-current a.mw-searchSuggest-link,.suggestions-result-current a.mw-searchSuggest-link:hover,.suggestions-result-current a.mw-searchSuggest-link:active,.suggestions-result-current a.mw-searchSuggest-link:focus{color:white}.suggestions a.mw-searchSuggest-link .special-query{ overflow:hidden;-o-text-overflow:ellipsis; text-overflow:ellipsis;white-space:nowrap}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:ae3fa4570b5ac0c6cf7b3776c8ae4d6f */</style><style>
+.cite-accessibility-label{position:absolute !important; top:-99999px;clip:rect(1px 1px 1px 1px); clip:rect(1px,1px,1px,1px);padding:0 !important;border:0 !important;height:1px !important;width:1px !important;overflow:hidden}.mw-cite-backlink,.cite-accessibility-label{-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;user-select:none}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:a59b70abe6ecaa39388bb79ebc509cb0 */
+.mw-mmv-overlay{position:fixed;top:0px;left:0px;right:0px;bottom:0px;z-index:1000;background-color:#000000}body.mw-mmv-lightbox-open{overflow-y:auto}body.mw-mmv-lightbox-open #mw-page-base,body.mw-mmv-lightbox-open #mw-head-base,body.mw-mmv-lightbox-open #mw-navigation,body.mw-mmv-lightbox-open #content,body.mw-mmv-lightbox-open #footer,body.mw-mmv-lightbox-open #globalWrapper // monobook{ display:none}body.mw-mmv-lightbox-open > *{ display:none}body.mw-mmv-lightbox-open > .mw-mmv-overlay,body.mw-mmv-lightbox-open > .mw-mmv-wrapper{display:block}.mw-mmv-view-expanded{display:inline-block;border:1px solid #dddddd;padding:5px 10px;padding-left:35px;background-image:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNy4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSINCgkgaWQ9IkxheWVyXzEiIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIg0KCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDkwMC40IDc2OCINCgkgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgOTAwLjQgNzY4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnPg0KCTxwb2x5Z29uIGZpbGw9IiM3Nzc3NzciIHBvaW50cz0iNTk5LjksMTg2LjQgNjMxLjEsMjE3LjYgNTQ1LjUsMzAzLjIgNTI0LjEsMjgxLjcgNTE5LDM2OS42IDYwNi45LDM2NC42IDU4NS40LDM0My4xIDY3MSwyNTcuNSANCgkJNzAyLjIsMjg4LjcgNzA5LjIsMTc5LjQgCSIvPg0KCTxwb2x5Z29uIGZpbGw9IiM3Nzc3NzciIHBvaW50cz0iNTQ1LjUsMjY4LjggNTg3LjYsMjI3IDUwMy41LDIyNyA1NDEuMywyNjQuOCAJIi8+DQoJPHBhdGggZmlsbD0iIzc3Nzc3NyIgZD0iTTUyMC40LDM5My45bC0yNy4zLDEuNmwxLjYtMjcuM2w1LTg3LjdsMy4xLTUzLjVIMTkxLjJ2MzYyaDQ3MVYzODUuOGwtNTMuOCwzLjFMNTIwLjQsMzkzLjl6IE02MTEuMiw1NDENCgkJSDIzNy43bDExMC41LTE0NC4xTDM2NSwzOTBsMTA0LjQsMTA5LjNsNTYuNS0zMy43bDg1LjIsNzUuMUw2MTEuMiw1NDFMNjExLjIsNTQxeiIvPg0KCTxwb2x5Z29uIGZpbGw9IiM3Nzc3NzciIHBvaW50cz0iNjI0LjIsMzQ3LjMgNjYyLjIsMzg1LjMgNjYyLjIsMzAxIDYyMCwzNDMuMSAJIi8+DQo8L2c+DQo8L3N2Zz4NCg==);background-image:url(//bits.wikimedia.org/static-1.24wmf9/extensions/MultimediaViewer/resources/mmv/img/expand.svg?2014-06-19T23:51:40Z)!ie;background-position:left;background-repeat:no-repeat}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:f6d02a63bf75b703a29539e9e3eaf82d */</style><meta name="ResourceLoaderDynamicStyles" content="">
+<link rel="stylesheet" href="http://bits.wikimedia.org/en.wikipedia.org/load.php?debug=false&lang=en&modules=site&only=styles&skin=vector&*">
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: enwiki:resourceloader:filter:minify-css:7:3904d24a08aa08f6a68dc338f9be277e */</style>
+<script src="./brainf_files/load.php"></script><script src="./brainf_files/load(1).php"></script><style title="spinjs"></style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Brainfuck","wgTitle":"Brainfuck","wgCurRevisionId":613537405,"wgRevisionId":613537405,"wgArticleId":4086,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles to be merged from March 2014","All articles to be merged","Articles with DMOZ links","Non-English-based programming languages","Esoteric programming languages","Programming languages created in 1993"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Brainfuck","wgIsProbablyEditable":true,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgWikiEditorEnabledModules":{"toolbar":true,"dialogs":true,"hidesig":true,"preview":false,"previewDialog":false,"publish":false},"wgBetaFeaturesFeatures":[],"wgMediaViewerOnClick":true,"wgVisualEditor":{"isPageWatched":false,"magnifyClipIconURL":"//bits.wikimedia.org/static-1.24wmf8/skins/common/images/magnify-clip.png","pageLanguageCode":"en","pageLanguageDir":"ltr","svgMaxSize":2048,"namespacesWithSubpages":{"6":0,"8":0,"1":true,"2":true,"3":true,"4":true,"5":true,"7":true,"9":true,"10":true,"11":true,"12":true,"13":true,"14":true,"15":true,"100":true,"101":true,"102":true,"103":true,"104":true,"105":true,"106":true,"107":true,"108":true,"109":true,"110":true,"111":true,"447":true,"828":true,"829":true}},"wikilove-recipient":"","wikilove-anon":0,"wgGuidedTourHelpGuiderUrl":"Help:Guided tours/guider","wgFlowTermsOfUseEdit":"By saving changes, you agree to our \u003Ca class=\"external text\" href=\"//wikimediafoundation.org/wiki/Terms_of_use\"\u003ETerms of Use\u003C/a\u003E and agree to irrevocably release your text under the \u003Ca rel=\"nofollow\" class=\"external text\" href=\"//creativecommons.org/licenses/by-sa/3.0\"\u003ECC BY-SA 3.0 License\u003C/a\u003E and \u003Ca class=\"external text\" href=\"//en.wikipedia.org/wiki/Wikipedia:Text_of_the_GNU_Free_Documentation_License\"\u003EGFDL\u003C/a\u003E","wgFlowTermsOfUseSummarize":"By clicking \"Summarize\", you agree to the terms of use for this wiki.","wgFlowTermsOfUseCloseTopic":"By clicking \"Close topic\", you agree to the terms of use for this wiki.","wgFlowTermsOfUseReopenTopic":"By clicking \"Reopen topic\", you agree to the terms of use for this wiki.","wgULSAcceptLanguageList":["en-us","en"],"wgULSCurrentAutonym":"English","wgFlaggedRevsParams":{"tags":{"status":{"levels":1,"quality":2,"pristine":3}}},"wgStableRevisionId":null,"wgCategoryTreePageCategoryOptions":"{\"mode\":0,\"hideprefix\":20,\"showcount\":true,\"namespaces\":false}","wgNoticeProject":"wikipedia","wgWikibaseItemId":"Q244627"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"ccmeonemails":0,"cols":80,"date":"default","diffonly":0,"disablemail":0,"editfont":"default","editondblclick":0,"editsectiononrightclick":0,"enotifminoredits":0,"enotifrevealaddr":0,"enotifusertalkpages":1,"enotifwatchlistpages":0,"extendwatchlist":0,"fancysig":0,"forceeditsummary":0,"gender":"unknown","hideminor":0,"hidepatrolled":0,"imagesize":2,"math":0,"minordefault":0,"newpageshidepatrolled":0,"nickname":"","norollbackdiff":0,"numberheadings":0,"previewonfirst":0,"previewontop":1,"rcdays":7,"rclimit":50,"rows":25,"showhiddencats":false,"shownumberswatching":1,"showtoolbar":1,"skin":"vector","stubthreshold":0,"thumbsize":4,"underline":2,"uselivepreview":0,"usenewrc":0,"watchcreations":1,"watchdefault":0,"watchdeletion":0,"watchlistdays":3,"watchlisthideanons":0,"watchlisthidebots":0,"watchlisthideliu":0,"watchlisthideminor":0,"watchlisthideown":0,"watchlisthidepatrolled":0,"watchmoves":0,"wllimit":250,
+"useeditwarning":1,"prefershttps":1,"flaggedrevssimpleui":1,"flaggedrevsstable":0,"flaggedrevseditdiffs":true,"flaggedrevsviewdiffs":false,"usebetatoolbar":1,"usebetatoolbar-cgd":1,"multimediaviewer-enable":true,"visualeditor-enable":0,"visualeditor-betatempdisable":0,"visualeditor-enable-experimental":0,"visualeditor-enable-language":0,"visualeditor-hidebetawelcome":0,"wikilove-enabled":1,"mathJax":false,"echo-subscriptions-web-page-review":true,"echo-subscriptions-email-page-review":false,"ep_showtoplink":false,"ep_bulkdelorgs":false,"ep_bulkdelcourses":true,"ep_showdyk":true,"echo-subscriptions-web-education-program":true,"echo-subscriptions-email-education-program":false,"echo-notify-show-link":true,"echo-show-alert":true,"echo-email-frequency":0,"echo-email-format":"html","echo-subscriptions-email-system":true,"echo-subscriptions-web-system":true,"echo-subscriptions-email-other":false,"echo-subscriptions-web-other":true,"echo-subscriptions-email-edit-user-talk":false,
+"echo-subscriptions-web-edit-user-talk":true,"echo-subscriptions-email-reverted":false,"echo-subscriptions-web-reverted":true,"echo-subscriptions-email-article-linked":false,"echo-subscriptions-web-article-linked":false,"echo-subscriptions-email-mention":false,"echo-subscriptions-web-mention":true,"echo-subscriptions-web-edit-thank":true,"echo-subscriptions-email-edit-thank":false,"echo-subscriptions-web-flow-discussion":true,"echo-subscriptions-email-flow-discussion":false,"gettingstarted-task-toolbar-show-intro":true,"uls-preferences":"","language":"en","variant-gan":"gan","variant-iu":"iu","variant-kk":"kk","variant-ku":"ku","variant-shi":"shi","variant-sr":"sr","variant-tg":"tg","variant-uz":"uz","variant-zh":"zh","searchNs0":true,"searchNs1":false,"searchNs2":false,"searchNs3":false,"searchNs4":false,"searchNs5":false,"searchNs6":false,"searchNs7":false,"searchNs8":false,"searchNs9":false,"searchNs10":false,"searchNs11":false,"searchNs12":false,"searchNs13":false,"searchNs14":
+false,"searchNs15":false,"searchNs100":false,"searchNs101":false,"searchNs108":false,"searchNs109":false,"searchNs118":false,"searchNs119":false,"searchNs446":false,"searchNs447":false,"searchNs710":false,"searchNs711":false,"searchNs828":false,"searchNs829":false,"gadget-teahouse":1,"gadget-ReferenceTooltips":1,"gadget-DRN-wizard":1,"gadget-charinsert":1,"gadget-refToolbar":1,"gadget-mySandbox":1,"variant":"en"});},{},{});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":false,"watchToken":false});},{},{});
+/* cache key: enwiki:resourceloader:filter:minify-js:7:369915ab579125627842c0da1e18ba20 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","ext.centralauth.centralautologin","mmv.head","ext.visualEditor.viewPageTarget.init","ext.uls.init","ext.uls.interface","ext.centralNotice.bannerController","skins.vector.js"]);
+}</script><script src="./brainf_files/load(2).php"></script>
+<link rel="dns-prefetch" href="http://meta.wikimedia.org/">
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/w/static-1.24wmf8/skins/vector/csshover.min.htc")}</style><![endif]-->
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Brainfuck skin-vector action-view vector-animateLayout">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+			<div id="mw-js-message" style="display:none;"></div>
+							<div id="siteNotice"><div id="centralNotice"></div><!-- CentralNotice --></div>
+						<h1 id="firstHeading" class="firstHeading" lang="en"><span dir="auto">Brainfuck</span></h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Wikipedia, the free encyclopedia</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="http://en.wikipedia.org/wiki/Brainfuck#mw-navigation">navigation</a>, 					<a href="http://en.wikipedia.org/wiki/Brainfuck#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="hatnote">Not to be confused with <a href="http://en.wikipedia.org/wiki/Brain_Fuck_Scheduler" title="Brain Fuck Scheduler">Brain Fuck Scheduler</a>.</div>
+<table class="metadata plainlinks ambox ambox-move" role="presentation">
+<tbody><tr>
+<td class="mbox-image">
+<div style="width:52px;"><img alt="" src="./brainf_files/50px-Mergefrom.svg.png" width="50" height="20" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Mergefrom.svg/75px-Mergefrom.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Mergefrom.svg/100px-Mergefrom.svg.png 2x" data-file-width="50" data-file-height="20"></div>
+</td>
+<td class="mbox-text"><span class="mbox-text-span">It has been suggested that <i><a href="http://en.wikipedia.org/wiki/Ook_Ook" title="Ook Ook">Ook Ook</a></i> be <a href="http://en.wikipedia.org/wiki/Wikipedia:Merging" title="Wikipedia:Merging">merged</a> into this article. (<a href="http://en.wikipedia.org/wiki/Talk:Brainfuck#Merger_proposal" title="Talk:Brainfuck">Discuss</a>) <small><i>Proposed since March 2014.</i></small></span></td>
+</tr>
+</tbody></table>
+<table class="infobox vevent" cellspacing="3" style="border-spacing:3px;width:22em;">
+<caption class="summary">brainfuck</caption>
+<tbody><tr>
+<th scope="row" style="text-align:left;"><a href="http://en.wikipedia.org/wiki/Programming_paradigm" title="Programming paradigm">Paradigm(s)</a></th>
+<td><a href="http://en.wikipedia.org/wiki/Esoteric_programming_language" title="Esoteric programming language">esoteric</a>, <a href="http://en.wikipedia.org/wiki/Imperative_programming" title="Imperative programming">imperative</a>, <a href="http://en.wikipedia.org/wiki/Structured_programming" title="Structured programming">structured</a></td>
+</tr>
+<tr>
+<th scope="row" style="text-align:left;"><a href="http://en.wikipedia.org/wiki/Software_design" title="Software design">Designed by</a></th>
+<td>Urban Müller</td>
+</tr>
+<tr>
+<th scope="row" style="text-align:left;">Appeared in</th>
+<td>1993</td>
+</tr>
+<tr>
+<th scope="row" style="text-align:left;"><a href="http://en.wikipedia.org/wiki/Type_system" title="Type system">Typing discipline</a></th>
+<td>static, strong, manifest</td>
+</tr>
+<tr>
+<th scope="row" style="text-align:left;">Influenced by</th>
+<td><a href="http://en.wikipedia.org/wiki/P%E2%80%B2%E2%80%B2" title="P′′">P′′</a>, <a href="http://en.wikipedia.org/wiki/FALSE" title="FALSE">FALSE</a></td>
+</tr>
+<tr>
+<th scope="row" style="text-align:left;"><a href="http://en.wikipedia.org/wiki/Filename_extension" title="Filename extension">Filename extension(s)</a></th>
+<td>.b, .bf</td>
+</tr>
+</tbody></table>
+<p><b>Brainfuck</b> is an <a href="http://en.wikipedia.org/wiki/Esoteric_programming_language" title="Esoteric programming language">esoteric programming language</a> noted for its extreme minimalism. The language consists of only eight simple commands and an <a href="http://en.wikipedia.org/wiki/Instruction_pointer" title="Instruction pointer" class="mw-redirect">instruction pointer</a>. It is a <a href="http://en.wikipedia.org/wiki/Turing_tarpit" title="Turing tarpit">Turing tarpit</a>, designed to challenge and amuse <a href="http://en.wikipedia.org/wiki/Programmer" title="Programmer">programmers</a>, and was not made to be suitable for practical use.<sup id="cite_ref-1" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-1"><span>[</span>1<span>]</span></a></sup> It was created in 1993 by Urban Müller.</p>
+<p></p>
+<div id="toc" class="toc">
+<div id="toctitle">
+<h2>Contents</h2>
+<span class="toctoggle">&nbsp;[<a href="http://en.wikipedia.org/wiki/Brainfuck#" class="internal" id="togglelink">hide</a>]&nbsp;</span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="http://en.wikipedia.org/wiki/Brainfuck#Language_design"><span class="tocnumber">1</span> <span class="toctext">Language design</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="http://en.wikipedia.org/wiki/Brainfuck#Commands"><span class="tocnumber">1.1</span> <span class="toctext">Commands</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="http://en.wikipedia.org/wiki/Brainfuck#Brainfuck.27s_formal_.22parent_language.22"><span class="tocnumber">1.2</span> <span class="toctext">Brainfuck's formal "parent language"</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-4"><a href="http://en.wikipedia.org/wiki/Brainfuck#Examples"><span class="tocnumber">2</span> <span class="toctext">Examples</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="http://en.wikipedia.org/wiki/Brainfuck#Hello_World.21"><span class="tocnumber">2.1</span> <span class="toctext">Hello World!</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="http://en.wikipedia.org/wiki/Brainfuck#ROT13"><span class="tocnumber">2.2</span> <span class="toctext">ROT13</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="http://en.wikipedia.org/wiki/Brainfuck#Portability_issues"><span class="tocnumber">3</span> <span class="toctext">Portability issues</span></a>
+<ul>
+<li class="toclevel-2 tocsection-8"><a href="http://en.wikipedia.org/wiki/Brainfuck#Cell_size"><span class="tocnumber">3.1</span> <span class="toctext">Cell size</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="http://en.wikipedia.org/wiki/Brainfuck#Array_size"><span class="tocnumber">3.2</span> <span class="toctext">Array size</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="http://en.wikipedia.org/wiki/Brainfuck#End-of-line_code"><span class="tocnumber">3.3</span> <span class="toctext">End-of-line code</span></a></li>
+<li class="toclevel-2 tocsection-11"><a href="http://en.wikipedia.org/wiki/Brainfuck#End-of-file_behavior"><span class="tocnumber">3.4</span> <span class="toctext">End-of-file behavior</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-12"><a href="http://en.wikipedia.org/wiki/Brainfuck#Derivatives"><span class="tocnumber">4</span> <span class="toctext">Derivatives</span></a></li>
+<li class="toclevel-1 tocsection-13"><a href="http://en.wikipedia.org/wiki/Brainfuck#References"><span class="tocnumber">5</span> <span class="toctext">References</span></a></li>
+<li class="toclevel-1 tocsection-14"><a href="http://en.wikipedia.org/wiki/Brainfuck#External_links"><span class="tocnumber">6</span> <span class="toctext">External links</span></a></li>
+</ul>
+</div>
+<p></p>
+<h2><span class="mw-headline" id="Language_design">Language design</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=1" title="Edit section: Language design">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Urban Müller created brainfuck in 1993 with the intention of designing a language which could be implemented with the smallest possible <a href="http://en.wikipedia.org/wiki/Compiler" title="Compiler">compiler</a>,<sup id="cite_ref-2" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-2"><span>[</span>2<span>]</span></a></sup> inspired by the 1024-byte compiler for the <a href="http://en.wikipedia.org/wiki/FALSE" title="FALSE">FALSE</a> programming language.<sup id="cite_ref-3" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-3"><span>[</span>3<span>]</span></a></sup> Several brainfuck compilers have been made smaller than 200 bytes. One compiler of 100 bytes is known to exist.<sup id="cite_ref-4" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-4"><span>[</span>4<span>]</span></a></sup> The classic distribution is Müller's version 2, containing a compiler for the <a href="http://en.wikipedia.org/wiki/Amiga" title="Amiga">Amiga</a>, an interpreter, example programs, and a readme document.<sup id="cite_ref-5" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-5"><span>[</span>5<span>]</span></a></sup></p>
+<p>The language consists of eight <a href="http://en.wikipedia.org/wiki/Command_(computing)" title="Command (computing)">commands</a>, listed below. A brainfuck program is a sequence of these commands, possibly interspersed with other characters (which are ignored). The commands are executed sequentially, with some exceptions: an <a href="http://en.wikipedia.org/wiki/Program_Counter" title="Program Counter" class="mw-redirect">instruction pointer</a> begins at the first command, and each command it points to is executed, after which it normally moves forward to the next command. The program terminates when the instruction pointer moves past the last command.</p>
+<p>The brainfuck language uses a simple machine model consisting of the program and instruction pointer, as well as an array of at least 30,000 <a href="http://en.wikipedia.org/wiki/Byte" title="Byte">byte</a> cells initialized to zero; a movable <a href="http://en.wikipedia.org/wiki/Pointer_(computer_programming)" title="Pointer (computer programming)">data pointer</a> (initialized to point to the leftmost byte of the array); and two streams of bytes for input and output (most often connected to a keyboard and a monitor respectively, and using the <a href="http://en.wikipedia.org/wiki/ASCII" title="ASCII">ASCII</a> character encoding).</p>
+<h3><span class="mw-headline" id="Commands">Commands</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=2" title="Edit section: Commands">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>The eight language commands, each consisting of a single character:</p>
+<table class="wikitable">
+<tbody><tr>
+<th style="text-align:center;">Character</th>
+<th align="left">Meaning</th>
+</tr>
+<tr>
+<td style="text-align:center"><code>&gt;</code></td>
+<td>increment the data pointer (to point to the next cell to the right).</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>&lt;</code></td>
+<td>decrement the data pointer (to point to the next cell to the left).</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>+</code></td>
+<td>increment (increase by one) the byte at the data pointer.</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-</code></td>
+<td>decrement (decrease by one) the byte at the data pointer.</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>.</code></td>
+<td>output the byte at the data pointer.</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>,</code></td>
+<td>accept one byte of input, storing its value in the byte at the data pointer.</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>[</code></td>
+<td>if the byte at the data pointer is zero, then instead of moving the <a href="http://en.wikipedia.org/wiki/Program_Counter" title="Program Counter" class="mw-redirect">instruction pointer</a> forward to the next command, <a href="http://en.wikipedia.org/wiki/Branch_(computer_science)" title="Branch (computer science)">jump</a> it <i>forward</i> to the command after the <i>matching</i> <code>]</code> command.</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>]</code></td>
+<td>if the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it <i>back</i> to the command after the <i>matching</i> <code>[</code> command.</td>
+</tr>
+</tbody></table>
+<p>(Alternatively, the <code>]</code> command may instead be translated as an unconditional jump <b>to</b> the corresponding <code>[</code> command, or vice versa; programs will behave the same but will run more slowly, due to unnecessary double searching.)</p>
+<p><code>[</code> and <code>]</code> match as parentheses usually do: each <code>[</code> matches exactly one <code>]</code> and vice versa, the <code>[</code> comes first, and there can be no unmatched <code>[</code> or <code>]</code> between the two.</p>
+<p>Brainfuck programs can be translated into <a href="http://en.wikipedia.org/wiki/C_(programming_language)" title="C (programming language)">C</a> using the following substitutions, assuming <code>ptr</code> is of type <code>unsigned char*</code> and has been initialized to point to an array of zeroed bytes:</p>
+<table class="wikitable">
+<tbody><tr>
+<th style="text-align:center;">brainfuck command</th>
+<th style="text-align:left;"><a href="http://en.wikipedia.org/wiki/C_(programming_language)" title="C (programming language)">C</a> equivalent</th>
+</tr>
+<tr>
+<td style="text-align:center;">(Program Start)</td>
+<td><span class="mw-geshi c source-c"><span class="kw4">char</span> array<span class="br0">[</span>infinitely large size<span class="br0">]</span><span class="sy0">;</span></span><br>
+<span class="mw-geshi c source-c"><span class="kw4">char</span> <span class="sy0">*</span>ptr<span class="sy0">=</span>array<span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>&gt;</code></td>
+<td><span class="mw-geshi c source-c"><span class="sy0">++</span>ptr<span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>&lt;</code></td>
+<td><span class="mw-geshi c source-c"><span class="sy0">--</span>ptr<span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>+</code></td>
+<td><span class="mw-geshi c source-c"><span class="sy0">++*</span>ptr<span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>-</code></td>
+<td><span class="mw-geshi c source-c"><span class="sy0">--*</span>ptr<span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>.</code></td>
+<td><span class="mw-geshi c source-c"><span class="kw3">putchar</span><span class="br0">(</span><span class="sy0">*</span>ptr<span class="br0">)</span><span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>,</code></td>
+<td><span class="mw-geshi c source-c"><span class="sy0">*</span>ptr<span class="sy0">=</span><span class="kw3">getchar</span><span class="br0">(</span><span class="br0">)</span><span class="sy0">;</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>[</code></td>
+<td><span class="mw-geshi c source-c"><span class="kw1">while</span> <span class="br0">(</span><span class="sy0">*</span>ptr<span class="br0">)</span> <span class="br0">{</span></span></td>
+</tr>
+<tr>
+<td style="text-align:center;"><code>]</code></td>
+<td><span class="mw-geshi c source-c"><span class="br0">}</span></span></td>
+</tr>
+</tbody></table>
+<p>As the name suggests, brainfuck programs tend to be difficult to comprehend. This is partly because any mildly complex task requires a long sequence of commands; partly it is because the program's text gives no direct indications of the program's <a href="http://en.wikipedia.org/wiki/State_(computer_science)" title="State (computer science)">state</a>. These, as well as brainfuck's inefficiency and its limited input/output capabilities, are some of the reasons it is not used for serious programming. Nonetheless, like any <a href="http://en.wikipedia.org/wiki/Turing_completeness" title="Turing completeness">Turing-complete</a> language, brainfuck is theoretically capable of computing any computable function or simulating any other computational model, if given access to an unlimited amount of memory.<sup id="cite_ref-6" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-6"><span>[</span>6<span>]</span></a></sup> A variety of brainfuck programs have been written.<sup id="cite_ref-7" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-7"><span>[</span>7<span>]</span></a></sup> Although brainfuck programs, especially complicated ones, are difficult to write, it is quite trivial to write an interpreter for brainfuck in a more typical language such as C due to its simplicity. There even exists a brainfuck interpreter written in the brainfuck language itself.<sup id="cite_ref-8" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-8"><span>[</span>8<span>]</span></a></sup></p>
+<h3><span class="mw-headline" id="Brainfuck.27s_formal_.22parent_language.22">Brainfuck's formal "parent language"</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=3" title="Edit section: Brainfuck&#39;s formal &quot;parent language&quot;">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>Except for its two I/O commands, brainfuck is a minor variation of the formal programming language <a href="http://en.wikipedia.org/wiki/P%E2%80%B2%E2%80%B2" title="P′′">P′′</a> created by <a href="http://en.wikipedia.org/wiki/Corrado_B%C3%B6hm" title="Corrado Böhm">Corrado Böhm</a> in 1964. In fact, using six symbols equivalent to the respective brainfuck commands <code>+</code>, <code>-</code>, <code>&lt;</code>, <code>&gt;</code>, <code>[</code>, <code>]</code>, Böhm provided an explicit program for each of the basic functions that together serve to compute any <a href="http://en.wikipedia.org/wiki/Computable_function" title="Computable function">computable function</a>. So in a very real sense, the first "brainfuck" programs appear in Böhm's 1964 paper – and they were programs sufficient to prove Turing-completeness.</p>
+<h2><span class="mw-headline" id="Examples">Examples</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=4" title="Edit section: Examples">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<h3><span class="mw-headline" id="Hello_World.21">Hello World!</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=5" title="Edit section: Hello World!">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>The following program prints <a href="http://en.wikipedia.org/wiki/Hello_world_program" title="Hello world program">"Hello World!"</a> and a newline to the screen:</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr">
+<div class="bf source-bf">
+<ol>
+<li class="li1">
+<pre class="de1"><span class="sy0">+++++</span> <span class="sy0">+++</span><span class="co1">               Set Cell #0 to 8</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy1">[</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&gt;</span><span class="sy0">++++</span><span class="co1">               Add 4 to Cell #1; this will always set Cell #1 to 4</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy1">[</span><span class="co1">                   as the cell will be cleared by the loop</span>
+</pre></li>
+<li class="li2">
+<pre class="de2">        <span class="sy2">&gt;</span><span class="sy0">++</span><span class="co1">             Add 2 to Cell #2</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">        <span class="sy2">&gt;</span><span class="sy0">+++</span><span class="co1">            Add 3 to Cell #3</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">        <span class="sy2">&gt;</span><span class="sy0">+++</span><span class="co1">            Add 3 to Cell #4</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">        <span class="sy2">&gt;</span><span class="sy0">+</span><span class="co1">              Add 1 to Cell #5</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">        <span class="sy2">&lt;&lt;&lt;&lt;</span><span class="sy0">-</span><span class="co1">           Decrement the loop counter in Cell #1</span>
+</pre></li>
+<li class="li2">
+<pre class="de2">    <span class="sy1">]</span><span class="co1">                   Loop till Cell #1 is zero; number of iterations is 4</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&gt;</span><span class="sy0">+</span><span class="co1">                  Add 1 to Cell #2</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&gt;</span><span class="sy0">+</span><span class="co1">                  Add 1 to Cell #3</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&gt;</span><span class="sy0">-</span><span class="co1">                  Subtract 1 from Cell #4</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&gt;&gt;</span><span class="sy0">+</span><span class="co1">                 Add 1 to Cell #6</span>
+</pre></li>
+<li class="li2">
+<pre class="de2">    <span class="sy1">[</span><span class="sy2">&lt;</span><span class="sy1">]</span><span class="co1">                 Move back to the first zero cell you find; this will</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="co1">                        be Cell #1 which was cleared by the previous loop</span>
+</pre></li>
+<li class="li1">
+<pre class="de1">    <span class="sy2">&lt;</span><span class="sy0">-</span><span class="co1">                  Decrement the loop Counter in Cell #0</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy1">]</span><span class="co1">                       Loop till Cell #0 is zero; number of iterations is 8</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"> 
+</pre></li>
+<li class="li2">
+<pre class="de2"><span class="co1">The result of this is:</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="co1">Cell No :   0   1   2   3   4   5   6</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="co1">Contents:   0   0  72 104  88  32   8</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="co1">Pointer :   ^</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"> 
+</pre></li>
+<li class="li2">
+<pre class="de2"><span class="sy2">&gt;&gt;</span><span class="sy3">.</span><span class="co1">                     Cell #2 has value 72 which is 'H'</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy2">&gt;</span><span class="sy0">---</span><span class="sy3">.</span><span class="co1">                   Subtract 3 from Cell #3 to get 101 which is 'e'</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy0">+++++</span> <span class="sy0">++</span><span class="sy3">..</span><span class="sy0">+++</span><span class="sy3">.</span><span class="co1">          Likewise for 'llo' from Cell #3</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy2">&gt;&gt;</span><span class="sy3">.</span><span class="co1">                     Cell #5 is 32 for the space</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy3">.</span><span class="co1">                     Subtract 1 from Cell #4 for 87 to give a 'W'</span>
+</pre></li>
+<li class="li2">
+<pre class="de2"><span class="sy2">&lt;</span><span class="sy3">.</span><span class="co1">                      Cell #3 was set to 'o' from the end of 'Hello'</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy0">+++</span><span class="sy3">.</span><span class="sy0">-----</span> <span class="sy0">-</span><span class="sy3">.</span><span class="sy0">-----</span> <span class="sy0">---</span><span class="sy3">.</span><span class="co1">  Cell #3 for 'rl' and 'd'</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy2">&gt;&gt;</span><span class="sy0">+</span><span class="sy3">.</span><span class="co1">                    Add 1 to Cell #5 gives us an exclamation point</span>
+</pre></li>
+<li class="li1">
+<pre class="de1"><span class="sy2">&gt;</span><span class="sy0">++</span><span class="sy3">.</span><span class="co1">                    And finally a newline from Cell #6</span>
+</pre></li>
+</ol>
+</div>
+</div>
+<p>For readability, this code has been spread across many lines and blanks and comments have been added. Brainfuck ignores all characters except the eight commands <code>+-&lt;&gt;[],.</code> so no special syntax for comments is needed (as long as the comments don't contain the command characters). The code could just as well have been written as:</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr">
+<div class="bf source-bf">
+<pre class="de1"><span class="sy0">++++++++</span><span class="sy1">[</span><span class="sy2">&gt;</span><span class="sy0">++++</span><span class="sy1">[</span><span class="sy2">&gt;</span><span class="sy0">++</span><span class="sy2">&gt;</span><span class="sy0">+++</span><span class="sy2">&gt;</span><span class="sy0">+++</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&lt;&lt;&lt;&lt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">-</span><span class="sy2">&gt;&gt;</span><span class="sy0">+</span><span class="sy1">[</span><span class="sy2">&lt;</span><span class="sy1">]</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;&gt;</span><span class="sy3">.</span><span class="sy2">&gt;</span><span class="sy0">---</span><span class="sy3">.</span><span class="sy0">+++++++</span><span class="sy3">..</span><span class="sy0">+++</span><span class="sy3">.</span><span class="sy2">&gt;&gt;</span><span class="sy3">.</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy3">.</span><span class="sy2">&lt;</span><span class="sy3">.</span><span class="sy0">+++</span><span class="sy3">.</span><span class="sy0">------</span><span class="sy3">.</span><span class="sy0">--------</span><span class="sy3">.</span><span class="sy2">&gt;&gt;</span><span class="sy0">+</span><span class="sy3">.</span><span class="sy2">&gt;</span><span class="sy0">++</span><span class="sy3">.</span>
+</pre></div>
+</div>
+<h3><span class="mw-headline" id="ROT13">ROT13</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=6" title="Edit section: ROT13">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>This program enciphers its input with the <a href="http://en.wikipedia.org/wiki/ROT13" title="ROT13">ROT13</a> cipher. To do this, it must map characters A-M (<a href="http://en.wikipedia.org/wiki/ASCII" title="ASCII">ASCII</a> 65-77) to N-Z (78-90), and vice versa. Also it must map a-m (97-109) to n-z (110-122) and vice versa. It must map all other characters to themselves; it reads characters one at a time and outputs their enciphered equivalents until it reads an EOF (here assumed to be represented as either -1 or "no change"), at which point the program terminates.</p>
+<p>The basic approach used is as follows. Calling the input character <i>x</i>, divide <i>x</i>-1 by 32, keeping quotient and remainder. Unless the quotient is 2 or 3, just output <i>x</i>, having kept a copy of it during the division. If the quotient is 2 or 3, divide the remainder ((<i>x</i>-1) modulo 32) by 13; if the quotient here is 0, output <i>x</i>+13; if 1, output <i>x</i>-13; if 2, output <i>x</i>.</p>
+<p>Regarding the division algorithm, when dividing <i>y</i> by <i>z</i> to get a quotient <i>q</i> and remainder <i>r</i>, there is an outer loop which sets <i>q</i> and <i>r</i> first to the quotient and remainder of 1/<i>z</i>, then to those of 2/<i>z</i>, and so on; after it has executed <i>y</i> times, this outer loop terminates, leaving <i>q</i> and <i>r</i> set to the quotient and remainder of <i>y</i>/<i>z</i>. (The dividend <i>y</i> is used as a diminishing counter that controls how many times this loop is executed.) Within the loop, there is code to increment <i>r</i> and decrement <i>y</i>, which is usually sufficient; however, every <i>z</i>th time through the outer loop, it is necessary to zero <i>r</i> and increment <i>q</i>. This is done with a diminishing counter set to the divisor <i>z</i>; each time through the outer loop, this counter is decremented, and when it reaches zero, it is refilled by moving the value from <i>r</i> back into it.</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr">
+<div class="bf source-bf">
+<pre class="de1"> 
+<span class="sy0">-</span><span class="sy3">,</span><span class="sy0">+</span><span class="sy1">[</span><span class="co1">                         Read first character and start outer character reading loop</span>
+    <span class="sy0">-</span><span class="sy1">[</span><span class="co1">                       Skip forward if character is 0</span>
+        <span class="sy2">&gt;&gt;</span><span class="sy0">++++</span><span class="sy1">[</span><span class="sy2">&gt;</span><span class="sy0">++++++++</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="co1">  Set up divisor (32) for division loop</span>
+<span class="co1">                               (MEMOR</span><span class="sy4">Y</span><span class="co1"> LA</span><span class="sy4">Y</span><span class="co1">OUT: dividend copy remainder divisor quotient zero zero)</span>
+        <span class="sy2">&lt;</span><span class="sy0">+</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy1">[</span><span class="co1">                Set up dividend (x minus 1) and enter division loop</span>
+            <span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">-</span><span class="sy1">[</span><span class="sy2">&gt;&gt;&gt;</span><span class="sy1">]</span><span class="co1">      Increase copy and remainder / reduce divisor / Normal case: skip forward</span>
+            <span class="sy2">&lt;</span><span class="sy1">[[</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;&gt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy1">]</span><span class="co1">    Special case: move remainder back to divisor and increase quotient</span>
+            <span class="sy2">&lt;&lt;&lt;&lt;&lt;</span><span class="sy0">-</span><span class="co1">           Decrement dividend</span>
+        <span class="sy1">]</span><span class="co1">                    End division loop</span>
+    <span class="sy1">]</span><span class="sy2">&gt;&gt;&gt;</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy0">+</span><span class="co1">                 End skip loop; zero former divisor and reuse space for a flag</span>
+    <span class="sy2">&gt;</span><span class="sy0">--</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">[</span><span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy2">&gt;</span><span class="sy0">+++</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">]]]</span><span class="sy2">&lt;</span><span class="sy1">[</span><span class="co1">         Zero that flag unless quotient was 2 or 3; zero quotient; check flag</span>
+        <span class="sy0">++++++++++++</span><span class="sy2">&lt;</span><span class="sy1">[</span><span class="co1">       If flag then set up divisor (13) for second division loop</span>
+<span class="co1">                               (MEMOR</span><span class="sy4">Y</span><span class="co1"> LA</span><span class="sy4">Y</span><span class="co1">OUT: zero copy dividend divisor remainder quotient zero zero)</span>
+            <span class="sy2">&gt;</span><span class="sy0">-</span><span class="sy1">[</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;&gt;</span><span class="sy1">]</span><span class="co1">         Reduce divisor; Normal case: increase remainder</span>
+            <span class="sy2">&gt;</span><span class="sy1">[</span><span class="sy0">+</span><span class="sy1">[</span><span class="sy2">&lt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;</span><span class="sy0">+</span><span class="sy2">&gt;&gt;</span><span class="sy1">]</span><span class="co1">   Special case: increase remainder / move it back to divisor / increase quotient</span>
+            <span class="sy2">&lt;&lt;&lt;&lt;&lt;</span><span class="sy0">-</span><span class="co1">           Decrease dividend</span>
+        <span class="sy1">]</span><span class="co1">                    End division loop</span>
+        <span class="sy2">&gt;&gt;</span><span class="sy1">[</span><span class="sy2">&lt;</span><span class="sy0">+</span><span class="sy2">&gt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="co1">             Add remainder back to divisor to get a useful 13</span>
+        <span class="sy2">&gt;</span><span class="sy1">[</span><span class="co1">                   Skip forward if quotient was 0</span>
+            <span class="sy0">-</span><span class="sy1">[</span><span class="co1">               Decrement quotient and skip forward if quotient was 1</span>
+                <span class="sy0">-</span><span class="sy2">&lt;&lt;</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;&gt;</span><span class="co1">     Zero quotient and divisor if quotient was 2</span>
+            <span class="sy1">]</span><span class="sy2">&lt;&lt;</span><span class="sy1">[</span><span class="sy2">&lt;&lt;</span><span class="sy0">-</span><span class="sy2">&gt;&gt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="sy2">&gt;&gt;</span><span class="co1">    Zero divisor and subtract 13 from copy if quotient was 1</span>
+        <span class="sy1">]</span><span class="sy2">&lt;&lt;</span><span class="sy1">[</span><span class="sy2">&lt;&lt;</span><span class="sy0">+</span><span class="sy2">&gt;&gt;</span><span class="sy0">-</span><span class="sy1">]</span><span class="co1">          Zero divisor and add 13 to copy if quotient was 0</span>
+    <span class="sy1">]</span><span class="co1">                        End outer skip loop (jump to here if ((character minus 1)/32) was not 2 or 3)</span>
+    <span class="sy2">&lt;</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">]</span><span class="co1">                     Clear remainder from first division if second division was skipped</span>
+    <span class="sy2">&lt;</span><span class="sy3">.</span><span class="sy1">[</span><span class="sy0">-</span><span class="sy1">]</span><span class="co1">                    Output ROT13ed character from copy and clear it</span>
+    <span class="sy2">&lt;</span><span class="sy0">-</span><span class="sy3">,</span><span class="sy0">+</span><span class="co1">                     Read next character</span>
+<span class="sy1">]</span><span class="co1">                            End character reading loop</span>
+</pre></div>
+</div>
+<h2><span class="mw-headline" id="Portability_issues">Portability issues</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=7" title="Edit section: Portability issues">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Partly because Urban Müller did not write a thorough language specification, the many subsequent brainfuck interpreters and compilers have come to use slightly different dialects of brainfuck.</p>
+<h3><span class="mw-headline" id="Cell_size">Cell size</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=8" title="Edit section: Cell size">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>In the classic distribution, the cells are of 8-bit size (cells are bytes), and this is still the most common size. However, to read non-textual data, a brainfuck program may need to distinguish an <a href="http://en.wikipedia.org/wiki/End-of-file" title="End-of-file">end-of-file</a> condition from any possible byte value; thus 16-bit cells have also been used. Some implementations have used 32-bit cells, 64-bit cells, or <a href="http://en.wikipedia.org/wiki/Bignum" title="Bignum" class="mw-redirect">bignum</a> cells with practically unlimited range, but programs that use this extra range are likely to be slow, since storing the value <i>n</i> into a cell requires <a href="http://en.wikipedia.org/wiki/Big_O_notation#Related_asymptotic_notations" title="Big O notation">Ω</a>(<i>n</i>) time as a cell's value may only be changed by incrementing and decrementing.</p>
+<p>In all these variants, the <code>,</code> and <code>.</code> commands still read and write data in bytes. In most of them, the cells wrap around, i.e. incrementing a cell which holds its maximal value (with the <code>+</code> command) will bring it to its minimal value and vice versa. The exceptions are implementations which are distant from the underlying hardware, implementations that use bignums, and implementations that try to enforce portability.</p>
+<p>Fortunately, it is usually easy to write brainfuck programs that do not ever cause integer wraparound or overflow, and therefore don't depend on cell size. Generally this means avoiding increment of +255 (unsigned 8-bit wraparound), or avoiding overstepping the boundaries of [-128, +127] (signed 8-bit wraparound) (since there are no comparison operators, a program cannot distinguish between a signed and unsigned <a href="http://en.wikipedia.org/wiki/Two%27s_complement" title="Two&#39;s complement">two's complement</a> fixed-bit-size cell and negativeness of numbers is a matter of interpretation). For more details on integer wraparound, see the <a href="http://en.wikipedia.org/wiki/Integer_overflow" title="Integer overflow">Integer overflow</a> article.</p>
+<h3><span class="mw-headline" id="Array_size">Array size</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=9" title="Edit section: Array size">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>In the classic distribution, the array has 30,000 cells, and the pointer begins at the leftmost cell. Even more cells are needed to store things like the millionth <a href="http://en.wikipedia.org/wiki/Fibonacci_number" title="Fibonacci number">Fibonacci number</a>, and the easiest way to make the language Turing-complete is to make the array unlimited on the right.</p>
+<p>A few implementations<sup id="cite_ref-9" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-9"><span>[</span>9<span>]</span></a></sup> extend the array to the left as well; this is an uncommon feature, and therefore portable brainfuck programs do not depend on it.</p>
+<p>When the pointer moves outside the bounds of the array, some implementations will give an error message, some will try to extend the array dynamically, some will not notice and will produce <a href="http://en.wikipedia.org/wiki/Undefined_behavior" title="Undefined behavior">undefined behavior</a>, and a few will move the pointer to the opposite end of the array. Some tradeoffs are involved: expanding the array dynamically to the right is the most user-friendly approach and is good for memory-hungry programs, but it carries a speed penalty. If a fixed-size array is used it is helpful to make it very large, or better yet let the user set the size. Giving an error message for bounds violations is very useful for debugging but even that carries a speed penalty unless it can be handled by the operating system's memory protections.</p>
+<h3><span class="mw-headline" id="End-of-line_code">End-of-line code</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=10" title="Edit section: End-of-line code">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>Different operating systems (and sometimes different programming environments) use subtly different versions of ASCII. The most important difference is in the code used for the end of a line of text. MS-DOS and Microsoft Windows use a <a href="http://en.wikipedia.org/wiki/Newline#Representations" title="Newline">CRLF</a>, i.e. a 13 followed by a 10, in most contexts. UNIX and its descendants, including Linux and Mac OS X, use just 10, and older Macs use just 13. It would be unfortunate if brainfuck programs had to be rewritten for different operating systems. Fortunately, a unified standard is easy to find. Urban Müller's compiler and his example programs use 10, on both input and output; so do a large majority of existing brainfuck programs; and 10 is also more convenient to use than CRLF. Thus, brainfuck implementations should make sure that brainfuck programs that assume newline=10 will run properly; many do so, but some do not.</p>
+<p>This assumption is also consistent with most of the world's sample code for <a href="http://en.wikipedia.org/wiki/C_(programming_language)" title="C (programming language)">C</a> and other languages, in that they use '\n', or 10, for their newlines. On systems that use CRLF line endings, the C standard library transparently remaps "\n" to "\r\n" on output and "\r\n" to "\n" on input for streams not opened in binary mode.</p>
+<h3><span class="mw-headline" id="End-of-file_behavior">End-of-file behavior</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=11" title="Edit section: End-of-file behavior">edit</a><span class="mw-editsection-bracket">]</span></span></h3>
+<p>The behavior of the "<code>,</code>" command when an <a href="http://en.wikipedia.org/wiki/End-of-file" title="End-of-file">end-of-file</a> condition has been encountered varies. Some implementations set the cell at the pointer to 0, some set it to the C constant EOF (in practice this is usually -1), some leave the cell's value unchanged. There is no real consensus; arguments for the three behaviors are as follows.</p>
+<p>Setting the cell to 0 avoids the use of negative numbers, and makes it marginally more concise to write a loop that reads characters until EOF occurs. This is a language extension devised by Panu Kalliokoski.</p>
+<p>Setting the cell to -1 allows EOF to be distinguished from any byte value (if the cells are larger than bytes), which is necessary for reading non-textual data; also, it is the behavior of the C translation of "<code>,</code>" given in Müller's readme file. However, it is not obvious that those C translations are to be taken as normative.</p>
+<p>Leaving the cell's value unchanged is the behavior of Urban Müller's brainfuck compiler. This behavior can easily coexist with either of the others; for instance, a program that assumes EOF=0 can set the cell to 0 before each "<code>,</code>" command, and will then work correctly on implementations that do either EOF=0 or EOF="no change". It is so easy to accommodate the "no change" behavior that any brainfuck programmer interested in portability should do so.</p>
+<h2><span class="mw-headline" id="Derivatives">Derivatives</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=12" title="Edit section: Derivatives">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<p>Many esolangers have created brainfuck equivalents (languages with commands that directly map to brainfuck)<sup id="cite_ref-10" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-10"><span>[</span>10<span>]</span></a></sup> or brainfuck derivatives (languages that extend its behavior or map it into new semantic territory).<sup id="cite_ref-11" class="reference"><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_note-11"><span>[</span>11<span>]</span></a></sup></p>
+<p>Some examples:</p>
+<ul>
+<li><b>Pi</b>, which maps brainfuck into errors in individual digits of <a href="http://en.wikipedia.org/wiki/Pi" title="Pi">Pi</a>.</li>
+<li><a href="http://en.wikipedia.org/wiki/Ook_Ook" title="Ook Ook">Ook!</a>, which maps brainfuck commands to the punctuation around the repeated orangutan call.</li>
+<li><b>VerboseFuck</b>, which looks like a traditional programming language, only what appears as parameters or expressions are actually parts of longer commands that cannot be altered.</li>
+</ul>
+<p>However, there are also unnamed minor variants (or dialects), formed possibly as a result of inattention, of which some of the more common are:</p>
+<ul>
+<li>forbidding, rather than ignoring, any non-command characters in brainfuck programs</li>
+<li>introducing a comment marker which comments out the rest of the line</li>
+<li>various alterations of the loop semantics, sometimes destroying <a href="http://en.wikipedia.org/wiki/Turing_completeness" title="Turing completeness">Turing completeness</a></li>
+<li>requiring a special character to mark the end of the program</li>
+</ul>
+<h2><span class="mw-headline" id="References">References</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=13" title="Edit section: References">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<div class="reflist columns references-column-width" style="-moz-column-width: 30em; -webkit-column-width: 30em; column-width: 30em; list-style-type: decimal;">
+<ol class="references">
+<li id="cite_note-1"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-1"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><a rel="nofollow" class="external text" href="http://de4.aminet.net/dev/lang/brainfuck-2.readme">Brainfuck readme</a></span></li>
+<li id="cite_note-2"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-2"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://www.muppetlabs.com/~breadbox/bf/">"The Brainfuck Programming Language"</a>. Muppetlabs.com<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=The+Brainfuck+Programming+Language&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fwww.muppetlabs.com%2F~breadbox%2Fbf%2F&amp;rft.pub=Muppetlabs.com&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-3"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-3"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://strlen.com/false/index.html">"Wouter's Wiki&nbsp;: False Language"</a>. Strlen.com. 2013-08-03<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=Wouter%27s+Wiki+%3A+False+Language&amp;rft.date=2013-08-03&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fstrlen.com%2Ffalse%2Findex.html&amp;rft.pub=Strlen.com&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-4"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-4"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://pferrie.host22.com/misc/brainfck.htm">"BRAINFCK IN 100 BYTES!"</a>. Pferrie.host22.com<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=BRAINFCK+IN+100+BYTES%21&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fpferrie.host22.com%2Fmisc%2Fbrainfck.htm&amp;rft.pub=Pferrie.host22.com&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-5"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-5"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://www.aminet.net/package.php?package=dev/lang/brainfuck-2.lha">"dev/lang/brainfuck-2.lha"</a>. Aminet<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=dev%2Flang%2Fbrainfuck-2.lha&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fwww.aminet.net%2Fpackage.php%3Fpackage%3Ddev%2Flang%2Fbrainfuck-2.lha&amp;rft.pub=Aminet&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-6"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-6"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://www.iwriteiam.nl/Ha_bf_Turing.html">"BF is Turing-complete"</a>. Iwriteiam.nl<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=BF+is+Turing-complete&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fwww.iwriteiam.nl%2FHa_bf_Turing.html&amp;rft.pub=Iwriteiam.nl&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-7"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-7"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://esoteric.sange.fi/brainfuck/bf-source/prog/">"Index of /brainfuck/bf-source/prog"</a>. Esoteric.sange.fi. 2002-01-22<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=Index+of+%2Fbrainfuck%2Fbf-source%2Fprog&amp;rft.date=2002-01-22&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fesoteric.sange.fi%2Fbrainfuck%2Fbf-source%2Fprog%2F&amp;rft.pub=Esoteric.sange.fi&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-8"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-8"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://www.iwriteiam.nl/Ha_bf_inter.html">"BF interpreter written in BF"</a>. Iwriteiam.nl<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=BF+interpreter+written+in+BF&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fwww.iwriteiam.nl%2FHa_bf_inter.html&amp;rft.pub=Iwriteiam.nl&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-9"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-9"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://kiyuko.org/software/beef">"Beef –"</a>. Kiyuko.org<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=Beef+%E2%80%93&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fkiyuko.org%2Fsoftware%2Fbeef&amp;rft.pub=Kiyuko.org&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-10"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-10"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://esoteric.voxelperfect.net/wiki/Category:Brainfuck_equivalents">"Category:Brainfuck equivalents"</a>. Esoteric.voxelperfect.net<span class="reference-accessdate">. Retrieved 2014-05-06</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=Category%3ABrainfuck+equivalents&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fesoteric.voxelperfect.net%2Fwiki%2FCategory%3ABrainfuck_equivalents&amp;rft.pub=Esoteric.voxelperfect.net&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+<li id="cite_note-11"><span class="mw-cite-backlink"><b><a href="http://en.wikipedia.org/wiki/Brainfuck#cite_ref-11"><span class="cite-accessibility-label">Jump up </span>^</a></b></span> <span class="reference-text"><span class="citation web"><a rel="nofollow" class="external text" href="http://esoteric.voxelperfect.net/wiki/Category:Brainfuck_derivatives">"Category:Brainfuck derivatives - Esolang"</a>. Esoteric.voxelperfect.net<span class="reference-accessdate">. Retrieved 2013-10-30</span>.</span><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fen.wikipedia.org%3ABrainfuck&amp;rft.btitle=Category%3ABrainfuck+derivatives+-+Esolang&amp;rft.genre=book&amp;rft_id=http%3A%2F%2Fesoteric.voxelperfect.net%2Fwiki%2FCategory%3ABrainfuck_derivatives&amp;rft.pub=Esoteric.voxelperfect.net&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook" class="Z3988"><span style="display:none;">&nbsp;</span></span></span></li>
+</ol>
+</div>
+<h2><span class="mw-headline" id="External_links">External links</span><span class="mw-editsection"><span class="mw-editsection-bracket">[</span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit&section=14" title="Edit section: External links">edit</a><span class="mw-editsection-bracket">]</span></span></h2>
+<ul>
+<li><a rel="nofollow" class="external text" href="http://www.dmoz.org/Computers/Programming/Languages/Brainfuck">Brainfuck</a> at <a href="http://en.wikipedia.org/wiki/DMOZ" title="DMOZ">DMOZ</a></li>
+<li><a rel="nofollow" class="external text" href="http://esolangs.org/wiki/Brainfuck">Brainfuck</a> on the <a rel="nofollow" class="external text" href="http://esolangs.org/wiki/Main_Page">Esolang (Esoteric Languages) wiki</a></li>
+</ul>
+
+
+<!-- 
+NewPP limit report
+Parsed by mw1136
+CPU time usage: 0.916 seconds
+Real time usage: 0.985 seconds
+Preprocessor visited node count: 1091/1000000
+Preprocessor generated node count: 5330/1500000
+Post‐expand include size: 18634/2048000 bytes
+Template argument size: 670/2048000 bytes
+Highest expansion depth: 14/40
+Expensive parser function count: 4/500
+Lua time usage: 0.131/10.000 seconds
+Lua memory usage: 2.91 MB/50 MB
+-->
+
+<!-- Saved in parser cache with key enwiki:pcache:idhash:4086-0!*!0!!en!4!* and timestamp 20140619085853 and revision id 613537405
+ -->
+<noscript>&lt;img src="//en.wikipedia.org/wiki/Special:CentralAutoLogin/start?type=1x1" alt="" title="" width="1" height="1" style="border: none; position: absolute;" /&gt;</noscript></div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="http://en.wikipedia.org/w/index.php?title=Brainfuck&oldid=613537405">http://en.wikipedia.org/w/index.php?title=Brainfuck&amp;oldid=613537405</a>"					</div>
+													<div id="catlinks" class="catlinks"><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="http://en.wikipedia.org/wiki/Help:Category" title="Help:Category">Categories</a>: <ul><li><a href="http://en.wikipedia.org/wiki/Category:Non-English-based_programming_languages" title="Category:Non-English-based programming languages">Non-English-based programming languages</a></li><li><a href="http://en.wikipedia.org/wiki/Category:Esoteric_programming_languages" title="Category:Esoteric programming languages">Esoteric programming languages</a></li><li><a href="http://en.wikipedia.org/wiki/Category:Programming_languages_created_in_1993" title="Category:Programming languages created in 1993">Programming languages created in 1993</a></li></ul></div><div id="mw-hidden-catlinks" class="mw-hidden-catlinks mw-hidden-cats-hidden">Hidden categories: <ul><li><a href="http://en.wikipedia.org/wiki/Category:Articles_to_be_merged_from_March_2014" title="Category:Articles to be merged from March 2014">Articles to be merged from March 2014</a></li><li><a href="http://en.wikipedia.org/wiki/Category:All_articles_to_be_merged" title="Category:All articles to be merged">All articles to be merged</a></li><li><a href="http://en.wikipedia.org/wiki/Category:Articles_with_DMOZ_links" title="Category:Articles with DMOZ links">Articles with DMOZ links</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-createaccount"><a href="http://en.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Brainfuck&type=signup">Create account</a></li><li id="pt-login"><a href="http://en.wikipedia.org/w/index.php?title=Special:UserLogin&returnto=Brainfuck" title="You&#39;re encouraged to log in; however, it&#39;s not mandatory. [alt-shift-o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li id="ca-nstab-main" class="selected"><span><a href="./brainf_files/brainf.htm" title="View the content page [alt-shift-c]" accesskey="c">Article</a></span></li>
+															<li id="ca-talk"><span><a href="http://en.wikipedia.org/wiki/Talk:Brainfuck" title="Discussion about the content page [alt-shift-t]" accesskey="t">Talk</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+						<h3 id="mw-vector-current-variant">
+													</h3>
+
+						<h3 id="p-variants-label" tabindex="0"><span>Variants</span><a href="http://en.wikipedia.org/wiki/Brainfuck#" tabindex="-1"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="./brainf_files/brainf.htm">Read</a></span></li>
+															<li id="ca-edit"><span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=edit" title="You can edit this page. Please use the preview button before saving [alt-shift-e]" accesskey="e">Edit</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=history" title="Past versions of this page [alt-shift-h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label" tabindex="0"><span>More</span><a href="http://en.wikipedia.org/wiki/Brainfuck#" tabindex="-1"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="http://en.wikipedia.org/w/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Wikipedia [alt-shift-f]" accesskey="f" id="searchInput" tabindex="1" autocomplete="off"><input type="hidden" value="Special:Search" name="title"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if one exists" id="searchButton" class="searchButton">								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a style="background-image: url(//upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png);" href="http://en.wikipedia.org/wiki/Main_Page" title="Visit the main page"></a></div>
+						<div class="portal first" role="navigation" id="p-navigation" aria-labelledby="p-navigation-label">
+			<h3 id="p-navigation-label">Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="http://en.wikipedia.org/wiki/Main_Page" title="Visit the main page [alt-shift-z]" accesskey="z">Main page</a></li>
+													<li id="n-contents"><a href="http://en.wikipedia.org/wiki/Portal:Contents" title="Guides to browsing Wikipedia">Contents</a></li>
+													<li id="n-featuredcontent"><a href="http://en.wikipedia.org/wiki/Portal:Featured_content" title="Featured content – the best of Wikipedia">Featured content</a></li>
+													<li id="n-currentevents"><a href="http://en.wikipedia.org/wiki/Portal:Current_events" title="Find background information on current events">Current events</a></li>
+													<li id="n-randompage"><a href="http://en.wikipedia.org/wiki/Special:Random" title="Load a random article [alt-shift-x]" accesskey="x">Random article</a></li>
+													<li id="n-sitesupport"><a href="https://donate.wikimedia.org/wiki/Special:FundraiserRedirector?utm_source=donate&utm_medium=sidebar&utm_campaign=C13_en.wikipedia.org&uselang=en" title="Support us">Donate to Wikipedia</a></li>
+													<li id="n-shoplink"><a href="http://shop.wikimedia.org/" title="Visit the Wikimedia Shop">Wikimedia Shop</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id="p-interaction" aria-labelledby="p-interaction-label">
+			<h3 id="p-interaction-label">Interaction</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-help"><a href="http://en.wikipedia.org/wiki/Help:Contents" title="Guidance on how to use and edit Wikipedia">Help</a></li>
+													<li id="n-aboutsite"><a href="http://en.wikipedia.org/wiki/Wikipedia:About" title="Find out about Wikipedia">About Wikipedia</a></li>
+													<li id="n-portal"><a href="http://en.wikipedia.org/wiki/Wikipedia:Community_portal" title="About the project, what you can do, where to find things">Community portal</a></li>
+													<li id="n-recentchanges"><a href="http://en.wikipedia.org/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [alt-shift-r]" accesskey="r">Recent changes</a></li>
+													<li id="n-contactpage"><a href="http://en.wikipedia.org/wiki/Wikipedia:Contact_us">Contact page</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id="p-tb" aria-labelledby="p-tb-label">
+			<h3 id="p-tb-label">Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="http://en.wikipedia.org/wiki/Special:WhatLinksHere/Brainfuck" title="List of all English Wikipedia pages containing links to this page [alt-shift-j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="http://en.wikipedia.org/wiki/Special:RecentChangesLinked/Brainfuck" title="Recent changes in pages linked from this page [alt-shift-k]" accesskey="k">Related changes</a></li>
+													<li id="t-upload"><a href="http://en.wikipedia.org/wiki/Wikipedia:File_Upload_Wizard" title="Upload files [alt-shift-u]" accesskey="u">Upload file</a></li>
+													<li id="t-specialpages"><a href="http://en.wikipedia.org/wiki/Special:SpecialPages" title="A list of all special pages [alt-shift-q]" accesskey="q">Special pages</a></li>
+													<li id="t-permalink"><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&oldid=613537405" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&action=info">Page information</a></li>
+													<li id="t-wikibase"><a href="http://www.wikidata.org/wiki/Q244627" title="Link to connected data repository item [alt-shift-g]" accesskey="g">Data item</a></li>
+						<li id="t-cite"><a href="http://en.wikipedia.org/w/index.php?title=Special:Cite&page=Brainfuck&id=613537405" title="Information on how to cite this page">Cite this page</a></li>					</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id="p-coll-print_export" aria-labelledby="p-coll-print_export-label">
+			<h3 id="p-coll-print_export-label">Print/export</h3>
+
+			<div class="body">
+									<ul>
+													<li id="coll-create_a_book"><a href="http://en.wikipedia.org/w/index.php?title=Special:Book&bookcmd=book_creator&referer=Brainfuck">Create a book</a></li>
+													<li id="coll-download-as-rl"><a href="http://en.wikipedia.org/w/index.php?title=Special:Book&bookcmd=render_article&arttitle=Brainfuck&oldid=613537405&writer=rl">Download as PDF</a></li>
+													<li id="t-print"><a href="http://en.wikipedia.org/w/index.php?title=Brainfuck&printable=yes" title="Printable version of this page [alt-shift-p]" accesskey="p">Printable version</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id="p-lang" aria-labelledby="p-lang-label"><span class="uls-settings-trigger" tabindex="0" role="button" aria-haspopup="true" original-title="Language settings"></span>
+			<h3 id="p-lang-label">Languages</h3>
+
+			<div class="body">
+									<ul>
+													<li class="interlanguage-link interwiki-ca"><a href="http://ca.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Catalan" lang="ca" hreflang="ca">Català</a></li>
+													<li class="interlanguage-link interwiki-cs"><a href="http://cs.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Czech" lang="cs" hreflang="cs">Čeština</a></li>
+													<li class="interlanguage-link interwiki-da"><a href="http://da.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Danish" lang="da" hreflang="da">Dansk</a></li>
+													<li class="interlanguage-link interwiki-de"><a href="http://de.wikipedia.org/wiki/Brainfuck" title="Brainfuck – German" lang="de" hreflang="de">Deutsch</a></li>
+													<li class="interlanguage-link interwiki-et"><a href="http://et.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Estonian" lang="et" hreflang="et">Eesti</a></li>
+													<li class="interlanguage-link interwiki-es"><a href="http://es.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Spanish" lang="es" hreflang="es">Español</a></li>
+													<li class="interlanguage-link interwiki-eo"><a href="http://eo.wikipedia.org/wiki/Brainfuck_(programlingvo)" title="Brainfuck (programlingvo) – Esperanto" lang="eo" hreflang="eo">Esperanto</a></li>
+													<li class="interlanguage-link interwiki-fr"><a href="http://fr.wikipedia.org/wiki/Brainfuck" title="Brainfuck – French" lang="fr" hreflang="fr">Français</a></li>
+													<li class="interlanguage-link interwiki-ko"><a href="http://ko.wikipedia.org/wiki/%EB%B8%8C%EB%A0%88%EC%9D%B8%ED%8D%BD" title="브레인퍽 – Korean" lang="ko" hreflang="ko">한국어</a></li>
+													<li class="interlanguage-link interwiki-is"><a href="http://is.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Icelandic" lang="is" hreflang="is">Íslenska</a></li>
+													<li class="interlanguage-link interwiki-it"><a href="http://it.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Italian" lang="it" hreflang="it">Italiano</a></li>
+													<li class="interlanguage-link interwiki-he"><a href="http://he.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Hebrew" lang="he" hreflang="he">עברית</a></li>
+													<li class="interlanguage-link interwiki-hu"><a href="http://hu.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Hungarian" lang="hu" hreflang="hu">Magyar</a></li>
+													<li class="interlanguage-link interwiki-ms"><a href="http://ms.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Malay" lang="ms" hreflang="ms">Bahasa Melayu</a></li>
+													<li class="interlanguage-link interwiki-nl"><a href="http://nl.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Dutch" lang="nl" hreflang="nl">Nederlands</a></li>
+													<li class="interlanguage-link interwiki-ja"><a href="http://ja.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Japanese" lang="ja" hreflang="ja">日本語</a></li>
+													<li class="interlanguage-link interwiki-no"><a href="http://no.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Norwegian (bokmål)" lang="no" hreflang="no">Norsk bokmål</a></li>
+													<li class="interlanguage-link interwiki-pl"><a href="http://pl.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Polish" lang="pl" hreflang="pl">Polski</a></li>
+													<li class="interlanguage-link interwiki-pt"><a href="http://pt.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Portuguese" lang="pt" hreflang="pt">Português</a></li>
+													<li class="interlanguage-link interwiki-ro"><a href="http://ro.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Romanian" lang="ro" hreflang="ro">Română</a></li>
+													<li class="interlanguage-link interwiki-ru"><a href="http://ru.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Russian" lang="ru" hreflang="ru">Русский</a></li>
+													<li class="interlanguage-link interwiki-sk"><a href="http://sk.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Slovak" lang="sk" hreflang="sk">Slovenčina</a></li>
+													<li class="interlanguage-link interwiki-sl"><a href="http://sl.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Slovenian" lang="sl" hreflang="sl">Slovenščina</a></li>
+													<li class="interlanguage-link interwiki-fi"><a href="http://fi.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Finnish" lang="fi" hreflang="fi">Suomi</a></li>
+													<li class="interlanguage-link interwiki-sv"><a href="http://sv.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Swedish" lang="sv" hreflang="sv">Svenska</a></li>
+													<li class="interlanguage-link interwiki-th"><a href="http://th.wikipedia.org/wiki/%E0%B8%A0%E0%B8%B2%E0%B8%A9%E0%B8%B2%E0%B9%80%E0%B8%9A%E0%B8%A3%E0%B8%99%E0%B8%9F%E0%B8%B1%E0%B8%81" title="ภาษาเบรนฟัก – Thai" lang="th" hreflang="th">ไทย</a></li>
+													<li class="interlanguage-link interwiki-tg"><a href="http://tg.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Tajik" lang="tg" hreflang="tg">Тоҷикӣ</a></li>
+													<li class="interlanguage-link interwiki-tr"><a href="http://tr.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Turkish" lang="tr" hreflang="tr">Türkçe</a></li>
+													<li class="interlanguage-link interwiki-uk"><a href="http://uk.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Ukrainian" lang="uk" hreflang="uk">Українська</a></li>
+													<li class="interlanguage-link interwiki-vi"><a href="http://vi.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Vietnamese" lang="vi" hreflang="vi">Tiếng Việt</a></li>
+													<li class="interlanguage-link interwiki-zh"><a href="http://zh.wikipedia.org/wiki/Brainfuck" title="Brainfuck – Chinese" lang="zh" hreflang="zh">中文</a></li>
+													
+											</ul>
+				<div class="after-portlet after-portlet-lang"><span class="wb-langlinks-edit wb-langlinks-link"><a action="edit" href="http://www.wikidata.org/wiki/Q244627#sitelinks-wikipedia" text="Edit links" title="Edit interlanguage links" class="wbc-editpage">Edit links</a></span></div>			</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 19 June 2014 at 08:58.<br></li>
+											<li id="footer-info-copyright">Text is available under the <a rel="license" href="http://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License">Creative Commons Attribution-ShareAlike License</a><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/" style="display:none;"></a>;
+additional terms may apply.  By using this site, you agree to the <a href="http://wikimediafoundation.org/wiki/Terms_of_Use">Terms of Use</a> and <a href="http://wikimediafoundation.org/wiki/Privacy_policy">Privacy Policy</a>. Wikipedia® is a registered trademark of the <a href="http://www.wikimediafoundation.org/">Wikimedia Foundation, Inc.</a>, a non-profit organization.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="http://wikimediafoundation.org/wiki/Privacy_policy" title="wikimedia:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="http://en.wikipedia.org/wiki/Wikipedia:About" title="Wikipedia:About">About Wikipedia</a></li>
+											<li id="footer-places-disclaimer"><a href="http://en.wikipedia.org/wiki/Wikipedia:General_disclaimer" title="Wikipedia:General disclaimer">Disclaimers</a></li>
+											<li id="footer-places-contact"><a href="http://en.wikipedia.org/wiki/Wikipedia:Contact_us">Contact Wikipedia</a></li>
+											<li id="footer-places-developers"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/How_to_contribute">Developers</a></li>
+											<li id="footer-places-mobileview"><a href="http://en.m.wikipedia.org/wiki/Brainfuck" class="noprint stopMobileRedirectToggle">Mobile view</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-copyrightico">
+															<a href="http://wikimediafoundation.org/"><img src="./brainf_files/wikimedia-button.png" width="88" height="31" alt="Wikimedia Foundation"></a>
+													</li>
+											<li id="footer-poweredbyico">
+															<a href="http://www.mediawiki.org/"><img src="./brainf_files/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" width="88" height="31"></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>/*<![CDATA[*/window.jQuery && jQuery.ready();/*]]>*/</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["ext.cite","mediawiki.toc","mobile.desktop","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest","ext.gadget.teahouse","ext.gadget.ReferenceTooltips","ext.gadget.DRN-wizard","ext.gadget.charinsert","ext.gadget.refToolbar","mw.MwEmbedSupport.style","mmv.bootstrap.autostart","ext.gettingstarted.assignToken","ext.eventLogging.subscriber","ext.navigationTiming","schema.UniversalLanguageSelector","ext.uls.eventlogger","ext.uls.interlanguage"],null,true);
+}</script>
+<script src="./brainf_files/load(3).php"></script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":269,"wgHostname":"mw1215"});
+}</script>
+	
+
+	<div class="suggestions" style="display: none; font-size: 13px;"><div class="suggestions-results"></div><div class="suggestions-special"></div></div></body></html>

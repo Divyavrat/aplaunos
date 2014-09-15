@@ -1,0 +1,51 @@
+ret>>c3
+int>>cd
+pusha>>60
+popa>>61
+nop>>90
+hlt>>f4
+clc>>f8
+stc>>f9
+cli>>fa
+sti>>fb
+call offset>>e8
+in al,port>>e4
+in ax,port>>e5
+out port,al>>e6
+out port,ax>>e7
+mov reg,value>>
+b0-al
+b1-cl
+b2-dl
+b3-bl
+b4-ah
+b5-ch
+b6-dh
+b7-bh
+mov [loc],reg>>
+a2-al
+88 0e-cl
+88 16-dl
+88 1e-bl
+88 26-ah
+88 2e-ch
+88 36-dh
+88 3e-bh
+add reg,value>>
+04-al
+80 c1-cl
+80 c2-dl
+80 c3-bl
+80 c4-ah
+80 c5-ch
+80 c6-dh
+80 c7-bh
+sub reg,value>>
+2c-al
+80 e9-cl
+80 ea-dl
+80 eb-bl
+80 ec-ah
+80 ed-ch
+80 ee-dh
+80 ef-bh

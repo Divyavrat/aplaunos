@@ -1,0 +1,205 @@
+New BASIC Commands
+==================
+
+---------------
+Screen Commands
+---------------
+
+Command: GRAPHICSMODE
+Description: Switches the operating system into graphics mode.
+Parameters: None
+Mode: Text
+Notes: Screen will be cleared upon switching modes.
+
+Command: TEXTMODE
+Description: Switches the operating system into text mode.
+Parameters: None
+Mode: Graphics
+Notes: Screen will be cleared upon switching modes.
+	This is the default mode.
+
+Command: PLOT
+Description: Changes the colour of a single pixel.
+Mode: Graphics
+Parameters: pixel_x, pixel_y, colour
+	
+Command: POINT
+Description: Find the colour of a single pixel.
+Parameters: pixel_x, pixel_y, colour
+Mode: Graphics
+
+Command: LINE 
+Description: Draw a line between two points.
+Parameters: start_x, start_y, finish_x, finish_y, colour
+Mode: Graphics
+	
+Command: VLINE
+Description: Draw a vertical line.
+Parameters: start_x, start_y, length, colour
+Mode: Both
+
+Command: HLINE
+Description: Draw a horizontal line
+Parameters: start_x, start_y, length, colour
+Mode: Both
+
+Command: BOX
+Description: Draws an unfilled rectangle.
+Parameters: start_x, start_y, width, height, colour
+Mode: Both
+	
+Command: BOXFILLED
+Description: Draws a filled rectangle
+Parameters: start_x, start_y, width, height, colour
+Mode: Both
+
+Command: POLYGON
+Description: Draws a polygon with N sides.
+Parameters: number_of_sides, colour, x1, y1, x2, y2, etc
+Mode: Graphics
+Notes: A polygon must have between 3 and 10 points.
+
+Command: INTERFACE
+Description: Draws the operating system application background.
+Parameters: top_string, bottom_string, colour
+Mode: Text
+
+Command: INPUTBOX
+Description: Uses the OS input prompt to collect text.
+Parameters: prompt_string, destination_string
+Mode: Text
+
+Command: QUESTION
+Description: Uses the OS message box to ask a ok/cancel question.
+Parameters: prompt_string, answer
+Mode: Text
+Notes: Answer is 0 for ok or 1 for cancel.
+
+Command: CIRCLE
+Description: Draws a circle around a point on the screen.
+Parameters: Point_X, Point_Y, Radius, Colour
+Mode: Graphics
+
+---------------
+String Commands
+---------------
+
+Command: LEFT
+Description: Collects part of the left side of a string.
+Parameters: source_string, length, destination_string
+
+Command: RIGHT
+Description: Collects part of the right side of a string.
+Parameters: source_string, length, destination_string
+
+Command: MID
+Description: Collects part of the middle of a string.
+Parameters: source_string, start_char_number, length, destination_string
+
+Command: TRIM
+Description: Removes the starting and ending spaces from a string.
+Parameters: source_string
+
+Command: REVERSE
+Description: Reverse the direction of a string.
+Parameters: source_string
+
+Command: SPLIT
+Description: Splits a string seperated by spaces into other strings.
+Parameters: source_string, string_1, string_2, string_3, string_4
+Notes: Must have all parameters.
+	Parameters past the end will be empty strings.
+
+Command: CLOCK
+Description: Places the current date and time into text strings.
+Parameters: date_string, time_string
+
+---------------
+Memory Commands
+---------------
+Note: Memory is allocated in 128b blocks.
+
+Command: FREEMEM
+Description: Finds the number of free memory blocks.
+Parameters: none
+Notes: Takes the form '(variable) = FREEMEM'
+
+Command: MEMORY ALLOCATE
+Description: Allocates extended memory.
+Parameters: number_of_blocks, new_handle_number
+
+Command: MEMORY RELEASE
+Description: Releases an extended memory handle.
+Parameters: handle_number
+
+Command: MEMORY READ
+Description: Reads an extended memory handle to program memory.
+Parameters: handle_number address
+
+Command: MEMORY WRITE
+Description: Writes an extended memory handle from program memory.
+Parameters: handle_number address
+
+---------------------
+Program Flow Commands
+---------------------
+Note: IF and LOOP statement can now use '!' for 'not equal'
+
+Command: BLOCKIF
+Description: Starts an if block
+Parameters: var_1 sign var_2
+Notes: Sign can be: =, >, < or ! for variables and = or ! for strings.
+
+Command: ENDIF
+Description: Finishes an if block
+Parameters: none
+
+--------------
+Mouse Commands
+--------------
+Command: LOCATEMOUSE
+Description: Finds the coordinents of the mouse.
+Parameters: mouse_X mouse_Y
+
+Command: MOVEMOUSE
+Description: Sets the coordinents of the mouse.
+Parameters: mouse_X, mouse_Y
+
+Command: WAITMOUSE
+Description: Delays until a mouse event.
+Parameters: none
+
+Command: WAITANY
+Description: Delays until a mouse or keyboard event.
+Parameters: none
+
+Command: LOCKMOUSE
+Description: Lock the mouse to a fixed area on the screen.
+Parameters: min_X, min_Y, max_X, max_Y
+
+Command: RELEASEMOUSE
+Description: Releases a mouse lock.
+Parameters: none
+
+Command: USEMOUSE
+Description: Allows free movement of the mouse until a keypress or mouse click occurs.
+Parameters: key_value, final_mouse_X, final_mouse_Y
+Notes: If the key value is zero a mouse click has occured otherwise a key press.
+	For mouse clicks, the mouse button is not returned. Use the mouse keywords to find it.
+
+--------
+Keywords
+--------
+Note: Keywords are used in the form: X = FOO
+
+Keyword: LEFTCLICK
+Description: Returns whether the left mouse button is pressed.
+Notes: 0 = Released, 1 = Pressed
+
+Keyword: RIGHTCLICK
+Description: Returns whether the right mouse button is pressed.
+
+Keyword: MIDDLECLICK
+Description: Returns whether the middle mouse button is pressed.
+
+

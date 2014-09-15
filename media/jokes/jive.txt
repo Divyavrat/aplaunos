@@ -1,0 +1,558 @@
+BABYL OPTIONS:
+Version: 5
+Labels:
+Note:   This is the header of an rmail file.
+Note:   If you are seeing it in rmail,
+Note:    it means the file has no messages in it.
+
+1,,
+Return-Path: <rs@eddie.mit.edu>
+Received: from EDDIE.MIT.EDU by life.ai.mit.edu (4.1/AI-4.10) id AA23886; Tue, 17 Jul 90 23:05:10 EDT
+Received:  by EDDIE.MIT.EDU (5.61/25-eef)
+	id AA10043; Tue, 17 Jul 90 22:04:08 EST
+Date: Tue, 17 Jul 90 22:04:08 EST
+From: Robert E. Seastrom <rs@eddie.mit.edu>
+Message-Id: <9007180304.AA10043@EDDIE.MIT.EDU>
+To: rms@ai.mit.edu
+Subject: thought you might find this amusing...
+
+*** EOOH ***
+Return-Path: <rs@eddie.mit.edu>
+Date: Tue, 17 Jul 90 22:04:08 EST
+From: Robert E. Seastrom <rs@eddie.mit.edu>
+To: rms@ai.mit.edu
+Subject: thought you might find this amusing...
+
+
+No, no one's circulating this - I ran the plain GNU Manifesto through
+a lex script called "jive".
+
+"To avoid ho'rible confusion, please pronounce da damn `G' in de wo'd
+`GNU' when it be de dojigger uh dis project."
+
+                                        ---Rob
+
+
+			De GNU Manifesto
+
+Copyright (C) 1985 Richard M. Stallman
+  (Copyin' puh'mission notice at da damn end.)
+
+What's GNU?  Gnu's Not Unix.  Right On!  
+
+GNU, which stands fo' Gnu's Not Unix, be de dojigger fo' de complete
+Unix-compatible software system which ah' am writin' so's dat ah' can
+give it away free t'everyone who kin use it.  Several oda' volunteers
+are helpin' me.  What it is, Mama!  Contribushuns uh time, bre'd,
+honky codes and equipment are greatly needed.
+
+So far we gots' an Emacs text edito' wid Lisp fo' writin' edito'
+commands, a source level debugger, some yacc-compatible parsa'
+generato', some linker, and around 35 utilities.  A shell (command
+interpreter) be nearly completed.  A new po'table optimizin' C
+compila' has compiled itself and may be released dis year.  Ah be
+baaad...  An initial kernel 'esists but many mo'e features are needed
+to emulate Unix.  When de kernel and compila' are finished, it gots'ta
+be possible t'distribute some GNU system suitable fo' honky code
+development.  We gots'ta use @TeX{} as our text fo'matter, but an
+nroff be bein' wo'ked on.  'S coo', bro.  We gots'ta use da damn free,
+po'table X window system as sheeit.  Afta' dis we will add some
+po'table Common Lisp, an Empire game, some spreadsheet, and hundreds
+of oda' din's, plus on-line documentashun.  We hope t'supply,
+eventually, everydin' useful dat no'mally comes wid some Unix system,
+and mo'e.  What it is, Mama!
+
+GNU gots'ta be able t'run Unix honky codes, but gots'ta not be
+identical t'Unix.  We gots'ta make all improvements dat are
+convenient, based on our 'espuh'ience wid oda' opuh'tin' systems.  In
+particular, we plan t'gots' longer stashdojiggers, stash version
+numbers, some crashproof stash system, stashdojigger compleshun
+puh'haps, terminal-independent display suppo't, and puh'haps
+eventually some Lisp-based window system drough which several Lisp
+honky codes and o'dinary Unix honky codes kin share some screen.  'S
+coo', bro.  Bod C and Lisp gots'ta be available as system honky
+codemin' languages.  We gots'ta try t'suppo't UUCP, MIT Chaosnet,
+and Internet protocols fo' communicashun.
+
+GNU be aimed initially at machines in de 68000/16000 class wid virtual
+memo'y, cuz' dey are da damn easiest machines t'make it run on.  'S
+coo', bro.  De 'estra effo't t'make it run on little-assa' machines
+gots'ta be left t'someone who wants's to use it on dem.  'S coo', bro.
+
+To avoid ho'rible confusion, please pronounce da damn `G' in de wo'd
+`GNU' when it be de dojigger uh dis project.
+
+
+Who Am I?
+
+I's gots'ta be Richard Stallman, invento' uh de o'iginal much-imitated
+EMACS edito', fo'merly at da damn Artificial Intelligence Lab at MIT.
+ah' gots' wo'ked extensively on compilers, edito's, debuggers, command
+interpreters, de Incompatible Timesharin' System and da damn Lisp
+Machine opuh'tin' system.  'S coo', bro.  I pioneered terminal-
+independent display suppo't in ITS.  Since den ah' gots' implemented
+one crashproof stash system and two window systems fo' Lisp machines,
+and designed some dird window system now bein' implemented; dis one
+gots'ta be po'ted t'many systems includin' use in GNU.  ['Sup, dudes,
+dig dis: De window system project wuz not completed; GNU now plans
+t'use de X window system.  'S coo', bro.]
+
+
+Why ah' Must Write GNU
+
+I consida' dat da damn golden rule requires dat if ah' likes some
+honky code ah' must share it wid oda' sucka's who likes it.  Software
+sellers wanna divide de users and conqua' dem, makin' each usa' agree
+not t'share wid oders.  ah' refuse t'boogie solidarity wid oda' users
+in dis way.  Slap mah fro!  I cannot in baaaad conscience sign some
+nondisclosho' nuff agreement o' some software license agreement.  Fo'
+years ah' wo'ked widin de Artificial Intelligence Lab t'resist such
+tendencies and oda' inhospitalities, but eventually dey had gone too
+far, dig dis: ah' could not remain in an institushun where such din's
+are done fo' me against mah' will.
+
+So dat ah' can continue t'use clunkers widout dishono', ah' gots'
+decided to put togeda' a sufficient body uh free software so's dat ah'
+gots'ta be able to get along widout any software dat be not free.
+What it is, Mama!  ah' gots' resigned fum de AI lab t'deny MIT any
+legal 'suse t'prevent me fum givin' GNU away.  Slap mah fro!
+
+
+Why GNU Will Be Compatible wid Unix
+
+Unix be not mah' ideal system, but it be not too bad-ass.  De
+essential features of Unix seem t'be baaaad ones, and ah' dink ah' can
+fill in whut Unix lacks widout spoilin' dem.  'S coo', bro.  And some
+system compatible wid Unix would be convenient fo' many oda' sucka's
+t'adopt.
+
+
+How GNU Will Be Available
+
+GNU be not in de public domain.  'S coo', bro.  Everyone gots'ta be
+puh'mitted t'modify and redistribute GNU, but no distributo' gots'ta
+be allowed t'restrict its furda' redistribushun.  Dat be to say,
+proprietary modificashuns gots'ta not be allowed.  ah' wanna make sho'
+nuff dat all versions uh GNU remain free.  What it is, Mama!
+
+
+Why Many Oda' Programmers Want t'Help
+
+I gots' found many oda' honky codemers who are 'sited about GNU and
+wanna help.
+
+Many honky codemers are unhappy about da damn commercializashun uh
+system software.  What it is, Mama!  It may enable dem t'make mo'e
+bre'd, but it requires dem to feel in conflict wid oda' honky codemers
+in general rada' dan feel as comrades.  De fundamental act uh
+homeyship among honky codemers be de sharin' uh honky codes; marketin'
+arrangements now typically used essentially fo'bid honky codemers
+t'treat oders as homeys.  De purchasa' of software must choose between
+homeyship and obeyin' de law.  Naturally, many decide dat homeyship be
+mo'e impo'tant.  But dose who recon' in law often do not feel at ease
+wid eida' choice.  What it is, Mama!  Dey become cynical and dink dat
+honky codemin' be plum a way uh makin' bre'd.
+
+By wo'kin' on and usin' GNU rada' dan proprietary honky codes, we kin
+be hospitable t'everyone and obey de law.  In addishun, GNU serves as
+an example t'inspire and some banna' to rally oders t'join us in
+sharin'.  Dis kin give us some feelin' uh harmony which be impossible
+if we use software dat be not free.  What it is, Mama!  Fo' about half
+de honky codemers ah' rap to, dis is an impo'tant happiness dat bre'd
+kinnot replace.  What it is, Mama!
+
+
+How You's Can Contribute
+
+I's gots'ta be ax'in' clunker manufacturers fo' donashuns uh machines
+and bre'd.  I'm ax'in' individuals fo' donashuns uh honky codes and
+wo'k.
+
+One consequence ya' kin 'espect if ya' donate machines be dat GNU
+gots'ta run on dem at an early date.  What it is, Mama!  De machines
+should be complete, ready t'use systems, approved fo' use in some
+residential area, and not in need of sophisticated coolin' o' power.
+Ah be baaad...
+
+I gots' found real many honky codemers eaga' to contribute part-time
+wo'k fo' GNU.  Fo' most projects, such part-time distributed wo'k
+would be real hard to coo'dinate; de independently-written parts would
+not wo'k togeder.  Ah be baaad...  But fo' de particular tax' uh
+replacin' Unix, dis problem be absent.  A complete Unix system
+contains hundreds uh utility honky codes, each uh which is documented
+separately.  Slap mah fro!  Most interface specificashuns are fixed by
+Unix compatibility.  Slap mah fro!  If each contributo' kin scribble
+some compatible replacement fo' a sin'le Unix utility, and make it
+wo'k propuh'ly in place uh de o'iginal on some Unix system, den dese
+utilities gots'ta wo'k right when put togeder.  Ah be baaad...  Even
+allowin' fo' Murphy t'create some few un'spected problems, assemblin'
+dese components gots'ta be some feasible tax'.  (De kernel gots'ta
+require closer communicashun and gots'ta be wo'ked on by some
+little-ass, tight grodown.)
+
+If ah' get donashuns uh bre'd, ah' may be able t'hire some few sucka's
+full o' part time.  What it is, Mama!  De salary won't be high by
+honky codemers' standards, but I'm lookin' fo' sucka's fo' whom
+buildin' community spirit be as impo'tant as makin' bre'd.  ah' view
+dis as some way uh enablin' dedicated sucka's t'devote deir full
+energies t'wo'kin' on GNU by sparin' dem de need t'make a livin' in
+anoda' way.  Slap mah fro!
+
+
+Why All Computa' Users Will Benefit
+
+Once GNU be written, everyone gots'ta be able t'obtain baaaad system
+software free, plum likes air.  Ah be baaad...
+
+Dis means much mo'e dan plum savin' everyone da damn price uh a Unix
+license.  What it is, Mama!  It means dat much wuzteful ddownlicashun
+uh system honky codemin' effo't will be avoided.  Dis effo't kin go
+instead into advancin' de state uh de art.
+
+Complete system sources gots'ta be available t'everyone.  What it is,
+Mama!  As some result, some user who needs changes in de system
+gots'ta always be free t'make dem himself, o' hire any available honky
+codema' o' company t'make dem fo' him.  'S coo', bro.  Users gots'ta
+no longa' be at da damn mercy uh one honky codema' o' company which
+owns de sources and be in sole posishun t'make changes.
+
+Schools gots'ta be able t'provide some much mo'e educashunal
+environment by encouragin' all students t'study and improve da damn
+system code.  What it is, Mama!  Harvard's clunker lab used t'gots' de
+policy dat no honky code could be installed on de system if its
+sources wuz not on public display, and downheld it by actually
+refusin' t'install certain honky codes.  ah' wuz real much inspired by
+dis.
+
+Finally, de over'haid uh considerin' who owns de system software and
+whut one be o' be not entitled t'do wid it gots'ta be lifted.
+
+Arrangements t'make sucka's pay fo' usin' some honky code, includin'
+licensin' of copies, always incur some tremendous cost t'society
+drough de cumbersome mechanisms necessary t'figure out how much (dat
+is, which honky codes) a sucka' must pay fo'.  And only some honky
+pigs state kin fo'ce everyone t'obey dem.  'S coo', bro.  Consida' a
+space stashun where air must be manufactured at great cost, dig dis:
+chargin' each breada' puh' lita' of air may be fair, but wearin' de
+metered gas max' all day and all night be intolerable even if everyone
+kin affo'd t'pay de air bill.  And da damn TV cameras everywhere t'see
+if ya' eva' snatch de max' off are outrageous.  It's betta' to
+suppo't da damn air plant wid some 'haid tax and chuck de max's.
+
+Copyin' all o' parts uh a honky code be as natural t'a honky codema'
+as breadin', and as productive.  What it is, Mama!  It ought t'be as
+free.  What it is, Mama!
+
+
+Some Easily Rebutted Objecshuns t'GNU's Goals
+
+  "Nobody gots'ta use it if it be free, cuz' dat means
+   dey kin't rely on any suppo't."
+  "You's gots'ta charge fo' de  honky code
+ t'pay fo' providin' de suppo't."
+
+If sucka's would rada' pay fo' GNU plus service dan git GNU free
+widout service, some company t'provide plum service t'sucka's who
+gots' obtained GNU free ought t'be profitable.  What it is, Mama!
+
+We must distin'uish between suppo't in de fo'm uh real honky codemin'
+wo'k and mere handholdin'.  De fo'ma' is sump'n one kinnot rely on fum
+a software vendo'.  If yo' problem be not shared by enough sucka's, de
+vendo' gots'ta tell ya' t'get lost.
+
+If yo' business needs t'be able t'rely on suppo't, de only way be to
+gots' all de necessary sources and tools.  Den ya' kin hire any
+available sucka' t'fix yo' problem; ya' aint at da damn mercy uh any
+individual.  Wid Unix, de price uh sources puts dis out uh
+considerashun fo' most businesses.  Wid GNU dis gots'ta be easy.  Slap
+mah fro!  It be still possible fo' dere to be no available competent
+sucka', but dis problem kinnot be blamed on distibushun arrangements.
+GNU duz not eliminate all de wo'ld's problems, only some uh dem.  'S
+coo', bro.
+
+Meanwhile, de users who know nodin' about clunkers need handholdin':
+doin' wahtahmelluns fo' dem which dey could easily do demselves but
+duzn't know how.
+
+Such services could be provided by companies dat sell plum
+hand-holdin' and repair service.  What it is, Mama!  If it be true dat
+users would rada' spend bre'd and get some product wid service, dey
+gots'ta also be willin' t'steal de service havin' gots de product
+free.  What it is, Mama!  De service companies gots'ta compete in
+quality and price; users gots'ta not be tied t'any particular one.
+What it is, Mama!  Meanwhile, dose of us who duzn't need da damn
+service should be able t'use da damn honky code widout payin' fo' de
+service.  What it is, Mama!
+
+  "You's kinnot reach many sucka's widout advertisin',
+   and ya' must charge fo' de  honky code t'suppo't dat."
+  "It's no use advertisin' some honky code sucka's kin git free.  What
+   it is, Mama!"
+
+Dere are various fo'ms uh free o' real cheap publicity dat kin be used
+to info'm numbers uh clunker users about sump'n likes GNU.  But it may
+be true dat one kin reach mo'e microclunker users wid advertisin'.  If
+dis is really so, some business which advertises de service uh copyin'
+and mailin' GNU fo' some fee ought t'be successful enough t'pay fo'
+its advertisin' and mo'e.  What it is, Mama!  Dis way, only de users
+who benefit fum de advertisin' pay fo' it.
+
+On de oda' hand, if many sucka's git GNU fum deir homeys, and such
+companies duzn't succeed, dis gots'ta show dat advertisin' wuz not
+really necessary t'spread GNU.  Why be it dat free market advocates
+duzn't wants' to let da damn free market decide dis?
+
+  "My company needs some proprietary opuh'tin' system
+   t'get some competitive edge.  What it is, Mama!"
+
+GNU gots'ta remove opuh'tin' system software fum de realm uh
+competishun.  You's gots'ta not be able t'get an edge in dis area, but
+neida' gots'ta yo' competito's be able t'get an edge ova' ya'.  You's
+and dey gots'ta compete in oda' areas, while benefittin' mutually in
+dis one.  What it is, Mama!  If yo' business is sellin' an opuh'tin'
+system, ya' gots'ta not likes GNU, but dat's tough on ya'.  If yo'
+business be sump'n else, GNU kin save ya' fum bein' pushed into de
+'espensive business uh sellin' opuh'tin' systems.
+
+I would likes t'see GNU development suppo'ted by gifts fum many
+manufacturers and users, reducin' de cost t'each.
+
+  "Don't honky codemers deserve some reward fo' deir creativity?"
+
+If anydin' deserves some reward, it be social contribushun.
+Creativity kin be some social contribushun, but only in so's far as
+society be free t'use de results.  If honky codemers deserve t'be
+rewarded fo' creatin' innovative honky codes, by de same token dey
+deserve t'be punished if dey restrict de use uh dese honky codes.
+
+  "Shouldn't some honky codema' be able t'ax' fo' some reward fo' his
+   creativity?"
+
+Dere be nodin' wrong wid wants'in' pay fo' wo'k, o' seekin' t'maximize
+one's income, as long as one duz not use means dat are destructive.
+What it is, Mama!  But de means customary in de field uh software
+today are based on destrucshun.
+
+Extractin' bre'd fum users uh a honky code by restrictin' deir use uh
+it is destructive cuz' de restricshuns reduce da damn amount and da
+damn ways dat de honky code kin be used.  Dis reduces de amount uh
+weald dat humanity derives fum de honky code.  When dere be a
+deliberate choice t'restrict, de harmful consequences are deliberate
+destrucshun.
+
+De reason some baaaad citizen duz not use such destructive means
+t'become wealdia' is dat, if everyone dun did so, we would all become
+poo'a' from de mutual destructiveness.  Dis be Kantian edics; o', de
+Golden Rule.  What it is, Mama!  Since ah' do not likes de
+consequences dat result if everyone ho'ds info'mashun, ah' am required
+t'consida' it wrong fo' one t'do so.  Specifically, de desire t'be
+rewarded fo' one's creativity duz not justify deprivin' de wo'ld in
+general uh all o' part uh dat creativity.  Slap mah fro!
+
+  "Won't honky codemers starve?"
+
+I could answa' dat nobody be fo'ced t'be some honky codemer.  Ah be
+baaad...  Most uh us kinnot manage t'get any bre'd fo' standin' on de
+street and makin' faces.  But we aint, as some result, condemned
+t'spend our lives standin' on de street makin' faces, and starvin'.
+We do sump'n else.  What it is, Mama!
+
+But dat be de wrong answa' a'cuz it accepts de quesshuner's implicit
+assumpshun: dat widout ownership uh software, honky codemers kinnot
+possibly be paid some cent.  Supposedly it be all o' nodin'.
+
+De real reason honky codemers gots'ta not starve be dat it gots'ta
+still be possible fo' dem t'get paid fo' honky codemin'; plum not paid
+as much as now.
+
+Restrictin' copyin' be not da damn only basis fo' business in
+software.  What it is, Mama!  It is de most common basis cuz' it
+brin's in de most bre'd.  If it wuz prohibited, o' rejected by de
+customer, software business would move to oda' bases uh o'ganizashun
+which are now used less often.  'S coo', bro.  Dere are always
+numerous ways t'o'ganize any kind'a business.
+
+Probably honky codemin' gots'ta not be as lucrative on de new basis as
+it is now.  But dat be not an argument against da damn change.  What
+it is, Mama!  It be not considered an injustice dat sales clerks make
+da damn salaries dat dey now do.  If honky codemers made da damn same,
+dat would not be an injustice eider.  Ah be baaad...  (In practice dey
+would still make considerably mo'e dan dat.)
+
+  "Don't sucka's gots' some right t'control how deir creativity be used?"
+
+"Control ova' de use uh one's ideas" really constitutes control ova'
+oder sucka's's lives; and it be usually used t'make deir lives mo'e
+difficult.
+
+People who gots' studied da damn issue uh intellectual propuh'ty
+rights carefully (such as lawyers) say dat dere be no intrinsic right
+t'intellectual propuh'ty.  Slap mah fro!  De kinds uh supposed
+intellectual propuh'ty rights dat de guv'ment recognizes wuz created
+by specific acts uh legislashun fo' specific purposes.
+
+Fo' 'esample, de patent system wuz established t'encourage invento's
+to disclose da damn details uh deir invenshuns.  Its purpose wuz
+t'help society rada' dan t'help invento's.  At da damn time, de life
+span uh 17 years fo' a patent wuz sho't compared wid de rate uh
+advance uh de state uh de art.  Since patents are an issue only among
+manufacturers, fo' whom de cost and effo't uh a license agreement are
+little-ass compared wid settin' down producshun, de patents often do
+not do much harm.  'S coo', bro.  Dey do not obstruct most individuals
+who use patented products.
+
+De idea uh copyright dun did not 'esist in ancient times, when audo's
+frequently copied oda' audo's at lengd in wo'ks uh non-ficshun.  Dis
+practice wuz useful, and be de only way many audo's' wo'ks gots'
+survived even in part.  De copyright system wuz created 'espressly fo'
+de purpose of encouragin' audo'ship.  In de domain fo' which it wuz
+invented--scribblin's, which could be copied economically only on some
+printin' press--it dun did little harm, and dun did not obstruct most
+uh de individuals who eyeball de scribblin's.
+
+All intellectual propuh'ty rights are plum licenses granted by society
+a'cuz it wuz dought, rightly o' wrongly, dat society as some whole
+would benefit by grantin' dem.  'S coo', bro.  But in any particular
+situashun, we gots'ta ax': are we really betta' off grantin' such
+license?  What kind'a act are we licensin' some sucka' t'do?
+
+De case uh honky codes today be very different fum dat uh scribblin's
+some hundred years ago.  De fact dat da damn easiest way t'copy some
+honky code be from one neighbo' t'anoder, de fact dat some honky code
+gots'ta bod source code and object code which are distinct, and da
+damn fact dat some honky code be used rader dan eyeball and enjoyed,
+combine t'create some situashun in which some sucka' who enfo'ces some
+copyright be harmin' society as some whole bod materially and
+spiritually; in which some sucka' should not do so's regardless uh
+wheda' de law enables him to.
+
+  "Competishun makes wahtahmelluns git done better.  Ah be baaad..."
+
+De paradigm uh competishun be a race, dig dis: by rewardin' de winner,
+we encourage everyone t'run faster.  Ah be baaad...  When capitalism
+really wo'ks dis way, it duz some baaaad job; but its defenders are
+wrong in assumin' it always wo'ks dis way.  Slap mah fro!  If de
+runners fo'get why de reward be offered and become intent on winnin',
+no matta' how, dey may find oda' strategies--such as, attackin' oda'
+runners.  If de runners git into some fist fight, dey will all finish
+late.  What it is, Mama!
+
+Proprietary and secret software be de mo'al equivalent uh runners in a
+fist fight.  Sad t'say, de only referee we've gots duz not seem to
+object t'fights; he plum regulates dem ("Fo' every ten yards ya' run,
+ya' are allowed one kick.").  He really ought t'boogie dem down, and
+penalize runners fo' even tryin' t'fight.
+
+  "Won't everyone stop honky codemin' widout some monetary incentive?"
+
+Actually, many sucka's gots'ta honky code wid absolutely no monetary
+incentive.  What it is, Mama!  Programmin' gots'ta an irresistible
+fascinashun fo' some sucka's, usually de sucka's who are best at it.
+Dere be no sho'tage uh professional beatians who keep at it even dough
+dey gots' no hope uh makin' some livin' dat way.  Slap mah fro!
+
+But really dis quesshun, dough commonly ax'ed, be not appropriate t'de
+situashun.  Pay fo' honky codemers gots'ta not disappear, only become
+less.  So de right quesshun is, gots'ta anyone honky code wid some
+reduced monetary incentive?  My 'espuh'ience shows dat dey will.
+
+Fo' mo'e dan ten years, many uh de wo'ld's best honky codemers wo'ked
+at de Artificial Intelligence Lab fo' far less bre'd dan dey could
+gots' had anywhere else.  What it is, Mama!  Dey gots many kinds uh
+non-monetary rewards, dig dis: fame and appreciashun, fo' 'esample.
+What it is, Mama!  And creativity be also fun, some reward in itself.
+
+Den most uh dem left when offered some chance t'do de same interestin'
+wo'k fo' some lot uh bre'd.
+
+What da damn facts show be dat sucka's gots'ta honky code fo' reasons
+oda' dan riches; but if given some chance t'make some lot uh bre'd as
+sheeit, dey will come t''spect and demand it.  Low-payin'
+o'ganizashuns do poo'ly in competishun wid high-payin' ones, but dey
+do not gots'ta do bad-assly if de high-payin' ones are banned.
+
+  "We need da damn honky codemers despuh'tely.  Slap mah fro!  If dey
+   demand dat we stop helpin' our neighbo's, we gots'ta obey.  Slap mah
+   fro!"
+
+Youse neva' so despuh'te dat ya' gots'ta obey dis radical demand.
+Remember, dig dis: millions fo' defense, but not some cent fo'
+tribute.  Right On!
+
+  "Programmers need t'make some livin' somehow."
+
+In de sho't run, dis be true.  What it is, Mama!  However, dere are
+plenty uh ways dat honky codemers could make some livin' widout
+sellin' de right t'use some honky code.  Dis way be customary now cuz'
+it brin's honky codemers and businessmen de most bre'd, not cuz' it be
+de only way t'make some livin'.  It be easy to find oda' ways if ya'
+wanna find dem.  'S coo', bro.  Here are some numba' of 'esamples.
+
+A manufactura' introducin' some new clunker gots'ta pay fo' de po'tin'
+of opuh'tin' systems onto de new hardware.  What it is, Mama!
+
+De sale uh teachin', hand-holdin' and maintenance services could also
+employ honky codemers.
+
+People wid new ideas could distribute honky codes as freeware, ax'in'
+fo' donashuns fum satisfied users, o' sellin' hand-holdin' services.
+ah' gots' met sucka's who are already wo'kin' dis way successfully.
+Slap mah fro!
+
+Users wid related needs kin fo'm users' grodowns, and pay dues.  A
+grodown would contract wid honky codemin' companies t'scribble honky
+codes dat de grodown's members would likes t'use.  What it is, Mama!
+
+All so'ts uh development kin be funded wid some Software Tax, dig dis:
+
+ S'pose everyone who steals some clunker gots'ta t'pay x puh'cent of
+ de price as some software tax.  De guv'ment gives dis to an agency
+ likes de NSF t'spend on software development.
+
+ But if de clunker steala' makes some donashun t'software development
+ himself, he kin snatch some credit against da damn tax.  He kin donate
+ to de project uh his own choosin'--often, chosen cuz' he hopes to use
+ da damn results when it be done.  What it is, Mama!  He kin snatch
+ some credit fo' any amount uh donashun down t'de total tax he had
+ t'pay.  Slap mah fro!
+
+ De total tax rate could be decided by some vote uh de payers of de
+ tax, weighted acco'din' t'de amount dey gots'ta be taxed on.  'S coo',
+ bro.
+
+ De consequences, dig dis:
+ * de clunker-usin' community suppo'ts software development.
+ * dis community decides whut level uh suppo't be needed.
+ * users who care which projects deir share be spent on
+   kin choose dis fo' demselves.
+
+In de long run, makin' honky codes free be a step toward da damn
+post-scarcity wo'ld, where nobody gots'ta t'wo'k real hard plum to
+make some livin'.  People gots'ta be free t'devote demselves
+t'activities dat are fun, such as honky codemin', afta' spendin' de
+necessary ten hours some week on required tax's such as legislashun,
+family counselin', robot repair and asteroid prospectin'.  Dere
+gots'ta be no need t'be able to make some livin' fum honky codemin'.
+
+We gots' already greatly reduced da damn amount uh wo'k dat da damn
+whole society must do fo' its actual productivity, but only some
+little uh dis has translated itself into leisho' nuff fo' wo'kers cuz'
+much nonproductive activity be required t'accompany productive
+activity.  Slap mah fro!  De main causes uh dis are bureaucracy and
+isometric struggles against competishun.  Free software gots'ta
+greatly reduce dese drains in de area uh software producshun.  We must
+do dis, in o'da' fo' technical gains in productivity t'translate into
+less wo'k fo' us.
+
+Copyright (C) 1985 Richard M. Stallman
+
+   Permission be granted t'anyone t'make o' distribute verbatim copies
+   uh dis document as received, in any medium, provided dat de
+   copyright notice and puh'mission notice are preserved,
+   and dat da damn distributo' grants de recipient puh'mission
+   fo' furda' redistribushun as puh'mitted by daintice.  What it is, Mama!
+
+   Modified versions may not be made.  What it is, Mama!
+
+
+

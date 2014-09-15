@@ -1,0 +1,227 @@
+New API Functions
+-----------------
+
+
+====================
+Screen API Functions
+====================
+Note: The Screen API is only intended to be run in text mode.
+
+Call Name: os_draw_border
+Description: Draws border around the specified area.
+Input: BL = colour, CH = start row, CL = start column, DH = start row, DL = start column
+Output: none
+
+Call Name: os_draw_vertical_line
+Description: Draws a vertical line.
+Input: BH = length, BL = colour, DH = start row, DL = start column
+Output: none
+
+Call Name: os_draw_horizontal_line
+Description: Draws a horizontal line.
+Input: BH = length, BL = colour, DH = start row, DL = start column
+Output: none
+
+===================
+Sound API Functions
+===================
+
+Call Name: os_speaker_freq
+Description: Starts the PC speaker playing the requested frequency
+Input: AX = sound frequency
+Output: none
+Notes: Differs from os_speaker_tone because this sends a frequency divisor.
+	Minimum frequency is 20Hz
+
+======================
+Graphics API Functions
+======================
+Note: The Graphics API is only intended to be run in graphical mode.
+
+Call Name: os_graphics_mode
+Description: Puts the operating system in a graphical mode.
+Input: none
+Output: none
+Notes: This must be called before performing any graphical functions.
+	The operating system must be put back into text mode finishing the program.
+
+Call Name: os_text_mode
+Description: Puts the operating system in a text mode.
+Input: none
+Output: none
+
+Call Name: os_set_pixel
+Description: Sets the colour of a single pixel.
+Input: AX = X, CX = Y, BL = colour
+Output: none
+
+Call Name: os_get_pixel
+Description: Finds the colour of a pixel.
+Input: AX = X, CX = Y
+Output: BL = colour
+
+Call Name: os_draw_line
+Description: Draws a line between two points on the screen.
+Input: CX = Start X, DX = Start Y, SI = Finish X, DI = Finish Y, BL = colour
+Output: 
+
+Call Name: os_draw_rectangle
+Description: Draws a rectangle between two points on the screen.
+Input: CX = Start X, DX = Start Y, SI = Finish X, DI = Finish Y, BL = colour, CF = Set for filled otherwise cleared
+Output: none
+
+Call Name: os_draw_polygon
+Description: Draws a polygon though a series of points
+Input: BH = number of points, BL = colour, SI = points data
+Output: none
+Notes: Polygon data is a series of coordinents in the format X1, Y1, X2, Y2, etc.
+	Each piece of coordinent data is a data word.
+	This last point always links to the first.
+	
+	i.e. coordinent_data dw 100, 200, 100, 40, 120, 100
+	
+Call Name: os_clear_graphics
+Description: Clears a graphics mode screen by setting all pixels to a specified colour.
+Input: BL = colour
+Output: none
+
+Call Name: os_draw_circle
+Description: Draws a circle around a given point.
+Input: AL = colour, BX = radius, CX = Point X, DX = Point Y
+Output: none
+
+=============================
+Extended Memory API functions
+=============================
+
+Call Name: os_memory_allocate
+Description: Allocate a block of extended memory.
+Input: DX = number of blocks to allocate (512b each)
+Output: CF = set if failed, clear if success; BH = memory handle number
+Notes: Make sure all memory handles are released before ending the program.
+
+Call Name: os_memory_release
+Description: Releases a memory handle, freeing all its allocated blocks.
+Input: BH = memory handle number
+Output: none
+
+Call Name: os_memory_reset
+Description: Resets the memory allocation system, freeing all handles.
+Input: none
+Output: none
+
+Call Name: os_memory_free
+Description: Returns the number of free memory blocks.
+Input: none
+Output: BX = number of free blocks
+
+Call Name: os_memory_read
+Description: Copies the contents of a memory handle to the program memory.
+Input: BH = memory handle number, ES:DI = destination address
+Output: none
+Notes: Make sure there is enough space in the destination to hold the memory handle.
+
+Call Name: os_memory_write
+Description: Copies the contents of program memory to a memory handle. 
+Input: BH = memory handle number, DS:SI = source address
+Output: none
+
+===================
+Mouse API functions
+===================
+
+Call Name: os_mouse_setup
+Description: Sets up the mouse and install the mouse driver.
+Input: none
+Output: none
+Notes: Run by the operating system at boot time.
+
+Call Name: os_mouse_locate
+Description: Finds the position of the mouse on the screen.
+Input: none
+Output: CX = Mouse X, DX = Mouse Y
+
+Call Name: os_mouse_move
+Description: Sets the position of the mouse on the screen.
+Input: CX = Mouse X, DX = Mouse Y
+Output: none
+
+Call Name: os_mouse_show
+Description: Inverts the colour of the character at the mouse position.
+Input: none
+Output: none
+
+Call Name: os_mouse_hide
+Description: Reverts the colour of the character at the mouse position.
+Input: none
+Output: none
+
+Call Name: os_mouse_wait
+Description: Delays until the next mouse event.
+Input: none
+Output: none
+
+Call Name: os_mouse_leftclick
+Description: Returns whether the left mouse button is currently pressed.
+Input: none
+Output: CF = set if pressed, otherwise clear
+
+Call Name: os_mouse_rightclick
+Description: Returns whether the right mouse button is currently pressed.
+Input: none
+Output: CF = set if pressed, otherwise clear
+
+Call Name: os_mouse_middleclick
+Description: Returns whether the middle mouse button is currently pressed.
+Input: none
+Output: CF = set if pressed, otherwise clear
+
+Call Name: os_mouse_anyclick
+Description: Return whether ANY mouse button is currently pressed
+Input: none
+Output: CF = set if pressed, otherwise clear
+
+Call Name: os_mouse_range
+Description: Sets the minimum and maximum positions of the mouse.
+Input: AX = X minimum, BX = Y minimum, CX = X maximum, DX = Y maximum
+Output: none
+Notes: The operating system sets the screen area in text mode as the default.
+
+Call Name: os_mouse_range
+Description: Set the mouse scaling factor (1:2^X)
+Input: DL = X scale factor, DH = Y scale factor
+Output: none
+Notes: The operating system sets sane defaults for text mode.
+
+==================
+Misc API functions
+==================
+Call Name: os_input_wait
+Description: Delays until a keyboard or mouse event.
+Input: none
+Output: CF = set if keyboard, clear if mouse
+
+==================
+Math API functions
+==================
+Call Name: os_square_root
+Description: Finds the square root of a number
+Input: AX = number
+Output: AX = result
+Notes: For non-perfect roots, this function will return the closest whole number.
+
+
+=====================
+Keyboard API function
+=====================
+Call Name: os_check_for_extkey
+Description: Similar to os_check_for_key but returns and extended scancode
+Input: none
+Output: AX = keyboard scancode
+
+
+
+====================
+Sprite API functions
+====================
+

@@ -1,0 +1,53 @@
++-------------------+
+| Commandline Guide |
++-------------------+
+
+While many of the programs in TachyonOS are avaliable through the menu interface, some are
+commandline only or can accept parameters through the commandline.
+Below is a list of all the commands that can be run throught the TachyonOS commandline shell.
+Commands marked as "Built-in" are provided by the shell itself and the rest are external BASIC
+or binary programs.
+Additional help is avaliable for some commands by typing "(command) help".
+
+Command		Description				Parameters				Part Of
+------------------------------------------------------------------------------------------------------------
+AAPCONV		Upconverts an old style AAP file	1:filename				ASCII Artist
+ARCHIVE		Creates file archives			1:cmd 2:archive-file [3:filelist]	Mega Archiver
+ASM		Assembler				1:input-file 2:output-file		Asm4mo
+BASIC		Interactive BASIC Interpreter		[1:command]				InteractiveInterpreter
+BFM		DOS-like file manager			(none)					BlackSVK File Manager
+CALC		Menu-based Calculator			(none)					Calculator
+CAT		Concatenates a file			1:filename				Built-in
+CF		Space Flight Game			(none)					Cosmic Flight
+CLS		Clears the screen			(none)					Built-in
+COPY		Copies a file				1:source-file 2:destination-file	Built-in
+DATE		Displays the current data		(none)					Built-in
+DEL		Deletes a file				1:filename				Built-in
+DIR		Lists files on the disk			(none)					Built-in
+DISPLAY		Displays AAP picture files		1:filename				ASCII Artist
+DRAW		An advanced text artwork program	[1:filename]				ASCII Artist
+ENCRYPT		File encryption program			(none)					Commandline Tools
+EXIT		Exits the commandline shell		(none)					Built-in
+GETBYTES	Commandline memory viewer		[1:flags] 2:start 3:end			Commandline Tools
+GREP		File search utility			1:filename 2:string			Commandline Tools
+HANGMAN		Simple hangman game with cities name	(none)					MikeOS Utilities
+HEAD		Display the start of a file		1:filename [2:lines]			Commandline Utilities
+HELP		Displays a list of avaliable commands	(none)					Built-in
+ITC		Plain text compression program		1:command 2:in-file [3:out-file]	Text Compression
+MEMEDIT		2-column TUI Memory Editor		[1:filename]				Memory Manipulator
+MIKETRON	Worm-like game				(none)					MikeTron Reloaded
+MONITOR		System monitor				(none)					MikeOS Utilities
+MUNCHER		Pathfinding game			(none)					Muncher
+NEWPASS		Changes the startup password		(none)					Password Protection
+PATTERN		Pattern generator			(none)					Visualiser
+PLAY		Plays a tune edit (SND) file		1:filename				Tune Editor
+REN		Changes the name of a file		1:old-filename 2:new-filename		Built-in
+SERIAL		Serial communication program		(none)					MikeOS Utilities
+SUDOKU		Sudoku puzzle game			(none)					MikeOS Utilities
+SIZE		Finds the size of a file		1:filename				Built-in
+TAIL		Displays the end of files		1:filename [2:lines]			Commandline Utilities
+TIME		Displays the current time		(none)					Built-in
+TUNEEDIT	PC speaker sound making tool		[1:filename]				Tune Editor
+VER		Displays the OS version			(none)					Built-in
+YOTTA		Nano-like text editor			[1:filename]				Yotta Text Editor
+ 

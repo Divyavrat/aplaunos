@@ -1,0 +1,39 @@
+Michael Heyeck's opcode table is named `8086_table.txt`, but we introduced a slightly modified `debug_exe_8086_table.txt`. For `DEBUG.EXE` compliancy (testing), `debug_exe_8086_table.txt` opcode FE refers to GRP5 instead of GRP4. This is wrong, but required for `DEBUG.EXE` bug compliancy. Find the original author's `8086_table.txt` here: [http://www.mlsite.net/8086/8086_table.txt]
+
+So: 
+|| 8086_table.txt || debug_exe_8086_table.txt ||
+|| FE GRP4 Eb || FE GRP5 Eb ||
+|| FF GRP5 Ev || FF GRP5 Ev ||
+
+The reason for this modification is explained in more detail in [MimickingDebugExe] (scroll down to the headline "GRP4/GRP5 confusion").
+
+A more readable original opcode sheet can be found here: [http://bitsavers.org/pdf/convergent/manuals/A-09-00012-01-A_Assembly_Language_Manual_1980.pdf], appendix A.
+As all opcode sheets, this one has some typos in it, but they are fairly obvious.
+
+
+The opcode table format is derived from Intel's more recent data sheets. The letters have the following meaning.
+
+|| -- || illegal opcode or illegal group specialization ||
+|| b  || byte ||
+|| e  || register constant prefix (eAX, eCX, eDX, eBX -- deeper meaning for 32bit cpus) ||
+|| v, w  || word ||
+|| p  || far ||
+|| 0  || only used for 'I', and only used for the weird `AAM` and `AAD` instructions. Means 10 is expected (0x0A) ||
+|| A  || address ||
+|| E  || effective address ||
+|| G  || register ||
+|| I  || immediate ||
+|| J  || relative jump/call address ||
+|| M  || "pseudo dereference" = a "void pointer" (BYTE PTR/WORD PTR is meaningless) ||
+|| O  || offset ||
+|| S  || segment register ||
+|| AL, ES, SS, etc. || register constant ||
+
+The "deeper meaning" of the 'e' prefix: 'e' has been introduced with the i386 to signal that these registers can be 32-bits or 16-bits, depending on the mode. 32-bits are *NOT* supported, but Michael Heyeck based his opcode table on an i386 data sheet and decided to stay close to the original and add some extra logic in the opcode table interpreter -- for future-proofness. A similar rationale is behind the 'v'-'w' equivalence. The distinction is meaningless for the 8086. 
+
+The pseudo dereference 'M' is an argument to instructions that work with a 16:16 bit address where the qualifiers BYTE/WORD are meaningless:
+ * LEA, LDS, LES instructions
+ * far jump/call instructions
+
+
+A set of regular expressions is used to parse the opcode table. 
