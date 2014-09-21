@@ -91,6 +91,8 @@ cmp ah,0x44
 je vedit.file_selector
 cmp ah,0x85
 je .save_file
+cmp ah,0x86
+je .play_video
 push ax
 call .calculate_pos
 pop ax
@@ -244,6 +246,9 @@ mov ah,0x45
 mov cx,0x0005
 int 0x61
 jmp .vedit_control
+.play_video:
+call video
+jmp vedit.loop
 .save_file:
 mov ah,0x81
 mov dx,[loc]
@@ -333,6 +338,62 @@ ret
 .width: db 80
 .height: db 25
 
+video:
+mov si,[loc]
+mov word [cur_frame],0x0001
+;mov di,0xB800
+;sub di,0x0500
+;call memcpy
+.loop:
+;mov bl,0x36
+;mov ax,0x1201
+;int 0x10
+;call newline
+mov dx,0
+call setpos
+call memcpyprint
+;mov bl,0x36
+;mov ax,0x1200
+;int 0x10
+mov dx,[frame]
+cmp dx,1
+jle .videoexit
+cmp byte [slowmode],0xf0
+je .slowmode
+;call delay
+mov ah,0x09
+int 0x61
+jmp .timewarpdone
+.slowmode:
+;call slow
+mov ah,0x09
+int 0x61
+.timewarpdone:
+;call chkkey
+mov ah,0x07
+int 0x2b
+cmp al,0
+jne .videoexit
+mov dx,[cur_frame]
+cmp dx,[frame]
+jge .limit
+inc word [cur_frame]
+jmp .loop
+.videoexit:
+call getkey
+cmp ah,0x43
+je .setwall
+;jmp kernel
+ret
+.limit:
+mov word [cur_frame],0x0001
+mov si,[loc]
+jmp .loop
+.setwall:
+mov ah,0x50
+int 0x61
+jmp video
+
 setcolor:
 pusha
 mov dl,ah
@@ -368,7 +429,7 @@ popa
 ret
 
 memcpyprint:
-;mov word ax,[player_x]
+;mov word ax,[cur_frame]
 ;xor dx,dx
 ;mov cx,0x0200
 ;mul cx
@@ -396,18 +457,19 @@ y_str:
 db 'Y :',0
 
 vedit_helpstr:
-db 'Esc-Close,F1-Help,F2-chaincopy,F3-Copy,F4-Paste,F5-Details',0
+db 'Esc-Close,F1-Help,F2-Menu,F3-Copy,F4-Paste,F5-Details',0
 vedit_helpstr2:
 db ' (Del-ColorDown,End-ColorUp), (Insert-CharDown,Home-CharUp)',0
 vedit_helpstr3:
 db ' (PgUp-FrameUp,PgDown-FrameDown)',0
 vedit_helpstr4:
-db 0x1B,0x18,0x19,0x1A,'-Move F6-Fill,F7-Clear,F8-Clean,F9-SetWall,F10-Load,F11-Save',0
+db 0x1B,0x18,0x19,0x1A,'-Move F6-Fill,F7-Clear,F8-Clean,F9-SetWall,F10-Load,F11-Save,F12-Video',0
 
 tempcolor: db 0x42
 pos: dw 0
 frame: dw 4
 cur_frame: dw 4
 loc: dw 0xA000
+slowmode: db 0x0f
 
 times (512*3)-($-$$) db 0

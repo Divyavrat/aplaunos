@@ -5,9 +5,12 @@ main_program:
 cmp si,0
 jne start.argument_found
 start:
-cmp byte [.argument_call],0xf0
-je .foundexit
 mov word [pos],0
+mov dx,[word_count]
+add [total_count],dx
+mov word [word_count],0
+cmp byte [.argument_call],0xf0
+je foundexit
 call newline
 mov dx,helpstr
 call prnstr
@@ -40,122 +43,151 @@ jne .key
 
 .skip:
 
+mov dx,c_debug
+mov bx,founddebug
+call findword
+
 mov dx,c_hy
-mov bx,.foundhy
+mov bx,foundhy
 call findword
 
 mov dx,c_hi
-mov bx,.foundhy
+mov bx,foundhy
 call findword
 
 mov dx,c_hey
-mov bx,.foundhy
+mov bx,foundhy
 call findword
 
 mov dx,c_hello
-mov bx,.foundhello
+mov bx,foundhello
 call findword
 
 mov dx,c_thank
-mov bx,.foundthank
+mov bx,foundthank
 call findword
 
 mov dx,c_time
-mov bx,.foundtime
+mov bx,foundtime
 call findword
 
 mov dx,c_date
-mov bx,.founddate
+mov bx,founddate
 call findword
 
 mov dx,c_name
-mov bx,.foundname
+mov bx,foundname
 call findword
 
 mov dx,c_book
-mov bx,.foundbook
+mov bx,foundbook
 call findword
 
 mov dx,c_song
-mov bx,.foundmusic
+mov bx,foundmusic
 call findword
 
 mov dx,c_music
-mov bx,.foundmusic
+mov bx,foundmusic
 call findword
 
 mov dx,c_boring
-mov bx,.foundboring
+mov bx,foundboring
 call findword
 
 mov dx,c_do
-mov bx,.founddo
+mov bx,founddo
 call findword
 
 mov dx,c_cook
-mov bx,.foundcook
+mov bx,foundcook
 call findword
 
 mov dx,c_food
-mov bx,.foundfood
+mov bx,foundfood
 call findword
 
 mov dx,c_like
-mov bx,.foundlike
+mov bx,foundlike
 call findword
 
 mov dx,c_love
-mov bx,.foundlike
+mov bx,foundlike
 call findword
 
 mov dx,c_lol
-mov bx,.foundlol
+mov bx,foundlol
 call findword
 
 mov dx,c_fine
-mov bx,.foundgood
+mov bx,foundgood
 call findword
 
 mov dx,c_good
-mov bx,.foundgood
+mov bx,foundgood
 call findword
 
 mov dx,c_what
-mov bx,.foundwhat
+mov bx,foundwhat
 call findword
 
 mov dx,c_cls
-mov bx,.foundclear
+mov bx,foundclear
 call findword
 
 mov dx,c_clear
-mov bx,.foundclear
+mov bx,foundclear
+call findword
+
+mov dx,c_color
+mov bx,foundcolor
 call findword
 
 mov dx,c_bye
-mov bx,.foundexit
+mov bx,foundexit
 call findword
 
 mov dx,c_close
-mov bx,.foundexit
+mov bx,foundexit
 call findword
 
 mov dx,c_quit
-mov bx,.foundexit
+mov bx,foundexit
 call findword
 
 mov dx,c_exit
-mov bx,.foundexit
+mov bx,foundexit
 call findword
 
 mov dx,c_you
-mov bx,.foundyou
+mov bx,foundyou
 call findword
 
 mov dx,c_me
-mov bx,.foundyou
+mov bx,foundyou
 call findword
 
+mov bx,[loc]
+add bx,[pos]
+cmp byte [bx],'0'
+jl .not_found
+cmp byte [bx],'9'
+jg .not_found
+
+push bx
+mov dx,bx
+mov ah,0x2b
+int 0x61
+mov [found_number],dx
+;mov dx,[strlen]
+;add [pos],dx
+pop bx
+mov dx,si
+sub dx,bx
+add [pos],dx
+jmp .cmploop
+
+.not_found:
 inc word [pos]
 ;cmp byte [.argument_call],0xf0;;skip
 ;jne .complete_check
@@ -168,14 +200,16 @@ jl .cmploop
 .cmploop_end:
 
 ;Presence checks
-cmp byte [start.present_like],0
-jne .word_like
-cmp byte [start.present_do],0
-jne .word_do
-cmp byte [start.what_present],0
-jne .word_what
-cmp byte [start.present_you],0
-jne .word_you
+cmp byte [foundcolor.found],0
+jne foundcolor.process
+cmp byte [foundlike.found],0
+jne foundlike.process
+cmp byte [founddo.found],0
+jne founddo.process
+cmp byte [foundwhat.found],0
+jne foundwhat.process
+cmp byte [foundyou.found],0
+jne foundyou.process
 
 ;mov ah,0x33
 ;mov dx,[loc]
@@ -211,7 +245,7 @@ call prnstr
 jmp start
 .key:
 cmp ah,0x01
-je .foundexit
+je foundexit
 jmp start
 .argument_found:
 mov byte [.argument_call],0xf0
@@ -227,22 +261,27 @@ jmp .string_recieved
 .argument_call:
 db 0x0f
 
-.foundhy:
+founddebug:
+not byte [debug_switch]
+inc word [pos]
+jmp start.cmploop
+
+foundhy:
 mov dx,hystr
 call prnstr
 jmp start
 
-.foundhello:
+foundhello:
 mov dx,hellostr
 call prnstr
 jmp start
 
-.foundthank:
+foundthank:
 mov dx,thankstr
 call prnstr
 jmp start
 
-.foundtime:
+foundtime:
 mov dx,timestr
 call prnstr
 mov dl,'t'
@@ -250,7 +289,7 @@ mov ah,0x0E
 int 0x61
 jmp start
 
-.founddate:
+founddate:
 mov dx,datestr
 call prnstr
 mov dl,'d'
@@ -258,7 +297,7 @@ mov ah,0x0E
 int 0x61
 jmp start
 
-.foundname:
+foundname:
 mov dx,namestr
 call prnstr
 mov dx,[loc]
@@ -273,28 +312,26 @@ mov dx,[loc]
 call prnstr
 jmp start
 
-.foundbook:
+foundbook:
 mov dx,bookstr
 call prnstr
 jmp start
 
-.foundmusic:
+foundmusic:
 mov dx,musicstr
 call prnstr
 jmp start
 
-.foundboring:
+foundboring:
 mov dx,boringstr
 call prnstr
 jmp start
 
-.founddo:
-mov dx,[word_count]
-mov [.present_do],dx
-inc word [pos]
-jmp start.cmploop
-.word_do:
-mov word [.present_do],0
+founddo:
+mov bx,.found
+jmp presence_word
+.process:
+mov word [.found],0
 mov dx,dostr
 call prnstr
 mov dx,[loc]
@@ -303,71 +340,96 @@ call newline
 mov dx,dostr2
 call prnstr
 jmp start
-.present_do: dw 0
+.found: dw 0
 
-.foundcook:
+foundcook:
 mov dx,cookstr
 call prnstr
 jmp start
 
-.foundfood:
+foundfood:
 mov dx,foodstr
 call prnstr
 jmp start
 
-.foundlike:
-mov dx,[word_count]
-mov [.present_like],dx
-inc word [pos]
-jmp start.cmploop
-.word_like:
-mov word [.present_like],0
+foundlike:
+mov bx,.found
+jmp presence_word
+.process:
+mov word [.found],0
 mov dx,likestr
 call prnstr
 jmp start
-.present_like: dw 0
+.found: dw 0
 
-.foundlol:
+foundlol:
 mov dx,lolstr
 call prnstr
 jmp start
 
-.foundgood:
+foundgood:
 mov dx,goodstr
 call prnstr
 jmp start
 
-.foundwhat:
-mov dx,[word_count]
-mov [.what_present],dx
-inc word [pos]
-jmp start.cmploop
-.word_what:
-mov word [.what_present],0
+foundwhat:
+mov bx,.found
+jmp presence_word
+.process:
+mov word [.found],0
 mov dx,whatstr
 call prnstr
 jmp start
-.what_present: dw 0
+.found: dw 0
 
-.foundclear:
+foundclear:
 mov ah,0x06
 int 0x61
 jmp start
 
-.foundexit:
+foundcolor:
+mov bx,.found
+jmp presence_word
+.process:
+mov word [.found],0
+mov dx,[found_number]
+cmp dl,0
+je .number
+;mov bx,[loc]
+;mov dx,[bx]
+mov dl,0x45
+.number:
+mov ah,0x01
+int 0x61
+jmp start
+.found: dw 0
+
+foundexit:
+cmp byte [debug_switch],0xf0
+jne .process
+mov dx,total_words_str
+call prnstr
+mov dx,[total_count]
+mov ah,0x20
+int 0x61
+.process:
 ret
 
-.foundyou:
-mov dx,[word_count]
-mov [.present_you],dx
-inc word [pos]
-jmp start.cmploop
-.word_you:
-mov word [.present_you],0
+foundyou:
+mov bx,.found
+jmp presence_word
+.process:
+mov word [.found],0
 mov dx,youstr
 call prnstr
 jmp start
-.present_you: dw 0
+.found: dw 0
+
+presence_word:
+mov ax,[word_count]
+mov [bx],ax
+inc word [pos]
+jmp start.cmploop
 
 newline:
 mov ah,0x0B
@@ -402,13 +464,39 @@ je .found
 popa
 ret
 .found:
-inc word [word_count]
 popa
 pop ax
+inc word [word_count]
+cmp byte [debug_switch],0xf0
+jne .process
+push dx
+;call newline
+mov dx,debugstr
+call prnstr
+pop dx
+call prnstr
+mov dx,debugstr2
+call prnstr
+mov dx,[word_count]
+mov ah,0x20
+int 0x61
+mov dx,debugstr2
+call prnstr
+mov dx,[pos]
+mov ah,0x20
+int 0x61
+call newline
+.process:
 jmp bx
 
 helpstr:
 db ' Talk to me : ',0
+debugstr:
+db " Found :: ",0
+debugstr2:
+db " : ",0
+total_words_str:
+db " Total Words found: ",0
 hystr:
 db " Hy , Greetings , Wha'sup!! ",0
 hellostr:
@@ -450,6 +538,8 @@ dostr2:
 db "Best-'o-luck for that.",0
 youstr:
 db "You, Me, We are all the same.",0
+c_debug:
+db 'debug',0
 c_hy:
 db 'hy',0
 c_hi:
@@ -496,6 +586,8 @@ c_cls:
 db 'cls',0
 c_clear:
 db 'clear',0
+c_color:
+db 'color',0
 c_bye:
 db 'bye',0
 c_close:
@@ -516,4 +608,10 @@ strlen:
 dw 0
 word_count:
 dw 0
+total_count:
+dw 0
+found_number:
+dw 0
+debug_switch: db 0x0f
+
 times (512*4)-($-$$) db 0

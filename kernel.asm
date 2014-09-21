@@ -332,10 +332,10 @@ mov di,c_print
 call cmpstr
 jc text
 
-mov si,found
-mov di,c_video
-call cmpstr
-jc video
+;mov si,found
+;mov di,c_video
+;call cmpstr
+;jc video
 
 ;mov si,found
 ;mov di,c_vedit
@@ -4547,11 +4547,11 @@ jmp kernel
 delay:
 xor ah,ah
 int 1ah
-mov byte [comm],dl
+mov [slow.temp],dl
 delay_loop:
 xor ah,ah
 int 1ah
-cmp byte [comm],dl
+cmp [slow.temp],dl
 je delay_loop
 ret
 
@@ -6747,59 +6747,59 @@ ret
 ; .width: db 80
 ; .height: db 25
 
-video:
-mov dl,[color]
-;push dx
-mov [extra],dl
-mov si,[loc]
-mov word [player_x],0x0001
-;mov di,0xB800
-;sub di,0x0500
-;call memcpy
-.loop:
-;mov bl,0x36
-;mov ax,0x1201
-;int 0x10
-;call newline
-mov dx,0
-call setpos
-call memcpyprint
-;mov bl,0x36
-;mov ax,0x1200
-;int 0x10
-mov dx,[frame]
-cmp dx,1
-jle .videoexit
-cmp byte [slowmode],0xf0
-je .slowmode
-call delay
-jmp .timewarpdone
-.slowmode:
-call slow
-.timewarpdone:
-call chkkey
-jnz .videoexit
-mov dx,[player_x]
-cmp dx,[frame]
-jge .limit
-inc word [player_x]
-jmp .loop
-.videoexit:
-call getkey
-cmp ah,0x43
-je .setwall
-mov dl,[extra]
-;pop dx
-mov [color],dl
-jmp kernel
-.limit:
-mov word [player_x],0x0001
-mov si,[loc]
-jmp .loop
-.setwall:
-mov ah,0x50
-int 0x61
-jmp video
+; video:
+; mov dl,[color]
+; ;push dx
+; mov [extra],dl
+; mov si,[loc]
+; mov word [player_x],0x0001
+; ;mov di,0xB800
+; ;sub di,0x0500
+; ;call memcpy
+; .loop:
+; ;mov bl,0x36
+; ;mov ax,0x1201
+; ;int 0x10
+; ;call newline
+; mov dx,0
+; call setpos
+; call memcpyprint
+; ;mov bl,0x36
+; ;mov ax,0x1200
+; ;int 0x10
+; mov dx,[frame]
+; cmp dx,1
+; jle .videoexit
+; cmp byte [slowmode],0xf0
+; je .slowmode
+; call delay
+; jmp .timewarpdone
+; .slowmode:
+; call slow
+; .timewarpdone:
+; call chkkey
+; jnz .videoexit
+; mov dx,[player_x]
+; cmp dx,[frame]
+; jge .limit
+; inc word [player_x]
+; jmp .loop
+; .videoexit:
+; call getkey
+; cmp ah,0x43
+; je .setwall
+; mov dl,[extra]
+; ;pop dx
+; mov [color],dl
+; jmp kernel
+; .limit:
+; mov word [player_x],0x0001
+; mov si,[loc]
+; jmp .loop
+; .setwall:
+; mov ah,0x50
+; int 0x61
+; jmp video
 
 memcpyprint:
 ;mov word ax,[player_x]
@@ -7243,6 +7243,9 @@ call set_ivt
 mov ax,0x0021
 mov di,int21h
 call set_ivt
+mov ax,0x0022	;;Alias
+mov di,int21h	;;Alias
+call set_ivt	;;Alias
 mov ax,0x002b
 mov di,int2bh
 call set_ivt
@@ -13151,8 +13154,8 @@ db 'calc',0
 ; db 'bcalc',0
 ; c_paint:
 ; db 'paint',0
-c_video:
-db 'video',0
+;c_video:
+;db 'video',0
 ;c_vedit:
 ;db 'vedit',0
 ; c_star:
