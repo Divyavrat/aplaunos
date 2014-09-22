@@ -29,10 +29,10 @@ cmp ah,0x20
 je os_dialog_box_i
 cmp ah,0x21
 je os_dialog_box2_i
-cmp ah,0x21
-je os_input_dialog_i
 cmp ah,0x22
 je os_list_dialog_i
+cmp ah,0x23
+je os_input_dialog_i
 
 cmp ah,0x25
 je os_draw_background_i

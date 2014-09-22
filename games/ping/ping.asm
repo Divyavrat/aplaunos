@@ -45,11 +45,43 @@ mov byte al,[color2]
 mov byte [color],al
 call ball_update
 call setpos_c
+
+call chkkey
+jz .continue_control
+
+call getkey
+cmp ah,0x01
+je exit
+cmp al,0x1b
+je exit
+cmp al,'`'
+je exit
+cmp ah,0x29
+je exit
+;cmp ah,0x12
+;cmp ah,0x0f
+;je switch_AI
+cmp ah,0x3B ;F1
+je AI_player_chance.help
+cmp ah,0x3C
+je switch_AI
+cmp ah,0x3D
+je AI_player_chance.color
+cmp ah,0x3E
+je AI_player_chance.switch_score
+cmp ah,0x3F
+je AI_player_chance.difficulty
+cmp ah,0x40
+je AI_player_chance.length
+call keybsto
+
+.continue_control:
 cmp byte [AI_flag],0xF0
 jne AI_player_chance
 ;je AI_play_loop
 ;jmp AI_player_chance
 AI_play_loop:
+
 mov byte al,[play_chance_flag]
 
 cmp byte al,[difficulty]
@@ -65,14 +97,8 @@ call chkkey
 jz play_loop
 
 .more_keys:
+
 call getkey
-cmp ah,0x01
-je exit
-cmp al,0x1b
-je exit
-cmp al,'~'
-je exit
-;cmp ah,0x12
 cmp al,'e'
 je play_clear
 cmp ah,0x12
@@ -81,24 +107,65 @@ cmp ah,0x48
 je player1_up
 cmp ah,0x50
 je player1_down
-;cmp ah,0x0f
-;je switch_AI
-cmp ah,0x3C
-je switch_AI
-cmp ah,0x3D
-je switch_AI
 
 cmp byte [AI_flag],0xF0
 je AI_on
 
 cmp ah,0x11
-je player2_up
+je player2_up	;W
 cmp ah,0x1f
-je player2_down
+je player2_down	;S
 
 call chkkey
 jnz .more_keys
 jmp play_loop
+.help:
+mov dx,play_helpstr
+mov bx,play_helpstr2
+mov cx,play_helpstr3
+mov ah,0x20
+int 0x2B
+call clean_screen
+jmp AI_player_chance
+.switch_score:
+not byte [score]
+call clean_screen
+jmp AI_player_chance
+.color:
+mov dx,inputstr
+mov bx,play_colorstr
+mov ah,0x23
+int 0x2B
+mov dx,inputstr
+mov ah,0x2b
+int 0x61
+mov [color],dl
+;not dl
+mov [color2],dl
+call clean_screen
+jmp AI_player_chance
+.difficulty:
+mov dx,inputstr
+mov bx,play_diffstr
+mov ah,0x23
+int 0x2B
+mov dx,inputstr
+mov ah,0x2b
+int 0x61
+mov [difficulty],dl
+call clean_screen
+jmp AI_player_chance
+.length:
+mov dx,inputstr
+mov bx,play_lenstr
+mov ah,0x23
+int 0x2B
+mov dx,inputstr
+mov ah,0x2b
+int 0x61
+mov [length],dl
+call clean_screen
+jmp AI_player_chance
 
 AI_on:
 call chkkey
@@ -128,7 +195,7 @@ player2_down:
 mov dh,[player2_y]
 inc dh
 mov [player2_y],dh
-jmp  play_loop
+jmp play_loop
 play_clear:
 call clean_screen
 xor dx,dx
@@ -488,6 +555,13 @@ int 0x16
 ;.skip:
 ret
 
+keybsto:
+mov ch,ah
+mov cl,al
+mov ah,0x05
+int 16h
+ret
+
 return_location:
 dw 0x0500
 difficulty:
@@ -528,11 +602,16 @@ dw 0x0000
 XFLOW	db 0x00 
 
 color:
-db 0x31
+db 49
 color2:
-db 0x74
+db 49
 
-;play_helpstr:
-;db 0x1B,0x18,0x19,0x1A,'-Player1, wasd-Player2, E-clrscr,(Esc,~)-Close, F1-Help, F2,F3-Change mode',0
+play_helpstr: db 0x1B,0x18,0x19,0x1A,'-Player1, wasd-Player2,(Esc,~)-Close',0
+play_helpstr2: db 'E-clrscr, F1-Help, F2-Player2 F3-Color',0
+play_helpstr3: db 'F4-Score(ON/OFF) F5-Difficulty F6-Length ',0
+play_diffstr: db 'Enter difficulty number (0-OFF)',0
+play_lenstr: db 'Enter length of bats (6-DEFAULT)',0
+play_colorstr: db 'Enter color (49-DEFAULT)',0
+inputstr: times 40 db 0
 
-times (512*2)-($-$$) db 0x90
+times (512*3)-($-$$) db 0x90

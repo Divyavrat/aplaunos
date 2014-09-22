@@ -46,3 +46,5 @@ cmp ah,0x4C
 je int21h_close_process
 cmp ah,0x4D
 je int21h_get_return_code
+call newline
+call debug_int

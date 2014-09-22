@@ -5,8 +5,10 @@
 
 portB   equ 61h         ; i/o port B
 keybd2  equ 7h          ; keyboard input, no echo
+stringprint  equ 09h          ; string print
 doscall equ 21h         ; DOS interrupt
 cont_c  equ 03h         ; control-c ASCII code
+quit1  equ 01h
 
 ;***********************
 ;.model tiny
@@ -22,10 +24,16 @@ main:; proc
 
     org   0x6000          ; start address
 
+	mov dx,welcome
+	mov ah,stringprint
+	int doscall
+	
   read_key:
     mov   ah, keybd2    ; keyboard, no echo
     int   doscall
     cmp   al,cont_c     ; is it control-c?
+    jz    go_away
+	cmp   ah,quit1
     jz    go_away
     
     mov   dl,al         ; print it
@@ -105,7 +113,10 @@ main:; proc
   go_away:
   ret
     ;.exit
-    
+
+welcome:
+db "Piano (all keys-play Esc-close)",0x0D,0x0A,'$',0
+
 ;main endp
 
   ;end

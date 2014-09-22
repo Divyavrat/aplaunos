@@ -1,5 +1,4 @@
 talk app impoved by two bytes as address to jump
-z list
 alias
 faults
 GUI

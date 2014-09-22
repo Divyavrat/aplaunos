@@ -3,6 +3,9 @@ use16
 
 mov ax,0x0003
 int 10h
+mov ah,0x02
+int 0x64
+mov [.tempcolor],dl
 mov dl,0x0f
 mov ah,0x01
 int 61h
@@ -38,7 +41,11 @@ jmp .loop
 mov cx,0x0506
 mov ah,0x01
 int 0x10
+mov dl,[.tempcolor]
+mov ah,0x01
+int 61h
 ret
+.tempcolor: db 0x31
 
 reset:
 mov ah,0x17

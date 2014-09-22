@@ -137,13 +137,31 @@ call os_clear_screen
 	jmp .recheck
 .key_pressed:
 	;call os_check_for_key
-	mov ah,0x01
+	call mouselib_hide
+	mov ah,0x00
 	int 0x16
 	cmp al, 27
 	je .exit
 	cmp al, 13
 	je .exit
-	call mouselib_hide
+	cmp al,'c'
+	je .common_link
+	cmp al,'f'
+	je .folder
+	cmp al,'a'
+	je .app
+	cmp al,'e'
+	je .editing
+	cmp al,'u'
+	je .customize
+	cmp al,'s'
+	je .shutdown
+	cmp al,'m'
+	je .example_link
+	cmp al,'p'
+	je .examplefolder
+	cmp al,'l'
+	je .exampleapp
 	jmp .loop
 .button:
 call mouselib_hide
@@ -174,6 +192,7 @@ cmp cx,0x16
 jge .app
 cmp cx,0x0C
 jge .folder
+.common_link:
 mov ax,.welcome_str_t3m1
 mov bx,.welcome_str_t3m2
 mov cx,.welcome_str_t3m3
@@ -220,6 +239,7 @@ cmp cx,0x2A
 jge .exampleapp
 cmp cx,0x16
 jge .examplefolder
+.example_link:
 mov ax,.welcome_str_e1m1
 mov bx,.welcome_str_e1m2
 mov cx,.welcome_str_e1m3
@@ -242,7 +262,7 @@ call os_dialog_box
 jmp welcome
 
 .osstring:
-db ' Ecstatic OS ',0
+db ' Aplaun OS Tutorial ',0
 .welcome_str1:
 db 'Welcome User to a new newbee World. Check out the commands first.',0
 .welcome_str_t1:
@@ -280,9 +300,9 @@ db 'edit to change text documents',0
 .welcome_str_t6m2:
 db 'code to alter machine codes',0
 .welcome_str_t6m3:
-db 'vedit to draw in ASCII PICs',0
+db 'read to open simple txt books',0
 .welcome_str_t7:
-db 'Customize',0
+db 'cUstomize',0
 .welcome_str_t7m1:
 db 'color , color2 to change colors',0
 .welcome_str_t7m2:
@@ -299,7 +319,7 @@ db 'restart to restart',0
 db 'reboot to reboot',0
 
 .welcome_str_e1:
-db 'Example-File',0
+db 'exaMple-file',0
 .welcome_str_e1m1:
 db 'nm test.txt',0
 .welcome_str_e1m2:
@@ -307,7 +327,7 @@ db 'q',0
 .welcome_str_e1m3:
 db 'edit',0
 .welcome_str_e2:
-db 'Example-Folder',0
+db 'examPle-folder',0
 .welcome_str_e2m1:
 db 'nm folder',0
 .welcome_str_e2m2:
@@ -315,7 +335,7 @@ db 'q',0
 .welcome_str_e2m3:
 db 'dir',0
 .welcome_str_e3:
-db 'Example-App',0
+db 'exampLe-app',0
 .welcome_str_e3m1:
 db 'hangman',0
 .welcome_str_e3m2:

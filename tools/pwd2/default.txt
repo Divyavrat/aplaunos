@@ -1,4 +1,0 @@
-default password is :
-user
-
-Change it as soon as you can.

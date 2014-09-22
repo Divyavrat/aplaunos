@@ -941,6 +941,7 @@ call bx
 mov ax,0
 mov ds,ax
 mov es,ax
+call reg_int	;;TODO
 jmp kernel
 ;mov word bx,0x0001
 ;push bx
@@ -5616,12 +5617,15 @@ cmp byte [found],'r'
 je .roam_on
 cmp byte [found],'t'
 je .roamt_on
+cmp byte [found],'z'
+je .size_skip
 jmp .dont_roam
 .roamt_on:
 mov byte [comm2],'t'
-jmp .dont_roam
+jmp .size_skip
 .roam_on:
 mov byte [comm2],'r'
+jmp .size_skip
 .dont_roam:
 
 call space
@@ -5636,6 +5640,7 @@ call colon
 call calculate_size
 call printn
 
+.size_skip:
 call space
 mov byte [found],'f'
 call filetype
@@ -6138,41 +6143,24 @@ jmp .done
 mov al,0x10
 stosb
 .done:
-mov al,0x18
-stosb
-mov al,0x1a
-stosb
-mov al,0x9a
-stosb
-mov al,0x42
-stosb
-mov al,0x7c
-stosb
-mov al,0x43
-stosb
-mov al,0x7c
-stosb
-mov al,0x43
-stosb
-mov al,0x00
-stosb
-stosb
-mov al,0xca
-stosb
-mov al,0x93
-stosb
-mov al,0x76
-stosb
-mov al,0x43
-stosb
+mov si,.file_attributes
+mov cx,14
+rep movsb
 
 ;add di,0x000e
-mov bx,comm
-mov al,[bx]
-stosb
-inc bx
-mov al,[bx]
-stosb
+;mov bx,comm
+;mov al,[bx]
+;stosb
+;inc bx
+;mov al,[bx]
+;stosb
+mov si,comm
+lodsw
+stosw
+
+;; Storing Size
+cmp byte [found],'d'
+je .dir_made
 inc di
 mov al,0x02
 stosb
@@ -6185,6 +6173,13 @@ mov [size],al
 mov dx,0
 mov es,dx
 ret
+.dir_made:
+call SAVE_ROOT
+
+jmp .exitl
+.file_attributes:
+db 0x18,0x1a,0x9a,0x42,0x7c,0x43,0x7c,0x43,0x00,0x00,0xca,0x93,0x76,0x43
+
 .cluster: dw 0
 .new_file_str:
 db "New File Name :",0
@@ -7949,10 +7944,10 @@ cmp ah,0x20
 je os_dialog_box_i
 cmp ah,0x21
 je os_dialog_box2_i
-cmp ah,0x21
-je os_input_dialog_i
 cmp ah,0x22
 je os_list_dialog_i
+cmp ah,0x23
+je os_input_dialog_i
 
 cmp ah,0x25
 je os_draw_background_i
@@ -8008,6 +8003,7 @@ mov dx,1
 call os_dialog_box
 iret
 os_input_dialog_i:
+mov ax,dx
 call os_input_dialog
 iret
 os_list_dialog_i:
@@ -9607,8 +9603,11 @@ os_dialog_box:
 .one_button_wait:
 	call os_wait_for_key
 	cmp al, 13			; Wait for enter key (13) to be pressed
-	jne .one_button_wait
-
+	je .one_button_wait_done
+	cmp ah,0x01
+	je .one_button_wait_done
+	jmp .one_button_wait
+.one_button_wait_done:
 	call os_show_cursor
 
 	popa
@@ -13250,13 +13249,13 @@ gdt_end:
 db 0
 
 ver:
-dw 1000
+dw 1001
 verstring:
-db ' Aplaun OS (version 1) ',0
+db ' Aplaun OS (version 1.0.1) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
-db 'View/Editors: text,code,doc,read,edit,type,sound,video',0
+db 'View/Editors: text,code,doc,read,edit,type,sound',0
 setting_list:
 db 'Settings: loc,loc2,loc3,prompt,color,color2,drive',0
 setting2_list:
@@ -13285,8 +13284,6 @@ mint_list:
 db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-exit',0
 alarmtextstr:
 db ' Alarm :Press {any key to jmp to kernel} or {enter to continue}.',0
-;play_helpstr:
-;db 0x1B,0x18,0x19,0x1A,'-Player1, wasd-Player2, E-clrscr,(Esc,~)-Close, F1-Help, F2,F3-Change mode',0
 doc_helpstr:
 db 0x1B,0x18,0x19,0x1A,'-Move,(Esc,~)-Close, F1-Help,F3-Copy,{F4,Insert-Paste},F5-Details,F6-Fill0',0
 read_helpstr:
