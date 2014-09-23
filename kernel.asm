@@ -342,10 +342,10 @@ jc text
 ;call cmpstr
 ;jc vedit
 
-mov si,found
-mov di,c_frame
-call cmpstr
-jc c_frame_f
+; mov si,found
+; mov di,c_frame
+; call cmpstr
+; jc c_frame_f
 
 mov si,found
 mov di,c_wall
@@ -3548,20 +3548,20 @@ jmp word [.return_address]
 .return_address: dw 0
 
 c_alias_f:
-; mov si,oldstr
-; call prnstr
-; mov si,commandstr
-; call prnstr
-; mov di,tempstr
-; call getstr
+mov si,oldstr
+call prnstr
+mov si,commandstr
+call prnstr
+mov di,tempstr
+call getstr
 
-; mov si,newstr
-; call prnstr
-; mov si,commandstr
-; call prnstr
-; mov di,tempstr2
-; call getstr
-
+call newline
+mov si,newstr
+call prnstr
+mov si,commandstr
+call prnstr
+mov di,tempstr2
+call getstr
 jmp kernel
 
 c_border_f:
@@ -7105,15 +7105,15 @@ mov si,scrolllength
 call change
 jmp kernel
 
-c_frame_f:
-mov si,frame
-call change
-cmp byte [frame],0
-jle .frameless
-jmp kernel
-.frameless:
-mov byte [frame],1
-jmp kernel
+; c_frame_f:
+; mov si,frame
+; call change
+; cmp byte [frame],0
+; jle .frameless
+; jmp kernel
+; .frameless:
+; mov byte [frame],1
+; jmp kernel
 
 ; c_score_f:
 ; not byte [score]
@@ -8275,6 +8275,9 @@ os_pause:
 ; IN: AX = error message string location
 
 os_fatal_error:
+mov si,ax
+call prnstr
+call colon
 	pop ax
 	call printwordh
 	jmp kernel
@@ -8755,6 +8758,177 @@ os_string_tokenize:
 	mov di, 0
 	pop si
 	ret
+	
+; ------------------------------------------------------------------
+; os_string_reverse -- Reverse the characters in a string
+; IN: SI = string location
+
+os_string_reverse:
+	pusha
+
+	cmp byte [si], 0		; Don't attempt to reverse empty string
+	je .end
+
+	mov ax, si
+	call os_string_length
+
+	mov di, si
+	add di, ax
+	dec di				; DI now points to last char in string
+
+.loop:
+	mov byte al, [si]		; Swap bytes
+	mov byte bl, [di]
+
+	mov byte [si], bl
+	mov byte [di], al
+
+	inc si				; Move towards string centre
+	dec di
+
+	cmp di, si			; Both reached the centre?
+	ja .loop
+
+.end:
+	popa
+	ret
+	
+; ------------------------------------------------------------------
+; os_string_truncate -- Chop string down to specified number of characters
+; IN: SI = string location, AX = number of characters
+; OUT: String modified, registers preserved
+
+os_string_truncate:
+	pusha
+
+	add si, ax
+	mov byte [si], 0
+
+	popa
+	ret
+
+; ------------------------------------------------------------------
+; os_string_strip -- Removes specified character from a string (max 255 chars)
+; IN: SI = string location, AL = character to remove
+
+os_string_strip:
+	pusha
+
+	mov di, si
+
+	mov bl, al			; Copy the char into BL since LODSB and STOSB use AL
+.nextchar:
+	lodsb
+	stosb
+	cmp al, 0			; Check if we reached the end of the string
+	je .finish			; If so, bail out
+	cmp al, bl			; Check to see if the character we read is the interesting char
+	jne .nextchar			; If not, skip to the next character
+
+.skip:					; If so, the fall through to here
+	dec di				; Decrement DI so we overwrite on the next pass
+	jmp .nextchar
+
+.finish:
+	popa
+	ret
+	
+; ------------------------------------------------------------------
+; os_string_parse -- Take string (eg "run foo bar baz") and return
+; pointers to zero-terminated strings (eg AX = "run", BX = "foo" etc.)
+; IN: SI = string; OUT: AX, BX, CX, DX = individual strings
+
+os_string_parse:
+	push si
+
+	mov ax, si			; AX = start of first string
+
+	mov bx, 0			; By default, other strings start empty
+	mov cx, 0
+	mov dx, 0
+
+	push ax				; Save to retrieve at end
+
+.loop1:
+	lodsb				; Get a byte
+	cmp al, 0			; End of string?
+	je .finish
+	cmp al, ' '			; A space?
+	jne .loop1
+	dec si
+	mov byte [si], 0		; If so, zero-terminate this bit of the string
+
+	inc si				; Store start of next string in BX
+	mov bx, si
+
+.loop2:					; Repeat the above for CX and DX...
+	lodsb
+	cmp al, 0
+	je .finish
+	cmp al, ' '
+	jne .loop2
+	dec si
+	mov byte [si], 0
+
+	inc si
+	mov cx, si
+
+.loop3:
+	lodsb
+	cmp al, 0
+	je .finish
+	cmp al, ' '
+	jne .loop3
+	dec si
+	mov byte [si], 0
+
+	inc si
+	mov dx, si
+
+.finish:
+	pop ax
+
+	pop si
+	ret
+
+	; ------------------------------------------------------------------
+; os_string_strincmp -- See if two strings match up to set number of chars
+; IN: SI = string one, DI = string two, CL = chars to check
+; OUT: carry set if same, clear if different
+
+os_string_strincmp:
+	pusha
+
+.more:
+	mov al, [si]			; Retrieve string contents
+	mov bl, [di]
+
+	cmp al, bl			; Compare characters at current location
+	jne .not_same
+
+	cmp al, 0			; End of first string? Must also be end of second
+	je .terminated
+
+	inc si
+	inc di
+
+	dec cl				; If we've lasted through our char count
+	cmp cl, 0			; Then the bits of the string match!
+	je .terminated
+
+	jmp .more
+
+
+.not_same:				; If unequal lengths with same beginning, the byte
+	popa				; comparison fails at shortest string terminator
+	clc				; Clear carry flag
+	ret
+
+
+.terminated:				; Both strings terminated at the same position
+	popa
+	stc				; Set carry flag
+	ret
 
 
 ; ==================================================================
@@ -8767,15 +8941,10 @@ mov bx,c_clock
 ret
 
 os_string_chomp:
-os_string_strip:
-os_string_reverse:
-os_string_parse:
-os_string_truncate:
 os_run_basic:
 os_bcd_to_int:
 
 os_dump_registers:
-os_string_strincmp:
 
 os_dump_string:
 os_print_digit:
@@ -11717,25 +11886,25 @@ call colon
 mov al,[color2]
 call printnb
 
-; call newline
-; mov si,c_drive
-; call prnstr
-; call colon
-; mov al,[drive]
-; call printnb
-; call space
-; mov si,c_drive2
-; call prnstr
-; call colon
-; mov al,[drive2]
-; call printnb
+call newline
+mov si,c_drive
+call prnstr
+call colon
+mov al,[drive]
+call printnb
+call space
+mov si,c_drive2
+call prnstr
+call colon
+mov al,[drive2]
+call printnb
 
-; call newline
-; mov si,c_videomode
-; call prnstr
-; call colon
-; mov al,[mode]
-; call printnb
+call newline
+mov si,c_videomode
+call prnstr
+call colon
+mov al,[mode]
+call printnb
 
 ; call newline
 ; mov si,c_difficulty
@@ -11751,12 +11920,12 @@ call printnb
 ; mov al,[length]
 ; call printnb
 
-; call newline
-; mov si,c_scrolllen
-; call prnstr
-; call colon
-; mov al,[scrolllength]
-; call printnb
+call newline
+mov si,c_scrolllen
+call prnstr
+call colon
+mov al,[scrolllength]
+call printnb
 
 ; call newline
 ; mov si,c_frame
@@ -11891,19 +12060,19 @@ jge .loopexit
 jmp .loop
 .loopexit:
 
-; call newline
-; mov si,c_page
-; call prnstr
-; call colon
-; mov ax,[page]
-; call printwordh
+call newline
+mov si,c_page
+call prnstr
+call colon
+mov ax,[page]
+call printwordh
 
-; call space
-; mov si,messagestr
-; call prnstr
-; call colon
-; mov ax,[message]
-; call printwordh
+call space
+mov si,messagestr
+call prnstr
+call colon
+mov ax,[message]
+call printwordh
 
 call newline
 mov si,c_fname
@@ -11926,26 +12095,26 @@ call colon
 mov si,alarmtextstr
 call prnstr
 
-; call newline
-; mov si,c_typemode
-; call prnstr
-; call colon
-; mov si,teletype
-; call switchshow
+call newline
+mov si,c_typemode
+call prnstr
+call colon
+mov si,teletype
+call switchshow
 
-; call space
-; mov si,c_scrollmode
-; call prnstr
-; call colon
-; mov si,scrollmode
-; call switchshow
+call space
+mov si,c_scrollmode
+call prnstr
+call colon
+mov si,scrollmode
+call switchshow
 
-; call newline
-; mov si,c_slowmode
-; call prnstr
-; call colon
-; mov si,slowmode
-; call switchshow
+call newline
+mov si,c_slowmode
+call prnstr
+call colon
+mov si,slowmode
+call switchshow
 
 ; call space
 ; mov si,c_score
@@ -11954,40 +12123,40 @@ call prnstr
 ; mov si,score
 ; call switchshow
 
-; call newline
-; mov si,c_rollcolor
-; call prnstr
-; call colon
-; mov si,rollcolor
-; call switchshow
+call newline
+mov si,c_rollcolor
+call prnstr
+call colon
+mov si,rollcolor
+call switchshow
 
-; call space
-; mov si,c_wall
-; call prnstr
-; call colon
-; mov si,wall_flag
-; call switchshow
+call space
+mov si,c_wall
+call prnstr
+call colon
+mov si,wall_flag
+call switchshow
 
-; call newline
-; mov si,c_autostart
-; call prnstr
-; call colon
-; mov si,autostart
-; call switchshow
+call newline
+mov si,c_autostart
+call prnstr
+call colon
+mov si,autostart
+call switchshow
 
-; call space
-; mov si,c_cursor
-; call prnstr
-; call colon
-; mov si,cursor
-; call switchshow
+call space
+mov si,c_cursor
+call prnstr
+call colon
+mov si,cursor
+call switchshow
 
-; call space
-; mov si,c_echo
-; call prnstr
-; call colon
-; mov si,echo_flag
-; call switchshow
+call space
+mov si,c_echo
+call prnstr
+call colon
+mov si,echo_flag
+call switchshow
 
 call newline
 mov si,c_autosize
@@ -12929,8 +13098,8 @@ color:
 db 0x31
 color2:
 db 0x74
-frame:
-db 0x0A
+;frame:
+;db 0x0A
 ; xmouse:
 ; dw 0x0000
 ; ymouse:
@@ -13007,8 +13176,8 @@ c_print:
 db 'print',0
 c_clock:
 db 'clock',0
-c_frame:
-db 'frame',0
+;c_frame:
+;db 'frame',0
 c_wall:
 db 'wall',0
 c_drive:
@@ -13249,9 +13418,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1001
+dw 1002
 verstring:
-db ' Aplaun OS (version 1.0.1) ',0
+db ' Aplaun OS (version 1.0.2) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
