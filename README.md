@@ -7,16 +7,17 @@ GPLv3 License
 Aplaun OS
 (Created by DivJ)
 
-Add the BASIC folder to path by going in folder
-and the command >> addpathc
+To run BASIC programs from any folder 
+	1. go in the BASIC folder >> `nm basic q q`
+	2. and add to path with the command >> `addpathc`
 
 ## Setup
 Format a pendrive(Careful).
-Use any Hex Editor such as HxD to write boot.img on drive's first sector. Or use PartCopy? or dd (Linux).
-Copy kernel.COM to pendrive.
-Recommended: Copy the copythis folder contents to drive too.
+Use any Hex Editor such as *HxD* to write boot.img on drive's first sector. Or use PartCopy? or dd (Linux).
+Copy **kernel.COM** to pendrive.
+######Recommended: Copy the *copythis folder* contents to drive too.
 
-## How to Boot
+## How to Boot with older bootloader
 Tell what drive it is.(commonly it is 80).
 Tell where FAT12 file is.(commonly it is 13).
 Try first by 80:13 ,else 00:13 ,other than that god knows.
@@ -64,4 +65,5 @@ BrokenThorn NeptuneOS - Bootloader and FAT12 driver
 
 Sean Haas - Drek game
 Mike Saunders - MikeOS
+Leonardo Ono - asm4mo Assembler
 Joshua Beck - MikeOS apps
