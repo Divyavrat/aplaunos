@@ -228,6 +228,8 @@ kernel:
 ; Checks for all commands
 ; and the returning point for programs
 
+mov al,[found_tempchar]
+mov [found],al
 cmp byte [kernelreturnflag],0xf0
 je kerneldone
 mov byte [step_flag],0x0f
@@ -269,9 +271,11 @@ call newline
 jmp c_setting_f
 
 previous_comm:
+call getkey
 mov si,found
 call prnstr
 mov di,si
+dec di
 mov si,found
 call getarg.loop
 jmp command_received
@@ -286,6 +290,8 @@ call getarg
 ; mov bx,prompt
 ; call os_input_dialog
 command_received:
+mov al,[found]
+mov [found_tempchar],al
 cmp byte [found],0	;Checking for empty command
 ;cmp al,0
 je kernel
@@ -5334,7 +5340,7 @@ mov ds,ax
 
 mov ax,found+20
 mov bx,verstring
-mov cx,filestr
+mov cx,file_selector_str
 call os_list_dialog
 jc FAILURE
 dec ax
@@ -8372,7 +8378,7 @@ os_string_join:
 	popa
 	ret
 	
-	; ==================================================================
+; ==================================================================
 ; TachyonOS -- The TachyonOS Operating System kernel
 ; Copyright (C) 2013 TachyonOS Developers -- see doc/LICENCE.TXT
 ;
@@ -12381,12 +12387,13 @@ int 0x61
 mov cx,[firstrow]
 jmp showscreen.firstline
 
+;Main loop to show a screenful of text
 showscreen:
-pusha
 ;call newline
+push cx
 mov ah,0x0B
 int 0x61
-popa
+pop cx
 .firstline:
 push cx
 mov dx,cx
@@ -12396,15 +12403,28 @@ call loadlinepos
 ;je .popexit
 call showline
 ;call getkey
+
+;Checking when to stop loop
+mov ah,0x06
+int 0x64
+mov dh,0
+cmp si,dx
+;jg .exitloop
+
+;If bottom of screen is reached
 call getpos
-pop cx
-cmp dh,24
+cmp dh,[border_max_y]
 jge .exitloop
+
+;Else show next line
+pop cx
 inc cx
 ;cmp cx,25
 ;jle showscreen
 jmp showscreen
+
 .exitloop:
+pop cx
 mov dh,[row]
 mov dl,[col]
 ;jmp .ok
@@ -12441,6 +12461,10 @@ cmp ah,0x3E
 je .paste
 cmp ah,0x3F
 je .newfile
+cmp ah,0x40
+je .loadfile
+cmp ah,0x41
+je .deleteline
 cmp ah,0x42
 je .details
 cmp ah,0x47
@@ -12501,7 +12525,7 @@ jmp mainloop
 jmp kernel
 .help:
 xor ah,ah
-mov dx,help_str
+mov dx,edit_help_str
 int 0x61
 jmp control
 .save:
@@ -12531,17 +12555,28 @@ inc word [var_i]
 jmp .enter
 .newfile:
 mov bx,filenew.new_file_str
-mov ax,found
+mov ax,tempstr2
 call os_input_dialog
 mov di,[loc]
 mov cx,0x0400
 mov ax,0
 rep stosw
-mov ax,found
+mov ax,tempstr2
 mov bx,[loc]
 ;call os_create_file
 call os_write_file
 jmp edit
+.loadfile:
+mov bx,file_name_str
+mov ax,found
+call os_input_dialog
+mov ax,found
+mov cx,[loc]
+;call os_create_file
+call os_load_file
+jmp edit
+.deleteline:
+jmp mainloop
 .details:
 mov dl,[col]
 mov dh,0
@@ -12603,6 +12638,7 @@ je .enterdel2
 jmp mainloop
 
 checkpos:
+;;TODO better handling for bigger files
 cmp word [firstrow],1
 jl .firstrow_l
 cmp byte [row],0
@@ -12672,6 +12708,10 @@ inc byte [row]
 mov byte [col],0
 ret
 
+;---------------------------
+;IN: nothing
+;OUT: si = location in memory at current pos
+;---------------------------
 getcurrentpos:
 mov dx,[firstrow]
 add dl,[row]
@@ -12683,6 +12723,10 @@ add cl,[col]
 mov si,cx
 ret
 
+;---------------------------
+; IN: nothing
+; OUT: SI = location in memory for end of the current line
+;---------------------------
 loadlineend:
 mov dx,[firstrow]
 add dl,[row]
@@ -12715,6 +12759,11 @@ int 0x21
 loop .loop
 ret
 
+;---------------------------
+;IN: nothing
+;OUT: si = location in memory 
+;	for start for current line
+;---------------------------
 loadlinepos:
 mov si,[loc]
 mov word [.linecount],1
@@ -12738,8 +12787,10 @@ jmp .check_end
 .linecount:
 dw 0
 
+;Print line from si
 showline:
 lodsb
+;End if newline character is found
 cmp al,0x0D
 je .done
 cmp al,0x0A
@@ -12765,9 +12816,6 @@ rowpos: dw 0
 ;col: db 0
 ;loc:
 ;dw 0x7000
-
-help_str:
-db "F1-Help F2-save F3-Copy F4-Paste F5-New F8-Details",0
 
 read:
 mov al,[teletype]
@@ -13409,6 +13457,10 @@ successstr:
 db 'Success',0
 argstr:
 db 'Arguments: ',0
+file_name_str:
+db 'File Name :',0
+file_selector_str:
+db 'Select a file >>',0
 
 gdtinfo: dw gdt_end - gdt -1
 dd gdt
@@ -13465,6 +13517,8 @@ db 'F1-help (Esc,q)-quit (Ins,End)-Continue ',0
 ;db ' (Del-ColorDown,End-ColorUp), (Insert-CharDown,Home-CharUp)',0
 ;vedit_helpstr3:
 ;db ' (PgUp-FrameUp,PgDown-FrameDown), F6-Fill,F7-Clear,F8-Clean,F9-SetWall',0
+edit_help_str:
+db "F1-Help F2-save F3-Copy F4-Paste F5-New F6-Load F7-DeleteLine F8-Details",0
 con:
 db 'ON',0
 coff:
@@ -13579,9 +13633,10 @@ times 15 db 0
 ; db 0x01
 ; times 9 dw 0
 ; dw 0
-
-found:
+found_tempchar:
 db 0
+found:
+times 255 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45)-($-$$) db 0 ; Optimal Size

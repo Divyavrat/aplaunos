@@ -1,3 +1,7 @@
+extension to app register
+mint can be registered by apps by lists
+previous commands list
+EXE
 talk app impoved by two bytes as address to jump
 alias
 faults
@@ -6,7 +10,6 @@ edit :: delete_line
 display limits
 AAP PIC
 memory size and manager
-EXE
 games - invaders, cards, reversi, pinball, pacman, mario, chess
 font hindi,unicode
 new shell
