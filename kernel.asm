@@ -2052,12 +2052,6 @@ mov bh,[page]
 int 10h
 ret
 
-setpos_c:
-mov ah,0x02
-mov bh,[page]
-int 10h
-ret
-
 setpos:
 cmp dl,[border_min_x]
 jl update_pos_c_z
@@ -2097,9 +2091,9 @@ call clear_screen
 xor dh,dh
 jmp setpos
 update_pos_e:
+setpos_c:
 mov ah,0x02
 mov bh,[page]
-
 int 0x10
 ret
 
@@ -12405,11 +12399,13 @@ call showline
 ;call getkey
 
 ;Checking when to stop loop
-mov ah,0x06
+mov ah,0x06	;Get file size
 int 0x64
 mov dh,0
-cmp si,dx
-;jg .exitloop
+mov bx,si
+sub bx,[loc]
+cmp bx,dx	;If end of file is reached
+jg .exitloop;then stop the loop
 
 ;If bottom of screen is reached
 call getpos
@@ -12438,6 +12434,19 @@ inc dh
 sub cx,80
 jmp .rowloop
 .ok:
+; push dx
+; mov bl,[color2]
+; mov dh,[border_max_y]
+; dec dh
+; mov dl,[border_min_x]
+; mov si,[border_max_x]
+; inc si
+; mov di,[border_max_y]
+; call os_draw_block
+; call setpos_c
+; mov si,edit_help_str
+; call os_print_string
+; pop dx
 call setpos_c
 jmp control
 .popexit:
@@ -12576,7 +12585,28 @@ mov cx,[loc]
 call os_load_file
 jmp edit
 .deleteline:
+;Delete whole one line
+call loadlineend
+mov di,si
+call loadlinepos
+sub di,si
+mov cx,di
+.deleteline_loop:
+pusha
+call strshift
+popa
+loop .deleteline_loop
+
+.check_eol:
+cmp byte [si],0x0D
+je .del_eol
+cmp byte [si],0x0A
+je .del_eol
 jmp mainloop
+.del_eol:
+call strshift
+jmp .check_eol
+
 .details:
 mov dl,[col]
 mov dh,0
@@ -12615,13 +12645,13 @@ jmp mainloop
 .enterdel:
 dec di
 cmp byte [di],0x0D
-jne .adel
+jne .enterdel2
 dec si
 call strshift
-.adel:
-call getcurrentpos
-call strshift
-jmp mainloop
+;.adel:
+;call getcurrentpos
+;call strshift
+;jmp mainloop
 .enterdel2:
 call getcurrentpos
 call strshift
@@ -12638,6 +12668,7 @@ je .enterdel2
 jmp mainloop
 
 checkpos:
+;Check if borders are reached
 ;;TODO better handling for bigger files
 cmp word [firstrow],1
 jl .firstrow_l
@@ -12695,6 +12726,7 @@ inc byte [row]
 mov byte [col],0
 jmp checkpos
 
+;See if end of line is encountered
 checkline_eol:
 call loadlineend
 mov di,si
@@ -13518,7 +13550,7 @@ db 'F1-help (Esc,q)-quit (Ins,End)-Continue ',0
 ;vedit_helpstr3:
 ;db ' (PgUp-FrameUp,PgDown-FrameDown), F6-Fill,F7-Clear,F8-Clean,F9-SetWall',0
 edit_help_str:
-db "F1-Help F2-save F3-Copy F4-Paste F5-New F6-Load F7-DeleteLine F8-Details",0
+db "F1-Help F2-Save F3-Copy F4-Paste F5-New F6-Load F7-LineDel F8-Details F9-Option",0
 con:
 db 'ON',0
 coff:

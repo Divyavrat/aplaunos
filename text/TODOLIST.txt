@@ -6,7 +6,6 @@ talk app impoved by two bytes as address to jump
 alias
 faults
 GUI
-edit :: delete_line
 display limits
 AAP PIC
 memory size and manager
