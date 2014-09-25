@@ -11757,9 +11757,11 @@ call getstr
 jmp kernel
 
 c_setting_f:
+;Clear Screen
 mov ah,0x06
 int 0x61
 
+;Create List of options
 mov di,found
 mov si,.quicksettings
 call memcpyza
@@ -12399,13 +12401,8 @@ call showline
 ;call getkey
 
 ;Checking when to stop loop
-mov ah,0x06	;Get file size
-int 0x64
-mov dh,0
-mov bx,si
-sub bx,[loc]
-cmp bx,dx	;If end of file is reached
-jg .exitloop;then stop the loop
+call check_for_eof
+jc .exitloop
 
 ;If bottom of screen is reached
 call getpos
@@ -12453,6 +12450,26 @@ jmp control
 pop cx
 jmp .exitloop
 
+check_for_eof:
+pusha
+cmp byte [free_roam],0x0f
+jne .skipsizecheck
+mov ah,0x06	;Get file size
+int 0x64
+mov dh,0
+mov bx,si
+sub bx,[loc]
+cmp bx,dx	;If end of file is reached
+jg .exitloop;then stop the loop
+.skipsizecheck:
+popa
+clc
+ret
+.exitloop:
+popa
+stc
+ret
+
 control:
 call getkey
 
@@ -12476,6 +12493,8 @@ cmp ah,0x41
 je .deleteline
 cmp ah,0x42
 je .details
+cmp ah,0x43
+je .option
 cmp ah,0x47
 je .home
 cmp ah,0x4f
@@ -12621,6 +12640,41 @@ mov ah,0x45
 mov cx,0x0005
 int 0x61
 jmp mainloop
+.option:
+mov di,found
+mov si,.free_roam_str
+call memcpyza
+mov si,c_exit
+call memcpyza
+dec di
+mov byte [di],0
+mov ax,found
+mov bx,verstring
+mov cx,c_setting
+call os_list_dialog
+
+jc .exit_l
+cmp ax,1;free roam
+je .free_roam
+
+.exit_l:
+jmp mainloop
+.free_roam:
+mov ax,.free_roam_str
+mov bx,c_edit
+mov cx,c_setting_f.switch_select
+mov dx,1
+call os_dialog_box
+cmp ax,0
+je .okfree
+mov byte [free_roam],0x0f
+jmp .option
+.okfree:
+mov byte [free_roam],0xf0
+jmp .option
+.free_roam_str:
+db "Free Roam in Memory",0
+
 .up:
 dec byte [row]
 jmp mainloop
@@ -12680,7 +12734,14 @@ cmp byte [col],0
 jl .col_l
 cmp byte [col],79
 jg .col_h
+
+call getcurrentpos
+call check_for_eof
+jc .exitloop
 ret
+.exitloop:
+dec byte [col]
+jmp checkpos
 .firstrow_l:
 mov byte [row],0
 mov word [firstrow],1
@@ -13220,6 +13281,8 @@ comm:
 dw 0x0000
 comm2:
 dw 0x0000
+free_roam:
+db 0x0f
 
 kernelreturnflag:
 db 0x0F
@@ -13502,9 +13565,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1002
+dw 1003
 verstring:
-db ' Aplaun OS (version 1.0.2) ',0
+db ' Aplaun OS (version 1.0.3) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
