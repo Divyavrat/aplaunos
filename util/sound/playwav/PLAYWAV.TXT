@@ -1,0 +1,67 @@
+Playwav (version 1.03) is a simple utility to play a .WAV file.  It will
+ only play .WAV files with a 11000 Freq. and the file must be less than
+ 50k (51200 bytes) in length.  This file is distributed as freeware and
+ should remain that way.  It is distributed to show how to play a WAV file.
+ It should be very simple to make it play larger WAV files, and at different
+ freqencies.  (maybe later versions)
+
+ NOTE:  This util is set to play on PORT 220h at Channel 1.  You can change
+   it to match your system by change a few numbers.
+     If you use Channel 0:
+       PgPort  = 87h
+       AddPort = 00h
+       LenPort = 01h
+       ModeReg = 48h
+     If you use Channel 1 (default set):
+       PgPort  = 83h
+       AddPort = 02h
+       LenPort = 03h
+       ModeReg = 49h
+     If you use Channel 2:
+       PgPort  = 81h
+       AddPort = 04h
+       LenPort = 05h
+       ModeReg = 4Ah
+     If you use Channel 3:
+       PgPort  = 82h
+       AddPort = 06h
+       LenPort = 07h
+       ModeReg = 4Bh
+
+    You can also set the freq different as long as you don't set it higher
+     than 29999.  (This util is not set to run at high freq.  Maybe next
+     version)
+
+    The Quick Basic 4.5, the Turbo Pascal 6.x, and the NBASM source code
+     is included.  You may modify them as you wish, as long as you do not
+     distribute them for profit.  If you find an error or a better technique,
+     please email me and I will modify them, then redistribute them (I even
+     leave you credit for the fix/technique).
+
+     *I did not test the BAS code as an executable.  I did however run it
+     in the Quick Basic 4.5 interpreter with no problems*
+
+    To create PLAYWAV.EXE from playwav.pas:
+      TPC playwav
+
+    To create PLAYWAV.COM from playwav.asm:
+      NBASM playwav
+
+*************
+    Forever Young Software (r)
+    Benjamin David Lunt
+    (C)opyright 1984-2007
+    All rights reserved
+    Version: 1.03
+    06 Jan 2002
+
+       email:  fys@frontiernet.net
+    web page:  http://www.frontiernet.net/~fys/index.htm
+
+*************
+History:
+  Version 1.03  cosmetic, and NBASM is now used to assemble playwav.asm
+  Version 1.02b increased wait time in reseting the DSP
+  Version 1.01b fixed error in .asm while reseting the DSP
+  Version 1.00b original release
+

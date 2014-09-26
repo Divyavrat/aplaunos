@@ -6175,7 +6175,24 @@ mov es,dx
 ret
 .dir_made:
 call SAVE_ROOT
+mov ax,ImageName
+mov cx,[loc]
+call os_load_file
+mov di,[loc]
+mov cx,bx
+mov al,0
+rep stosb
 
+mov ah,0x07
+mov dl,0x00
+int 0x61
+mov bx,[loc]
+mov ah,0x73
+int 0x61
+
+; mov dx,[loc]
+; mov ah,0x81
+; int 0x61
 jmp .exitl
 .file_attributes:
 db 0x18,0x1a,0x9a,0x42,0x7c,0x43,0x7c,0x43,0x00,0x00,0xca,0x93,0x76,0x43
@@ -11584,16 +11601,20 @@ int61_setcluster:
 mov [cluster],dx
 iret
 int61_loadcluster:
+push bx
 mov ax,dx
 call LBACHS
-mov bx,[locf4]
+;mov bx,[locf4]
+pop bx
 call fileload_c
-mov ax,[locf4]
+;mov ax,[locf4]
 iret
 int61_savecluster:
+push bx
 mov ax,[cluster]
 call LBACHS
-mov bx,[locf4]
+pop bx
+;mov bx,[locf4]
 call filesave_c
 iret
 int61_LBACHS:
@@ -13565,9 +13586,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1003
+dw 1004
 verstring:
-db ' Aplaun OS (version 1.0.3) ',0
+db ' Aplaun OS (version 1.0.4) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
