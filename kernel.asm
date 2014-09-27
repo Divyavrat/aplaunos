@@ -3555,6 +3555,10 @@ call prnstr
 mov di,tempstr
 call getstr
 
+.findloop:
+mov si,tempstr
+mov di,c_start
+
 call newline
 mov si,newstr
 call prnstr
@@ -4610,23 +4614,36 @@ ret
 strshiftr:
 pusha
 call strlen
+add si,ax
+;dec si
 mov di,si
 push si
 dec si
 call memcpyr
 pop si
+inc si
 mov byte [si],0
 popa
 ret
 
+;IN: si-String
+;OUT: ax-Length
 strlen:
-xor cx,cx
+;pusha
+;xor cx,cx
+mov cx,0
 .loop:
 lodsb
 inc cx
 cmp al,0
 jne .loop
+dec cx
+mov ax,cx
+;mov [.temp],cx
+;popa
+;mov ax,[.temp]
 ret
+;.temp: dw 0
 
 os_seed_random:
 	push bx
@@ -8301,14 +8318,14 @@ call colon
 
 ; ==================================================================
 
-
+;IN: ax-String
+;OUT: ax-Length
 os_string_length:
 pusha
-mov dx,ax
-mov ah,0x33
-int 0x61
-dec dx
-mov [.length_tmp],dx
+mov si,ax
+call strlen
+dec ax
+mov [.length_tmp],ax
 ;mov ah,0x20
 ;int 0x61
 popa
@@ -11395,7 +11412,7 @@ iret
 int61_strlen:
 mov si,dx
 call strlen
-mov dx,cx
+mov dx,ax
 iret
 
 int61_box_str_top:
@@ -13586,9 +13603,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1004
+dw 1005
 verstring:
-db ' Aplaun OS (version 1.0.4) ',0
+db ' Aplaun OS (version 1.0.5) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
