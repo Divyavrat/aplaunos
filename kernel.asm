@@ -903,13 +903,11 @@ mov byte [found],'r'
 jmp fdir
 
 command_link:
-mov al,[found]
-mov [var_c],al
 call command ;; Checking for mints
 cmp byte [echo_flag],0x0f
 je .done
-mov al,[found]
-cmp [var_c],al
+mov al,[found_tempchar]
+cmp [found],al
 jne .done
 call print_error
 .done:
@@ -2808,10 +2806,10 @@ ret
 ; ret
 
 cmpstr:
-cmp byte [si],0
-je .nequal
-cmp byte [di],0
-je .nequal
+;cmp byte [si],0
+;je .nequal
+;cmp byte [di],0
+;je .nequal
 .loop:
 mov al,[si]
 mov bl,[di]
@@ -3578,8 +3576,15 @@ jmp kernel
 
 .foundmatch:
 push si
-call strlen
-push ax
+mov di,si
+;call strlen
+mov cx,0xffff
+mov al,0
+repne scasb
+repe scasb
+sub di,si
+dec di
+push di
 mov si,newstr
 call prnstr
 mov si,commandstr
@@ -3592,7 +3597,7 @@ call strlen
 pop bx
 pop di
 cmp bx,ax
-jl .toobig
+jle .toobig
 mov si,tempstr2
 mov cx,ax
 rep movsb
@@ -4654,7 +4659,9 @@ ret
 strshiftr:
 pusha
 call strlen
-add si,ax
+;add si,ax
+inc ax
+mov cx,ax
 ;dec si
 mov di,si
 push si
@@ -8219,12 +8226,12 @@ os_sint_to_string:
 os_long_int_to_string:
 os_int_to_string:
 pusha
-mov bx,temp_str
+mov bx,tempstr
 mov dx,ax
 mov ah,0x2A
 int 0x61
 popa
-mov ax,temp_str
+mov ax,tempstr
 ret
 
 os_string_to_int:
@@ -8969,6 +8976,46 @@ os_string_parse:
 	pop si
 	ret
 
+; ------------------------------------------------------------------
+; os_string_strincmp -- See if two strings match up to set number of chars
+; IN: SI = string one, DI = string two, CL = chars to check
+; OUT: carry set if same, clear if different
+
+os_string_strincmp:
+	pusha
+
+.more:
+	mov al, [si]			; Retrieve string contents
+	mov bl, [di]
+
+	cmp al, bl			; Compare characters at current location
+	jne .not_same
+
+	cmp al, 0			; End of first string? Must also be end of second
+	je .terminated
+
+	inc si
+	inc di
+
+	dec cl				; If we've lasted through our char count
+	cmp cl, 0			; Then the bits of the string match!
+	je .terminated
+
+	jmp .more
+
+
+.not_same:				; If unequal lengths with same beginning, the byte
+	popa				; comparison fails at shortest string terminator
+	clc				; Clear carry flag
+	ret
+
+
+.terminated:				; Both strings terminated at the same position
+	popa
+	stc				; Set carry flag
+	ret
+
+
 ; ==================================================================
 
 os_set_time_fmt:
@@ -8979,7 +9026,6 @@ mov bx,c_clock
 ret
 
 os_string_chomp:
-os_string_strincmp:
 os_run_basic:
 os_bcd_to_int:
 
@@ -12440,7 +12486,6 @@ call loadlinepos
 ;mov ax,[si]
 ;cmp ax,0
 ;je .popexit
-call showline
 ;call getkey
 
 ;Checking when to stop loop
@@ -12451,6 +12496,9 @@ jc .exitloop
 call getpos
 cmp dh,[border_max_y]
 jge .exitloop
+
+;Show the line
+call showline
 
 ;Else show next line
 pop cx
@@ -12499,7 +12547,7 @@ cmp byte [free_roam],0x0f
 jne .skipsizecheck
 mov ah,0x06	;Get file size
 int 0x64
-mov dh,0
+;mov dh,0
 mov bx,si
 sub bx,[loc]
 cmp bx,dx	;If end of file is reached
@@ -13709,7 +13757,6 @@ autorunstr:
 db 'pwd confg lvlh ',0
 ;db 'confg pwd lvlh ',0
 ;db 'auto ',0
-temp_str:
 tempstr:
 times 80 db 0
 tempstr2:
@@ -13778,7 +13825,7 @@ times 15 db 0
 found_tempchar:
 db 0
 found:
-times 255 db 0
+times 0 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45)-($-$$) db 0 ; Optimal Size
