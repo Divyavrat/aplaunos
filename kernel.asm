@@ -2808,6 +2808,11 @@ ret
 ; ret
 
 cmpstr:
+cmp byte [si],0
+je .nequal
+cmp byte [di],0
+je .nequal
+.loop:
 mov al,[si]
 mov bl,[di]
 cmp al,bl
@@ -2818,7 +2823,7 @@ cmp al,0
 je .cmpend
 inc di
 inc si
-jmp cmpstr
+jmp .loop
 .nequal:
 clc
 ret
@@ -3554,18 +3559,53 @@ mov si,commandstr
 call prnstr
 mov di,tempstr
 call getstr
-
-.findloop:
-mov si,tempstr
-mov di,c_start
-
 call newline
+
+mov si,c_start
+.findloop:
+push si
+mov di,tempstr
+call cmpstr
+pop si
+jc .foundmatch
+call strlen
+;add si,ax
+cmp si,c_end
+jl .findloop
+mov si,notfoundstr
+call prnstr
+jmp kernel
+
+.foundmatch:
+push si
+call strlen
+push ax
 mov si,newstr
 call prnstr
 mov si,commandstr
 call prnstr
 mov di,tempstr2
 call getstr
+call newline
+mov si,tempstr2
+call strlen
+pop bx
+pop di
+cmp bx,ax
+jl .toobig
+mov si,tempstr2
+mov cx,ax
+rep movsb
+sub bx,ax
+mov cx,bx
+mov ax,0
+rep stosb
+mov si,successstr
+call prnstr
+jmp kernel
+.toobig:
+mov si,toobigstr
+call prnstr
 jmp kernel
 
 c_border_f:
@@ -6866,6 +6906,11 @@ stosb
 loop .zero
 ret
 
+;IN: si-Source String,di-Destination String
+;OUT: ax-Length
+;
+;Find end of string
+;and copy string with comma , at end
 memcpyza:
 mov cx,0xffff
 memcpyz:
@@ -6874,7 +6919,6 @@ push si
 mov di,si
 
 mov al,0
-;repne scasb
 repne scasb
 mov cx,di
 sub cx,si
@@ -8925,46 +8969,6 @@ os_string_parse:
 	pop si
 	ret
 
-	; ------------------------------------------------------------------
-; os_string_strincmp -- See if two strings match up to set number of chars
-; IN: SI = string one, DI = string two, CL = chars to check
-; OUT: carry set if same, clear if different
-
-os_string_strincmp:
-	pusha
-
-.more:
-	mov al, [si]			; Retrieve string contents
-	mov bl, [di]
-
-	cmp al, bl			; Compare characters at current location
-	jne .not_same
-
-	cmp al, 0			; End of first string? Must also be end of second
-	je .terminated
-
-	inc si
-	inc di
-
-	dec cl				; If we've lasted through our char count
-	cmp cl, 0			; Then the bits of the string match!
-	je .terminated
-
-	jmp .more
-
-
-.not_same:				; If unequal lengths with same beginning, the byte
-	popa				; comparison fails at shortest string terminator
-	clc				; Clear carry flag
-	ret
-
-
-.terminated:				; Both strings terminated at the same position
-	popa
-	stc				; Set carry flag
-	ret
-
-
 ; ==================================================================
 
 os_set_time_fmt:
@@ -8975,6 +8979,7 @@ mov bx,c_clock
 ret
 
 os_string_chomp:
+os_string_strincmp:
 os_run_basic:
 os_bcd_to_int:
 
@@ -13588,6 +13593,10 @@ imsge:
 db 'Failed',0
 successstr:
 db 'Success',0
+notfoundstr:
+db 'Not Found',0
+toobigstr:
+db 'Too big',0
 argstr:
 db 'Arguments: ',0
 file_name_str:
@@ -13603,9 +13612,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1005
+dw 1006
 verstring:
-db ' Aplaun OS (version 1.0.5) ',0
+db ' Aplaun OS (version 1.0.6) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
