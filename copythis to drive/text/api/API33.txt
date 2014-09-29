@@ -1,0 +1,17 @@
+cmp ah,0x00
+je int33_mouse_setup
+cmp ah,0x01
+je int33_show_mouse
+cmp ah,0x02
+je int33_hide_mouse
+cmp ah,0x03
+je int33_mouse_pos
+cmp ah,0x04
+je int33_move_mouse
+
+cmp ah,0x07
+je int33_mouse_horzlimit
+cmp ah,0x08
+je int33_mouse_vertlimit
+cmp ah,0x21
+je int33_mouse_setup

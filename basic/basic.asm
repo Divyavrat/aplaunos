@@ -5172,7 +5172,7 @@ textmode_finish:
 
 	err_char_in_num		db "Error: unexpected char in no.", 0
 	err_cmd_unknown		db "Error: unknown command", 0
-	err_divide_by_zero	db "Error: attempt to divide by zero", 0
+	;err_divide_by_zero	db "Error: attempt to divide by zero", 0
 	err_doloop_maximum	db "Error: DO/LOOP nesting limit exceeded", 0
 	err_file_notfound	db "Error: file not found", 0
 	err_goto_notlabel	db "Error: GOTO or GOSUB not followed by label", 0
@@ -5232,4 +5232,5 @@ vars_loc:
 	disp_page		db 0		; Page to display
 	graphicsmode		db 0		; Keeps track of whether the system is in graphics mode
 
-times (512*25)-($-$$) db 0
+;times (512*24)-($-$$) db 0
+times (512*24)-($-$$) db 0

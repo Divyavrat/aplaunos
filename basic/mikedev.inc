@@ -158,76 +158,20 @@ os_fatal_error		equ	os_main+0027h	; AX = error string location
 ; GRAPHICS ROUTINES
 ; ==================================================================
 
-os_return:
-ret
+os_text_mode equ os_main+00D5h
+os_graphics_mode equ os_main+00D8h
+os_set_pixel equ os_main+00DBh
+os_get_pixel equ os_main+00DEh
 
-os_text_mode:
-	; Put the operating system in text mode (mode 03h)
-	pusha
-	
-	mov ax, 3			; Back to text mode
-	mov bx, 0
-	int 10h
-	mov ax, 1003h			; No blinking text!
-	int 10h
-	
-	popa
-	jmp os_return
-	
-os_graphics_mode:
-	; Put the operating system in graphical mode (mode 13h)
-	push ax
-	mov ah, 0			; Switch to graphics mode
-	mov al, 13h
-	int 10h
-	pop ax
-	jmp os_return
-	
-; Change the colour of a pixel
-; IN: AX=X, CX=Y, BL=colour
-; OUT: None, registers preserved
+os_clear_graphics equ os_main+00EAh
 
-os_set_pixel:
-	pusha
+os_draw_horizontal_line equ os_main+010Bh
+os_draw_vertical_line equ os_main+010Eh
 
-	cmp ax, 320
-	jge .out_of_range
-	
-	cmp cx, 200
-	jge .out_of_range
-	
-	mov dx, cx
-	mov cx, ax
-	mov ah, 0Ch
-	mov al, bl
-	xor bx, bx
-	int 10h
-.out_of_range:
-	popa
-	jmp os_return
-	
-	
-; Get the the colour of a pixel
-; IN: AX=X, CX=Y, BL=colour
-; OUT: None, registers preserved
-os_get_pixel:
-	pusha
-	
-	;push 1000h
-	;pop ds
-	
-	mov dx, cx
-	mov cx, ax
-	mov ah, 0Dh
-	xor bx, bx
-	int 10h
-	mov byte [.pixel], al
-	popa
-	mov bl, [.pixel]
-	jmp os_return
-	
-	.pixel				db 0
-	
+os_draw_circle equ os_main+0165h
+
+;os_return:
+;ret
 	
 ; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
 ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
@@ -294,7 +238,7 @@ os_draw_line:
 	
 	popa
 	;dec byte [internal_call]
-	jmp os_return
+	ret
 	
 .y1gty2:
 	sub ax, bx
@@ -492,7 +436,7 @@ os_draw_rectangle:
 .finished_fill:
 	popa
 	;dec byte [internal_call]
-	jmp os_return
+	ret
 	
 	.x1				dw 0
 	.x2				dw 0
@@ -558,164 +502,13 @@ os_draw_polygon:
 	
 	popa
 	;dec byte [internal_call]
-	jmp os_return
+	ret
 	
 	.xi				dw 0
 	.yi				dw 0
 	.xl				dw 0
 	.yl				dw 0
 	.points				db 0
-	
-
-; Clear the screen by setting all pixels to a single colour
-; BL = colour to set
-os_clear_graphics:
-	pusha
-	
-	mov ax, 0xA000
-	mov es, ax
-
-	mov al, bl
-	mov di, 0
-	mov cx, 64000
-	rep stosb
-
-	popa
-	jmp os_return
-	
-	
-; ----------------------------------------
-; os_draw_circle -- draw a circular shape
-; IN: AL = colour, BX = radius, CX = middle X, DX = middle y
-
-os_draw_circle:
-	pusha
-
-	;push gs
-	;pop ds
-	
-	;inc byte [internal_call]
-
-	mov [.colour], al
-	mov [.radius], bx
-	mov [.x0], cx
-	mov [.y0], dx
-
-	mov [.x], bx
-	mov word [.y], 0
-	mov ax, 1
-	shl bx, 1
-	sub ax, bx
-	mov [.xChange], ax
-	mov word [.yChange], 0
-	mov word [.radiusError], 0
-jmp .next_point
-	
-.finish:
-	popa
-	;dec byte [internal_call]
-	jmp os_return
-	
-.next_point:
-	cmp cx, dx
-	jl .finish
-
-	;ax bx - function points
-	;cx = x 
-	;dx = y
-	;si = -x
-	;di = -y
-
-	mov cx, [.x]
-	mov dx, [.y]
-	mov si, cx
-	xor si, 0xFFFF
-	inc si
-	mov di, dx
-	xor di, 0xFFFF
-	inc di
-
-	; (x + x0, y + y0)
-	mov ax, cx
-	mov bx, dx
-	call .draw_point
-
-	; (y + x0, x + y0)
-	xchg ax, bx
-	call .draw_point
-
-	; (-x + x0, y + y0)
-	mov ax, si
-	mov bx, dx
-	call .draw_point
-
-	; (-y + x0, x + y0)
-	mov ax, di
-	mov bx, cx
-	call .draw_point
-
-	; (-x + x0, -y + y0)
-	mov ax, si
-	mov bx, di
-	call .draw_point
-
-	; (-y + x0, -x + y0)
-	xchg ax, bx
-	call .draw_point
-
-	; (x + x0, -y + y0)
-	mov ax, cx
-	mov bx, di
-	call .draw_point
-
-	; (y + x0, -x + y0)
-	mov ax, dx
-	mov bx, si
-	call .draw_point
-	
-	inc word [.y]
-	mov ax, [.yChange]
-	add [.radiusError], ax
-	add word [.yChange], 2
-	
-	mov ax, [.radiusError]
-	shl ax, 1
-	add ax, [.xChange]
-	
-	mov cx, [.x]
-	mov dx, [.y]
-	
-	cmp ax, 0
-	jle .next_point
-	
-	dec word [.x]
-	mov ax, [.xChange]
-	add [.radiusError], ax
-	add word [.xChange], 2
-
-	mov cx, [.x]
-	jmp .next_point
-
-.draw_point:
-	; AX = X, BX = Y
-	pusha
-	add ax, [.x0]
-	add bx, [.y0]
-	mov cx, bx
-	mov bl, [.colour]
-	call os_set_pixel
-	popa
-	ret
-
-.colour				db 0
-.x0				dw 0
-.y0				dw 0
-.radius				dw 0
-.x				dw 0
-.y				dw 0
-.xChange			dw 0
-.yChange			dw 0
-.radiusError			dw 0
 
 ; ------------------------------------------------------------------
 ; os_draw_border -- draw a single character border
@@ -811,7 +604,7 @@ os_draw_border:
 	
 	popa
 	;dec byte [internal_call]
-	jmp os_return
+	ret
 	
 	
 .start_column				db 0
@@ -822,66 +615,3 @@ os_draw_border:
 .width					db 0
 
 .character_set				db 218, 191, 192, 217, 196, 179
-
-; ------------------------------------------------------------------
-; os_draw_horizontal_line - draw a horizontal between two points
-; IN: BH = width, BL = colour, DH = start row, DL = start column
-
-os_draw_horizontal_line:
-	pusha
-	
-	;mov ax, 0x1000
-	;mov ds, ax
-	
-	;inc byte [internal_call]
-	
-	mov cx, 0
-	mov cl, bh
-	
-	call os_move_cursor
-	
-	mov ah, 09h
-	mov al, 196
-	mov bh, 0
-	int 10h
-
-	popa
-	;dec byte [internal_call]
-	jmp os_return
-	
-; ------------------------------------------------------------------
-; os_draw_horizontal_line - draw a horizontal between two points
-; IN: BH = length, BL = colour, DH = start row, DL = start column
-
-os_draw_vertical_line:
-	pusha
-	
-	;mov ax, 0x1000
-	;mov ds, ax
-	
-	;inc byte [internal_call]
-	
-	mov cx, 0
-	mov cl, bh
-	
-	mov ah, 09h
-	mov al, 179
-	mov bh, 0
-	
-.lineloop:
-	push cx
-	
-	call os_move_cursor
-	
-	mov cx, 1
-	int 10h
-	
-	inc dh
-	
-	pop cx
-	
-	loop .lineloop
-
-	popa
-	;dec byte [internal_call]
-	jmp os_return

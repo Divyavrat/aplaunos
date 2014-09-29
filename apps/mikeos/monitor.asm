@@ -16,7 +16,8 @@
 	; be generated -- if you change it, you will need to
 	; ORG the code you enter at the new address
 
-	CODELOC	equ 36864
+	;CODELOC	equ 36864
+	CODELOC	equ 0x8000
 
 start:
 	mov si, helpmsg1		; Print help text
@@ -40,6 +41,9 @@ main_loop:
 
 	mov ax, input			; Get hex string
 	call os_input_string
+	
+	mov ax, input
+	call os_string_uppercase; Convert to Uppercase
 
 	mov ax, input
 	call os_string_length

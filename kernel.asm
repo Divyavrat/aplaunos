@@ -1330,139 +1330,50 @@ mov di,ImageName
 mov cx,0x0008
 call memcpys
 
-mov di,ImageName
-add di,0x0008
-mov al,'C'
-stosb
-mov al,'O'
-stosb
-mov al,'M'
-stosb
+mov si,.extension_com
+call microkernel_findfile
+jnc .find_bin
+jmp .run_program
+.extension_com:
+db 'COM'
 
-call checkfname
+.find_bin:
 
-mov si,found
-call strshiftr
-
-mov word [comm],0x0f0f
-mov byte [found],'c'
-mov bx,microkernel_ret
-mov [extra],bx
-;mov di,[locf7]
-;stc
-jmp fdir
-microkernel_ret:
-
-mov si,found
-call strshift
-
-mov dx,[comm]
-cmp dx,0xf0f0
-jne .fail
-jmp microkernel2_ret.run_program
-.fail:
-
-mov di,ImageName
-add di,0x0008
-mov al,'B'
-stosb
-mov al,'I'
-stosb
-mov al,'N'
-stosb
-
-mov si,found
-call strshiftr
-
-mov word [comm],0x0f0f
-mov byte [found],'c'
-mov bx,microkernel2_ret
-mov [extra],bx
-jmp fdir
-microkernel2_ret:
-
-mov si,found
-call strshift
-
-mov dx,[comm]
-cmp dx,0xf0f0
-jne .fail
+mov si,.extension_bin
+call microkernel_findfile
+jnc .find_exe
 
 .run_program:
-call restorename
+call microkernel_restoredata
 pop ax
-mov ax,[currentdirtemp]
-mov [currentdir],ax
 call argument
 jmp run
+.extension_bin:
+db 'BIN'
 
-.fail:
+.find_exe:
 
-mov di,ImageName
-add di,0x0008
-mov al,'E'
-stosb
-mov al,'X'
-stosb
-mov al,'E'
-stosb
+mov si,.extension_exe
+call microkernel_findfile
+jnc .find_bat
 
-mov si,found
-call strshiftr
-
-mov word [comm],0x0f0f
-mov byte [found],'c'
-mov bx,microkernel3_ret
-mov [extra],bx
-jmp fdir
-microkernel3_ret:
-
-mov si,found
-call strshift
-
-mov dx,[comm]
-cmp dx,0xf0f0
-jne .fail
-
-call restorename
+call microkernel_restoredata
 pop ax
-mov ax,[currentdirtemp]
-mov [currentdir],ax
 jmp execute
+.extension_exe:
+db 'EXE'
 
-.fail:
+.find_bat:
 
-mov di,ImageName
-add di,0x0008
-mov al,'B'
-stosb
-mov al,'A'
-stosb
-mov al,'T'
-stosb
+mov si,.extension_bat
+call microkernel_findfile
+jnc .fail
 
-mov si,found
-call strshiftr
-
-mov word [comm],0x0f0f
-mov byte [found],'c'
-mov bx,microkernel4_ret
-mov [extra],bx
-jmp fdir
-microkernel4_ret:
-
-mov si,found
-call strshift
-
-mov dx,[comm]
-cmp dx,0xf0f0
-jne .fail
-
-call restorename
+call microkernel_restoredata
 pop ax
-mov ax,[currentdirtemp]
-mov [currentdir],ax
 jmp batch
+.extension_bat:
+db 'BAT'
 
 .fail:
 inc word [var_d]
@@ -1471,6 +1382,42 @@ jmp microkernel.start_search
 ;jmp microkernel_kernel_loop
 ;pop ax
 ;jmp kernel
+
+;Carry set if file found
+microkernel_findfile:
+mov di,ImageName+8
+;si pointing to extension
+mov cx,0x003
+rep movsb
+call checkfname
+mov si,found
+call strshiftr
+
+mov word [comm],0x0f0f
+mov byte [found],'c'
+mov bx,.return_address
+mov [extra],bx
+jmp fdir
+.return_address:
+
+mov si,found
+call strshift
+
+mov dx,[comm]
+cmp dx,0xf0f0
+jne .fail
+
+stc
+ret
+.fail:
+clc
+ret
+
+microkernel_restoredata:
+call restorename
+mov ax,[currentdirtemp]
+mov [currentdir],ax
+ret
 
 text.move_right:
 pusha
@@ -1932,8 +1879,11 @@ not byte [teletype]
 jmp kernel
 
 os_graphics_mode:
+; Put the operating system in graphical mode (mode 13h)
+push ax
 mov ax,0x0013
 int 0x10
+pop ax
 ret
 
 c_videomode_f:
@@ -5261,6 +5211,8 @@ fileload:
 		  mov ax,[dir_seg]
 		  mov es,ax
           mov di, [loc2]
+; cmp byte [found],'l'
+; je .makelist
 cmp byte [found],'z'
 je .makelist
 cmp byte [found],'r'
@@ -5327,8 +5279,8 @@ cmp byte [found],'i';Interrupt
 je .intload
 cmp byte [found],'c';Call
 je .intload
-cmp byte [found],'z';List
-je .intload
+;cmp byte [found],'z';List
+;je .intload
 call getkey
 cmp al,0x0D
 je LOAD_FAT
@@ -5424,7 +5376,7 @@ jmp LOAD_FAT
 dw 0
 
 fileselected:
-mov dx,0
+mov dx,[kernel_seg]
 mov es,dx
 pusha
 mov al,[var_x]
@@ -5681,10 +5633,18 @@ cmp byte [found],'r'
 je .roam_on
 cmp byte [found],'t'
 je .roamt_on
+
 cmp byte [found],'z'
 je .size_skip
+; cmp byte [found],'l'
+; je .size_skip
+
 jmp .dont_roam
 .roamt_on:
+mov al,[var_x]
+and al,0x10
+cmp al,0x10
+je .size_skip
 mov byte [comm2],'t'
 jmp .size_skip
 .roam_on:
@@ -5726,13 +5686,11 @@ mov [currentdir],ax
 cmp byte [comm2],'r'
 je .dir_roam
 cmp byte [comm2],'t'
-je .dir_roamt
+je .dir_roam
 jmp .done
 .dir_roam:
-mov byte [found],'r'
-jmp fdir
-.dir_roamt:
-mov byte [found],'t'
+mov al,[comm2]
+mov [found],al
 jmp fdir.fdir_not_interrupt
 .done:
 cmp byte [comm2],'t'
@@ -5796,7 +5754,15 @@ calculate_size:
 mov dx,[filesize+2]
 mov ax,[filesize]
 mov cx,0x0200
+cmp dx,0x1fff
+jge .skip
+cmp dx,0
+jne .start
+cmp ax,0
+je .skip
+.start:
 div cx
+.skip:
 cmp dx,0
 je .perfectsector
 inc ax
@@ -7314,9 +7280,9 @@ call set_ivt
 mov ax,0x001c
 mov di,int1ch
 call set_ivt
-; mov ax,0x001b
-; mov di,int1bh
-; call set_ivt
+mov ax,0x001b;;TODO may cause problems
+mov di,int1bh
+call set_ivt
 mov ax,0x0020
 mov di,int20h
 call set_ivt
@@ -7696,20 +7662,20 @@ call ackport
 popa
 iret
 
-; int1bh:
-; pusha
-; xor dx,dx
-; mov ds,dx
-; mov es,dx
-; popa
-; call newline
-; call debug_int
-; pusha
-; call getkey
-; mov al,0x1b
-; call ackport
-; popa
-; iret
+int1bh:
+pusha
+xor dx,dx
+mov ds,dx
+mov es,dx
+popa
+call newline
+call debug_int
+pusha
+call getkey
+mov al,0x1b
+call ackport
+popa
+iret
 
 int20h:
 mov dx,0
@@ -8202,8 +8168,19 @@ mov dx,[.tmp]
 ret
 .tmp dw 0
 
-os_clear_graphics:
 os_text_mode:
+	; Put the operating system in text mode (mode 03h)
+	pusha
+	
+	mov ax, 3			; Back to text mode
+	mov bx, 0
+	int 10h
+	mov ax, 1003h			; No blinking text!
+	int 10h
+	
+	popa
+	ret
+
 os_clear_screen:
 pusha
 mov ah,0x06
@@ -9015,6 +8992,646 @@ os_string_strincmp:
 	stc				; Set carry flag
 	ret
 
+; Change the colour of a pixel
+; IN: AX=X, CX=Y, BL=colour
+; OUT: None, registers preserved
+
+os_set_pixel:
+	pusha
+
+	cmp ax, 320
+	jge .out_of_range
+	
+	cmp cx, 200
+	jge .out_of_range
+	
+	mov dx, cx
+	mov cx, ax
+	mov ah, 0Ch
+	mov al, bl
+	xor bx, bx
+	int 10h
+.out_of_range:
+	popa
+	ret
+	
+	
+; Get the the colour of a pixel
+; IN: AX=X, CX=Y, BL=colour
+; OUT: None, registers preserved
+os_get_pixel:
+	pusha
+	
+	;push 1000h
+	;pop ds
+	
+	mov dx, cx
+	mov cx, ax
+	mov ah, 0Dh
+	xor bx, bx
+	int 10h
+	mov byte [.pixel], al
+	popa
+	mov bl, [.pixel]
+	ret
+	
+	.pixel				db 0
+	
+	
+; ; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
+; ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
+; ; OUT: None, registers preserved
+; os_draw_line:
+	; pusha				; Save parameters
+	
+	; ;mov ax, 1000h
+	; ;mov ds, ax
+	; ;mov es, ax
+	; ;inc byte [internal_call]
+	
+	; xor ax, ax			; Clear variables
+	; mov di, .x1
+	; mov cx, 11
+	; rep stosw
+	
+	; popa				; Restore and save parameters
+	; pusha
+	
+	; mov [.x1], cx			; Save points
+	; mov [.x], cx
+	; mov [.y1], dx
+	; mov [.y], dx
+	; mov [.x2], si
+	; mov [.y2], di
+	
+	; mov [.colour], bl		; Save the colour
+	
+	; mov bx, [.x2]
+	; mov ax, [.x1]
+	; cmp bx, ax
+	; jl .x1gtx2
+	
+	; sub bx, ax
+	; mov [.dx], bx
+	; mov ax, 1
+	; mov [.incx], ax
+	; jmp .test2
+	
+; .x1gtx2:
+	; sub ax, bx
+	; mov [.dx], ax
+	; mov ax, -1
+	; mov [.incx], ax
+	
+; .test2:
+	; mov bx, [.y2]
+	; mov ax, [.y1]
+	; cmp bx, ax
+	; jl .y1gty2
+	
+	; sub bx, ax
+	; mov [.dy], bx
+	; mov ax, 1
+	; mov [.incy], ax
+	; jmp .test3
+	
+	; .done:
+	; mov ax, [.x]
+	; mov cx, [.y]
+	; mov bl, [.colour]
+	; call os_set_pixel
+	
+	; popa
+	; ;dec byte [internal_call]
+	; ret
+	
+; .y1gty2:
+	; sub ax, bx
+	; mov [.dy], ax
+	; mov ax, -1
+	; mov [.incy], ax
+	
+; .test3:
+	; mov bx, [.dx]
+	; mov ax, [.dy]
+	; cmp bx, ax
+	; jl .dygtdx
+	
+	; mov ax, [.dy]
+	; shl ax, 1
+	; mov [.dy], ax
+	
+	; mov bx, [.dx]
+	; sub ax, bx
+	; mov [.balance], ax
+	
+	; shl bx, 1
+	; mov [.dx], bx
+	
+; .xloop:
+	; mov ax, [.x]
+	; mov bx, [.x2]
+	; cmp ax, bx
+	; je .done
+	
+	; mov ax, [.x]
+	; mov cx, [.y]
+	; mov bl, [.colour]
+	; call os_set_pixel
+	
+	; xor si, si
+	; mov di, [.balance]
+	; cmp di, si
+	; jl .xloop1
+	
+	; mov ax, [.y]
+	; mov bx, [.incy]
+	; add ax, bx
+	; mov [.y], ax
+	
+	; mov ax, [.balance]
+	; mov bx, [.dx]
+	; sub ax, bx
+	; mov [.balance], ax
+	
+; .xloop1:
+	; mov ax, [.balance]
+	; mov bx, [.dy]
+	; add ax, bx
+	; mov [.balance], ax
+	
+	; mov ax, [.x]
+	; mov bx, [.incx]
+	; add ax, bx
+	; mov [.x], ax
+	
+	; jmp .xloop
+	
+; .dygtdx:
+	; mov ax, [.dx]
+	; shl ax, 1
+	; mov [.dx], ax
+	
+	; mov bx, [.dy]
+	; sub ax, bx
+	; mov [.balance], ax
+	
+	; shl bx, 1
+	; mov [.dy], bx
+	
+; .yloop:
+	; mov ax, [.y]
+	; mov bx, [.y2]
+	; cmp ax, bx
+	; je .done
+	
+	; mov ax, [.x]
+	; mov cx, [.y]
+	; mov bl, [.colour]
+	; call os_set_pixel
+	
+	; xor si, si
+	; mov di, [.balance]
+	; cmp di, si
+	; jl .yloop1
+	
+	; mov ax, [.x]
+	; mov bx, [.incx]
+	; add ax, bx
+	; mov [.x], ax
+	
+	; mov ax, [.balance]
+	; mov bx, [.dy]
+	; sub ax, bx
+	; mov [.balance], ax
+	
+; .yloop1:
+	; mov ax, [.balance]
+	; mov bx, [.dx]
+	; add ax, bx
+	; mov [.balance], ax
+	
+	; mov ax, [.y]
+	; mov bx, [.incy]
+	; add ax, bx
+	; mov [.y], ax
+	
+	; jmp .yloop
+	
+	
+	; .x1 dw 0
+	; .y1 dw 0
+	; .x2 dw 0
+	; .y2 dw 0
+	
+	; .x dw 0
+	; .y dw 0
+	; .dx dw 0
+	; .dy dw 0
+	; .incx dw 0
+	; .incy dw 0
+	; .balance dw 0
+	; .colour db 0
+	; .pad db 0
+	
+; ; Draw (straight) rectangle
+; ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour, CF = set if filled or clear if not
+; ; OUT: None, registers preserved
+; os_draw_rectangle:
+	; pusha
+	; pushf
+	
+	; ;mov ax, 1000h
+	; ;mov ds, ax
+	; ;mov es, ax
+	
+	; ;inc byte [internal_call]
+	
+	; mov word [.x1], cx
+	; mov word [.y1], dx
+	; mov word [.x2], si
+	; mov word [.y2], di
+	
+	; ; top line
+	; mov cx, [.x1]
+	; mov dx, [.y1]
+	; mov si, [.x2]
+	; mov di, [.y1]
+	; call os_draw_line
+	
+	; ; left line
+	; mov cx, [.x1]
+	; mov dx, [.y1]
+	; mov si, [.x1]
+	; mov di, [.y2]
+	; call os_draw_line
+	
+	; ; right line
+	; mov cx, [.x2]
+	; mov dx, [.y1]
+	; mov si, [.x2]
+	; mov di, [.y2]
+	; call os_draw_line
+
+	; ; bottom line
+	; mov cx, [.x1]
+	; mov dx, [.y2]
+	; mov si, [.x2]
+	; mov di, [.y2]
+	; call os_draw_line
+	
+	; popf
+	; jnc .finished_fill
+	
+; .fill_shape:
+	; inc word [.y1]
+	
+	; mov ax, [.y1]
+	; cmp ax, [.y2]
+	; jge .finished_fill
+	
+	; mov cx, [.x1]
+	; mov dx, [.y1]
+	; mov si, [.x2]
+	; mov di, [.y1]
+	; call os_draw_line
+	
+	; jmp .fill_shape
+	
+; .finished_fill:
+	; popa
+	; ;dec byte [internal_call]
+	; ret
+	
+	; .x1				dw 0
+	; .x2				dw 0
+	; .y1				dw 0
+	; .y2				dw 0
+
+; ; Draw freeform shape
+; ; IN: BH = number of points, BL = colour, SI = location of shape points data
+; ; OUT: None, registers preserved
+; ; DATA FORMAT: x1, y1, x2, y2, x3, y3, etc
+; os_draw_polygon:
+	; pusha
+	
+	; ;mov ax, 1000h
+	; ;mov ds, ax
+	; ;mov es, ax
+	
+	; ;inc byte [internal_call]
+	
+	; dec bh
+	; mov byte [.points], bh
+	
+	; mov word ax, [fs:si]
+	; add si, 2
+	; mov word [.xi], ax
+	; mov word [.xl], ax
+	
+	; mov word ax, [fs:si]
+	; add si, 2
+	; mov word [.yi], ax
+	; mov word [.yl], ax
+	
+	; .draw_points:
+		; mov cx, [.xl]
+		; mov dx, [.yl]
+		
+		; mov word ax, [fs:si]
+		; add si, 2
+		; mov word [.xl], ax
+		
+		; mov word ax, [fs:si]
+		; add si, 2
+		; mov word [.yl], ax
+		
+		; push si
+		
+		; mov si, [.xl]
+		; mov di, [.yl]
+		
+		; call os_draw_line
+		
+		; pop si
+		
+		; dec byte [.points]
+		; cmp byte [.points], 0
+		; jne .draw_points
+		
+	; mov cx, [.xl]
+	; mov dx, [.yl]
+	; mov si, [.xi]
+	; mov di, [.yi]
+	; call os_draw_line
+	
+	; popa
+	; ;dec byte [internal_call]
+	; ret
+	
+	; .xi				dw 0
+	; .yi				dw 0
+	; .xl				dw 0
+	; .yl				dw 0
+	; .points				db 0
+	
+
+; Clear the screen by setting all pixels to a single colour
+; BL = colour to set
+os_clear_graphics:
+	pusha
+	
+	mov ax, 0xA000
+	mov es, ax
+
+	mov al, bl
+	mov di, 0
+	mov cx, 64000
+	rep stosb
+
+	popa
+	ret
+	
+	
+; ----------------------------------------
+; os_draw_circle -- draw a circular shape
+; IN: AL = colour, BX = radius, CX = middle X, DX = middle y
+
+os_draw_circle:
+	pusha
+
+	;push gs
+	;pop ds
+	
+	;inc byte [internal_call]
+
+	mov [.colour], al
+	mov [.radius], bx
+	mov [.x0], cx
+	mov [.y0], dx
+
+	mov [.x], bx
+	mov word [.y], 0
+	mov ax, 1
+	shl bx, 1
+	sub ax, bx
+	mov [.xChange], ax
+	mov word [.yChange], 0
+	mov word [.radiusError], 0
+jmp .next_point
+	
+.finish:
+	popa
+	;dec byte [internal_call]
+	ret
+	
+.next_point:
+	cmp cx, dx
+	jl .finish
+
+	;ax bx - function points
+	;cx = x 
+	;dx = y
+	;si = -x
+	;di = -y
+
+	mov cx, [.x]
+	mov dx, [.y]
+	mov si, cx
+	xor si, 0xFFFF
+	inc si
+	mov di, dx
+	xor di, 0xFFFF
+	inc di
+
+	; (x + x0, y + y0)
+	mov ax, cx
+	mov bx, dx
+	call .draw_point
+
+	; (y + x0, x + y0)
+	xchg ax, bx
+	call .draw_point
+
+	; (-x + x0, y + y0)
+	mov ax, si
+	mov bx, dx
+	call .draw_point
+
+	; (-y + x0, x + y0)
+	mov ax, di
+	mov bx, cx
+	call .draw_point
+
+	; (-x + x0, -y + y0)
+	mov ax, si
+	mov bx, di
+	call .draw_point
+
+	; (-y + x0, -x + y0)
+	xchg ax, bx
+	call .draw_point
+
+	; (x + x0, -y + y0)
+	mov ax, cx
+	mov bx, di
+	call .draw_point
+
+	; (y + x0, -x + y0)
+	mov ax, dx
+	mov bx, si
+	call .draw_point
+	
+	inc word [.y]
+	mov ax, [.yChange]
+	add [.radiusError], ax
+	add word [.yChange], 2
+	
+	mov ax, [.radiusError]
+	shl ax, 1
+	add ax, [.xChange]
+	
+	mov cx, [.x]
+	mov dx, [.y]
+	
+	cmp ax, 0
+	jle .next_point
+	
+	dec word [.x]
+	mov ax, [.xChange]
+	add [.radiusError], ax
+	add word [.xChange], 2
+
+	mov cx, [.x]
+	jmp .next_point
+
+.draw_point:
+	; AX = X, BX = Y
+	pusha
+	add ax, [.x0]
+	add bx, [.y0]
+	mov cx, bx
+	mov bl, [.colour]
+	call os_set_pixel
+	popa
+	ret
+
+.colour				db 0
+.x0				dw 0
+.y0				dw 0
+.radius				dw 0
+.x				dw 0
+.y				dw 0
+.xChange			dw 0
+.yChange			dw 0
+.radiusError			dw 0
+
+; ; ------------------------------------------------------------------
+; ; os_draw_border -- draw a single character border
+; ; BL = colour, CH = start row, CL = start column, DH = end row, DL = end column
+
+; os_draw_border:
+	; pusha
+	
+	; ;mov ax, 0x1000
+	; ;mov ds, ax
+	
+	; ;inc byte [internal_call]
+
+	; mov [.start_row], ch
+	; mov [.start_column], cl
+	; mov [.end_row], dh
+	; mov [.end_column], dl
+
+	; mov al, [.end_column]
+	; sub al, [.start_column]
+	; dec al
+	; mov [.width], al
+	
+	; mov al, [.end_row]
+	; sub al, [.start_row]
+	; dec al
+	; mov [.height], al
+	
+	; mov ah, 09h
+	; mov bh, 0
+	; mov cx, 1
+
+	; mov dh, [.start_row]
+	; mov dl, [.start_column]
+	; call os_move_cursor
+
+	; mov al, [.character_set + 0]
+	; int 10h
+	
+	; mov dh, [.start_row]
+	; mov dl, [.end_column]
+	; call os_move_cursor
+	
+	; mov al, [.character_set + 1]
+	; int 10h
+	
+	; mov dh, [.end_row]
+	; mov dl, [.start_column]
+	; call os_move_cursor
+	
+	; mov al, [.character_set + 2]
+	; int 10h
+	
+	; mov dh, [.end_row]
+	; mov dl, [.end_column]
+	; call os_move_cursor
+	
+	; mov al, [.character_set + 3]
+	; int 10h
+	
+	; mov dh, [.start_row]
+	; mov dl, [.start_column]
+	; inc dl
+	; call os_move_cursor
+	
+	; mov al, [.character_set + 4]
+	; mov cx, 0
+	; mov cl, [.width]
+	; int 10h
+	
+	; mov dh, [.end_row]
+	; call os_move_cursor
+	; int 10h
+	
+	; mov al, [.character_set + 5]
+	; mov cx, 1
+	; mov dh, [.start_row]
+	; inc dh
+	
+; .sides_loop:
+	; mov dl, [.start_column]
+	; call os_move_cursor
+	; int 10h
+	
+	; mov dl, [.end_column]
+	; call os_move_cursor
+	; int 10h
+	
+	; inc dh
+	; dec byte [.height]
+	; cmp byte [.height], 0
+	; jne .sides_loop
+	
+	; popa
+	; ;dec byte [internal_call]
+	; ret
+	
+	
+; .start_column				db 0
+; .end_column				db 0
+; .start_row				db 0
+; .end_row				db 0
+; .height					db 0
+; .width					db 0
+
+; .character_set				db 218, 191, 192, 217, 196, 179
+
 
 ; ==================================================================
 
@@ -9037,11 +9654,8 @@ os_long_int_negate:
 
 os_get_file_list:
 
-os_set_pixel:
-os_get_pixel:
 os_draw_line:
 os_draw_rectangle:
-os_draw_circle:
 os_draw_polygon:
 os_draw_border:
 
@@ -13148,17 +13762,10 @@ jmp kernel
 call os_show_cursor
 jmp kernel
 
-; c_difficulty_f:
-; mov si,difficulty
-; call change
-; jmp kernel
-
 signature:
 db 'DivJ',0
 jmp kernel
 
-;calc_options:
-;db '1.Add 2.Sub 3.Mul 4.Div 5.dtoh',0
 drive_type_string:
 db 'DrvType:',0
 drive_number_string:
@@ -13219,16 +13826,6 @@ dw 0x0000
 message:
 dw 0
 
-; LBUTTON db 0x00 
-; RBUTTON db 0x00 
-; MBUTTON db 0x00 
-; XCOORD	db 0x00 
-; YCOORD	db 0x00 
-; XCOORDN db 0x00 
-; YCOORDN db 0x00 
-; XFLOW	db 0x00 
-; YFLOW	db 0x00 
-
 vars:
 
 var_a:
@@ -13260,12 +13857,6 @@ dw 0x0000,0x0200
 var_x	db 0x00
 var_y	db 0x01
 
-; strlbt	db "Left btn:   ", 0x00
-; strrbt	db "Rigt btn:  ", 0x00
-; strmbt	db "Midl btn: ", 0x00
-; strcdx	db "X:", 0x00
-; strcdy	db "Y:", 0x00
-; strneg	db "-", 0x00
 row	db 0x00
 col	db 0x00
 
@@ -13660,9 +14251,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1006
+dw 1007
 verstring:
-db ' Aplaun OS (version 1.0.6) ',0
+db ' Aplaun OS (version 1.0.7) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
