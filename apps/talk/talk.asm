@@ -489,6 +489,18 @@ call newline
 .process:
 jmp bx
 
+;IN: dx=word location to add
+add_presence_location:
+pusha
+mov si,found_presence
+.loop:
+lodsw
+cmp ax,0
+jne .loop
+mov [si-2],dx
+popa
+ret
+
 helpstr:
 db ' Talk to me : ',0
 debugstr:
@@ -613,5 +625,9 @@ dw 0
 found_number:
 dw 0
 debug_switch: db 0x0f
+
+found_presence:
+times 40 dw 0
+found_presence_end:
 
 times (512*4)-($-$$) db 0

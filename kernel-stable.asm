@@ -1332,7 +1332,6 @@ mov si,found
 mov di,ImageName
 mov cx,0x0008
 call memcpys
-call checkfname
 
 mov si,.extension_com
 call microkernel_findfile
@@ -1785,8 +1784,6 @@ lodsw
 inc cx
 cmp cx,10
 jg .done
-cmp ax,[currentdirtemp]
-je .done
 cmp ax,0
 jne .loop
 .done:
@@ -1847,11 +1844,11 @@ pop ds
 call os_reset
 jmp kernel
 
-; c_reset_c:
-; mov ah,0x00
-; mov al,[mode]
-; int 10h
-; ret
+c_reset_c:
+mov ah,0x00
+mov al,[mode]
+int 10h
+ret
 
 c_cls_f:
 call clear_screen
@@ -2828,9 +2825,6 @@ mov es,bx
 mov ch,[track]
 mov dh,[head]
 mov byte dl,[drive]
-;xchg bx,ax
-;call calculate_size
-;mov ah,bh
 mov word bx,[loc]
 mov al,[size]
 int 13h
@@ -3258,7 +3252,6 @@ out 0x61,al
 .done:
 ;jmp kernel
 ;call PlayWAV
-;call calculate_size
 mov ax,0x80
 mov al,[size]
 int 0x1a
@@ -3358,8 +3351,8 @@ not byte [slowmode]
 jmp kernel
 
 c_size_f:
-call getno
-mov [size],ax
+mov si,size
+call change
 jmp kernel
 
 debug_int:
@@ -4644,7 +4637,7 @@ lodsb
 inc cx
 cmp al,0
 jne .loop
-;dec cx
+dec cx
 mov ax,cx
 ;mov [.temp],cx
 ;popa
@@ -4834,22 +4827,12 @@ LBACHS:
           mov     BYTE [absoluteTrack], al
           ret
 
-;************************************************;
-; Reads a series of sectors
-; CX=>Number of sectors to read
-; AX=>Starting sector
-; ES:BX=>Buffer to read to
-;************************************************;
-
 ReadSectors:
 ; xor bp,bp
 ; mov es,bp
-;call calculate_size
-;mov cx,ax
-;mov cx,[size]
 mov byte [.failflag],0x0f
      .Read_Sectors_MAIN:
-          mov     di, 0x0005                          ; five retres for error
+          mov     di, 0x0005                          ; five retries for error
 	.Read_Sectors_SECTORLOOP:
           push    ax
           push    bx
@@ -4866,8 +4849,8 @@ mov     ah, 0x02
           mov     ch, BYTE [absoluteTrack]            ; track
           mov     cl, BYTE [absoluteSector]           ; sector
           mov     dh, BYTE [absoluteHead]             ; head
-;mov al,[size]
-mov al,1	;;TODO
+mov al,[size]
+;mov al,1	;;TODO
 ; pusha
 ; call printnb
 ; popa
@@ -5039,8 +5022,8 @@ mov ax,[loc]
 mov [var_a],ax
 mov [loc],di
 .fdir_not_interrupt:
-mov word ax,[size]
-mov word [var_y],ax
+mov byte al,[size]
+mov byte [var_y],al
 .fdir_next:
 call LOAD_ROOT
 jmp fileload
@@ -5096,28 +5079,27 @@ ret
 db 0x0f
 
 LOAD_ROOT:
-call calculate_root
+     call calculate_root
 mov dx,[dir_seg]
 mov es,dx
 mov word bx,[loc2]
-;call calculate_size
-;mov dx,ax
-mov dx,[size]
-push dx
+		  mov dl,[size]
+		  push dx
+	 
 cmp word [currentdir],0x0013
 jne .infolder
-		  mov [size],cx
+		  mov [size],cl
 		  call    ReadSectors
 		  pop dx
-		  mov [size],dx
+		  mov [size],dl
 mov dx,0
 mov es,dx
 ret
 .infolder:
-mov word [size],1
+mov byte [size],1
 ;mov     dx, WORD [di + 0x001A]
           ;mov     WORD [cluster], dx          
-		  call calculate_fat
+     call calculate_fat
           mov word bx,[loc3]
           call ReadSectors
 		  
@@ -5159,63 +5141,6 @@ popa
 pusha
 call LBACHS
 call space
-call print_HTS_details
-popa
-.callnodata:
-          xor     cx, cx
-          mov     cl, BYTE [bpbSectorsPerCluster]     ; sectors to read
-          call    ReadSectors
-		  ;inc word [xmouse]
-          push    bx
-          ;call calculate_next_cluster
-		  ; compute next cluster
-
-          mov     ax, WORD [cluster]                  ; identify current cluster
-		  mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-		  ; pusha
-		  ; ;mov ax,dx
-		  ; call printwordh
-		  ; mov ax,dx
-		  ; call printwordh
-		  ; mov ax,bx
-		  ; call printwordh
-		  ; popa
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-          
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-         jmp     .DONE
-         
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
-          
-     .DONE:
-		  mov     WORD [cluster], dx
-		  ;cmp word [xmouse],4
-		  ;jg .close
-		  cmp     dx, 0x0FF0                          ; test for end of file
-          jb .loop
-.close:
-pop bx
-mov word [es:bx],0
-mov word ax,[player_x]
-mov word [cluster],ax
-pop dx
-mov [size],dx
-mov dx,[kernel_seg]
-mov es,dx
-ret
-
-print_HTS_details:
 mov al,'H'
 call printf
 mov al,'='
@@ -5236,15 +5161,61 @@ mov al,'='
 call printf
 mov byte al,[absoluteSector]
 call printh
-ret
+popa
+.callnodata:
+          xor     cx, cx
+          mov     cl, BYTE [bpbSectorsPerCluster]     ; sectors to read
+          call    ReadSectors
+		  ;inc word [xmouse]
+          push    bx
+          ;call calculate_next_cluster
+		  ; compute next cluster
 
+          mov     ax, WORD [cluster]                  ; identify current cluster
+		  .skip:
+		  ;mov [var_b]
+          mov     cx, ax                              ; copy current cluster
+          mov     dx, ax                              ; copy current cluster
+          shr     dx, 0x0001                          ; divide by two
+          add     cx, dx                              ; sum for (3/2)
+          mov word bx, [loc3]                          ; location of FAT in memory
+          add     bx, cx                              ; index into FAT
+          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
+          test    ax, 0x0001
+          jnz     .ODD_CLUSTER
+          
+     .EVEN_CLUSTER:
+     
+          and     dx, 0000111111111111b               ; take low twelve bits
+         jmp     .DONE
+         
+     .ODD_CLUSTER:
+     
+          shr     dx, 0x0004                          ; take high twelve bits
+          
+     .DONE:
+		  mov     WORD [cluster], dx
+		  ;cmp word [xmouse],4
+		  ;jg .close
+		  cmp     dx, 0x0FF0                          ; test for end of file
+          jb .loop
+;.close:
+pop bx
+mov word [es:bx],0
+mov word ax,[player_x]
+mov word [cluster],ax
+pop dx
+mov [size],dl
+mov dx,0
+mov es,dx
+ret
 fileload:
           mov     cx, WORD [bpbRootEntries]
 		  mov ax,[dir_seg]
 		  mov es,ax
           mov di, [loc2]
-cmp byte [found],'l'
-je .makelist
+; cmp byte [found],'l'
+; je .makelist
 cmp byte [found],'z'
 je .makelist
 cmp byte [found],'r'
@@ -5346,7 +5317,7 @@ jmp FAILURE
 ;mov word [.list_pos],found+20
 mov ax,[dir_seg]
 mov ds,ax;Directory Segment
-;push ds
+push ds
 mov ax,[kernel_seg]
 mov es,ax
 ;mov di,[.list_pos]
@@ -5371,7 +5342,7 @@ je .exitmakelistloop
 jmp .makelistloop
 .exitmakelistloop:
 ;dec di
-mov word [es:di-1],0
+mov byte [di-1],0
 
 mov ax,[kernel_seg]
 mov ds,ax
@@ -5380,7 +5351,6 @@ mov ds,ax
 ;call reload_words
 ;jmp FAILURE
 
-call clear_screen
 mov ax,found+20
 mov bx,verstring
 mov cx,file_selector_str
@@ -5391,10 +5361,6 @@ imul ax,0x20
 mov word di,[loc2]
 add di,ax
 
-mov dx,[dir_seg];Directory Segment
-mov es,dx
-mov dx,[kernel_seg]
-mov ds,dx
 call save_filedata
 
 ;mov ax,[kernel_seg]
@@ -5406,6 +5372,7 @@ call save_filedata
 ;mov cx,0x0020
 ;call reload_words
 ;jmp kernel
+pop es
 jmp LOAD_FAT
 
 .list_pos:
@@ -5437,7 +5404,7 @@ popa
 mov sp,[var_k]
 mov dx,[dir_seg]
 mov es,dx
-mov di,[FileSystem_DONE.selected_file]
+mov di,[var_l]
 ;mov si,di
 mov si,ImageName
 mov cx,0x000C
@@ -5470,13 +5437,23 @@ mov bx,0
 ret
 
      LOAD_FAT:
-	 mov [FileSystem_DONE.selected_file],di
-	 pusha
-	 mov si,tempstr
-	 add di,8
+	 mov [var_l],di
+	 push di
+	 push es
+	 push ds
+	 mov dx,[kernel_seg]
+	 mov es,dx
+	 mov dx,[dir_seg]
+	 mov ds,dx
+	 mov si,di
+	 add si,8
+	 mov di,tempstr
 	 mov cx,0x0003
-	 call memstr_copy
-	 popa
+	 rep movsb
+	 mov byte [es:di],0
+	 pop ds
+	 pop es
+	 pop di
 	 ;push ds
 	 ;pop es
 cmp byte [found],'i'
@@ -5490,8 +5467,9 @@ je .noname
      call calculate_fat
 mov dx,[dir_seg]
 mov es,dx
-mov bx,[loc3]
-call ReadSectors
+          mov bx,[loc3]
+          call ReadSectors
+		  
 		  ; xor ax,ax
           ; mov es, ax                              ; destination for image
           mov bx,[loc]                          ; destination for image
@@ -5505,12 +5483,11 @@ and al,0x10
 cmp al,0x10
 je .skip
 pusha
-;call calculate_size
-mov ax,[size]
-mov [var_j],ax
+call calculate_size
+mov [var_j],al
 ; cmp al,25
 ; jg .too_big
-mov word [size],ax
+mov byte [size],al
 jmp .done
 ; .too_big:
 ; mov byte al,[var_y]
@@ -5527,10 +5504,8 @@ cmp byte [completeload_flag],0x0f
 je .complete_load_off
 cmp byte [found],'a'
 jne .complete_load_off
-		  mov word [size],1
+		  mov byte [size],1
 		  .complete_load_off:
-mov word ax,[cluster]
-mov word [player_x],ax
 mov dx,0
 mov es,dx
      LOAD_IMAGE:
@@ -5548,16 +5523,17 @@ mov es,dx
 ; call getkey
 ; .dontstop:
 		  ; popa
-		  ;mov cx,[size]
-call    ReadSectors
-mov dx,[dir_seg]
+          call    ReadSectors
+;mov dx,[dir_seg]
 ; mov dx,0
-mov es,dx
+; mov es,dx
           push    bx
           ;call calculate_next_cluster
 		  ; compute next cluster
+mov word ax,[cluster]
+mov word [player_x],ax
      ;.loop:
-          mov     ax, WORD [cluster]                  ; identify current cluster
+          ;mov     ax, WORD [cluster]                  ; identify current cluster
 		  ;cmp word [xmouse],0
 		  ;je .skip
 		  ;mov ax, WORD [xmouse]
@@ -5567,10 +5543,10 @@ mov es,dx
           mov     dx, ax                              ; copy current cluster
           shr     dx, 0x0001                          ; divide by two
           add     cx, dx                              ; sum for (3/2)
-          mov 	  bx, [loc3]                          ; location of FAT in memory
+          mov word bx, [loc3]                          ; location of FAT in memory
           add     bx, cx                              ; index into FAT
-          mov     dx, [es:bx]                       ; read two bytes from FAT
-		  test    ax, 0x0001
+          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
+          test    ax, 0x0001
           jnz     .ODD_CLUSTER
           
      .EVEN_CLUSTER:
@@ -5583,39 +5559,30 @@ mov es,dx
           shr     dx, 0x0004                          ; take high twelve bits
           
      .DONE:
-mov bx,0
-mov es,bx
-cmp byte [completeload_flag],0xf0
-je complete_load_on
-cmp byte [found],'a'
-jne complete_load_off
-complete_load_on:
+cmp byte [completeload_flag],0x0f
+je complete_load_off
+          cmp byte [found],'a'
+		  jne complete_load_off
 		  ;mov     WORD [xmouse], dx                  ; store new cluster
 		  cmp WORD [cluster], dx
 		  je complete_load_off
 		  cmp WORD [cluster],0
 		  je complete_load_off
-		  cmp dx,0
-		  je complete_load_off
-; mov al,[var_x]
-; and al,0x10
-; cmp al,0x10
-; je complete_load_off
 		  mov     WORD [cluster], dx
           cmp     dx, 0x0FF0                          ; test for end of file
-		  jb LOAD_IMAGE
+          jb LOAD_IMAGE
 		  complete_load_off:
 		  ;mov word [xmouse],0
 mov word ax,[player_x]
 mov word [cluster],ax
 
-     FileSystem_DONE:
+     DONE:
 mov ax,0
 mov es,ax
 	 pop bx
 	 mov sp,[var_k]
-mov ax,[var_y]
-mov [size],ax
+mov byte al,[var_y]
+mov byte [size],al
 
 ;pop sp
 mov byte [kernelreturnflag],0x0f
@@ -5643,7 +5610,26 @@ add ax,[cluster]
 sub ax,2
 call printwordh
 call space
-call print_HTS_details
+mov al,'H'
+call printf
+mov al,'='
+call printf
+mov byte al,[absoluteHead]
+call printh
+call colon
+mov al,'T'
+call printf
+mov al,'='
+call printf
+mov byte al,[absoluteTrack]
+call printh
+call colon
+mov al,'S'
+call printf
+mov al,'='
+call printf
+mov byte al,[absoluteSector]
+call printh
 
 mov byte [comm2],'f'
 cmp byte [found],'r'
@@ -5651,8 +5637,8 @@ je .roam_on
 cmp byte [found],'t'
 je .roamt_on
 
-; cmp byte [found],'z'
-; je .size_skip
+cmp byte [found],'z'
+je .size_skip
 ; cmp byte [found],'l'
 ; je .size_skip
 
@@ -5666,7 +5652,7 @@ mov byte [comm2],'t'
 jmp .size_skip
 .roam_on:
 mov byte [comm2],'r'
-; jmp .size_skip
+jmp .size_skip
 .dont_roam:
 
 call space
@@ -5712,8 +5698,6 @@ jmp fdir.fdir_not_interrupt
 .done:
 cmp byte [comm2],'t'
 je .roam_done
-cmp byte [comm2],'r'
-je .roam_fileselected
 jmp kernel
 .roam_done:
 clc
@@ -5723,30 +5707,12 @@ mov dx,[var_a]
 mov [loc],dx
 jmp bx
 
-.roam_fileselected:
-mov di,[FileSystem_DONE.selected_file]
-mov si,found
-mov cx,0x0B
-call memstr_copy
-
-;mov si,tempstr
-;call prnstr
-; mov si,tempstr
-; call pipespace2enter
-; mov si,tempstr
-; call pipestore
-call microkernel
-jmp kernel
-
-.selected_file:
-dw 0
-
 FAILURE:
 mov ax,0
 mov es,ax
 mov sp,[var_k]
-mov ax,[var_y]
-mov [size],ax
+mov byte al,[var_y]
+mov byte [size],al
 stc
 mov word [comm],0x0f0f
 cmp byte [found],'l'
@@ -5787,31 +5753,9 @@ mov dx,[comm]
 jmp bx
 ;jmp microkernel_ret
 
-memstr_copy:
-	 push si
-	 push di
-	 push es
-	 push ds
-	 mov dx,[kernel_seg]
-	 mov es,dx
-	 mov dx,[dir_seg]
-	 mov ds,dx
-	 xchg si,di
-	 ;add si,8
-	 ;mov di,tempstr
-	 rep movsb
-	 mov byte [es:di],0
-	 pop ds
-	 pop es
-	 pop di
-	 pop si
-ret
-
 calculate_size:
-pusha
 mov dx,[filesize+2]
 mov ax,[filesize]
-; xchg ax,dx
 mov cx,0x0200
 cmp dx,0x1fff
 jge .skip
@@ -5820,36 +5764,12 @@ jne .start
 cmp ax,0
 je .skip
 .start:
-;div cx
-call division
+div cx
 .skip:
 cmp dx,0
 je .perfectsector
 inc ax
 .perfectsector:
-mov [.temp],ax
-popa
-mov ax,[.temp]
-ret
-.temp: dw 0
-
-;Divides dx*16+ax by cx
-; OUT: dx=remainder, ax=quotient
-division:
-imul dx,512
-add dx,ax
-mov ax,0
-cmp dx,cx
-jg .loop
-mov dx,0
-jmp .small
-.loop:
-sub dx,cx
-.small:
-inc ax
-cmp dx,cx
-jge .loop
-.quit:
 ret
 
 find_next_free_cluster:
@@ -6001,9 +5921,8 @@ jle delete_cluster
 ret
 
 calculate_fat:
-
-	 ; compute size of FAT and store in "cx"
-
+; compute size of FAT and store in "cx"
+     
           xor     ax, ax
           mov     al, BYTE [bpbNumberOfFATs]          ; number of FATs
           mul     WORD [bpbSectorsPerFAT]             ; sectors used by FATs
@@ -6061,9 +5980,8 @@ pusha
 ;mov dx,ds
 ;xor bx,bx
 ;mov es,dx
-;call calculate_size
-mov al,[size]
 mov byte ah,0x03
+mov byte al,[size]
 mov byte ch,[absoluteTrack]
 mov byte cl,[absoluteSector]
 mov byte dh,[absoluteHead]
@@ -6078,9 +5996,8 @@ popa
 ret
 
 fileload_c:
-;call calculate_size
-mov al,[size]
 mov ah, 0x02
+mov al,[size]
 mov ch, BYTE [absoluteTrack]
 mov cl, BYTE [absoluteSector]
 mov dh, BYTE [absoluteHead]
@@ -6105,9 +6022,9 @@ call os_input_dialog
 ret
 
 filenew:
-mov ax,[size]
-mov [var_x],ax
-mov word [size],0x09 ;size of fat
+mov al,[size]
+mov [var_x],al
+mov byte [size],0x09
 
 cmp byte [found],'r'
 je .dont_allocate
@@ -6143,8 +6060,8 @@ call newline
 jmp .loop
 .filenew_exit:
 call print_error
-mov ax,[var_x]
-mov [size],ax
+mov al,[var_x]
+mov [size],al
 jmp .exitl
 .loop:
 cmp byte [found],'r'
@@ -6184,7 +6101,7 @@ mov dx,[dir_seg]
 mov es,dx
 mov dx,[kernel_seg]
 mov ds,dx
-;mov di,[FileSystem_DONE.selected_file]
+;mov di,[var_l]
 ;mov si,di
 mov si,ImageName
 mov cx,0x000C
@@ -6284,8 +6201,8 @@ stosb
 call SAVE_ROOT
 
 .exitl:
-mov ax,[var_x]
-mov [size],ax
+mov al,[var_x]
+mov [size],al
 mov dx,0
 mov es,dx
 ret
@@ -7043,16 +6960,16 @@ call setpos
 jmp doc_shown_control
 
 doc:
-; mov ax,0x0200
-; ;xor dx,dx
-; mov cx,[size]
-; imul ax,cx
+mov ax,0x0200
+xor cx,cx
+;xor dx,dx
+mov byte cl,[size]
+imul ax,cx
 ;cmp dx,0
 ;jg .small_file
 ;mov ax,0xFFFF
 ;.small_file:
-mov ax,[size]
-mov [var_b],ax
+mov word [var_b],ax
 mov word [var_a],0x0000
 mov si,[loc]
 doc_loop:
@@ -11917,7 +11834,7 @@ call setpos
 iret
 
 int61h_set_size:
-mov [size],dx
+mov [size],dl
 iret
 
 int61h_change_typemode:
@@ -12388,7 +12305,7 @@ iret
 int61_LBACHS:
 mov ax,[cluster]
 call LBACHS
-mov ax,[size]
+mov al,[size]
 mov ch, BYTE [absoluteTrack]
 mov cl, BYTE [absoluteSector]
 mov dh, BYTE [absoluteHead]
@@ -12469,11 +12386,11 @@ iret
 
 int64_getsize:
 push ax
-mov dx,[size]
-mov ax,[var_j]
-cmp  ax,dx
+mov dl,[size]
+mov al,[var_j]
+cmp  al,dl
 jl .ok
-mov dx,ax
+mov dl,al
 .ok:
 pop ax
 iret
@@ -12629,8 +12546,8 @@ int 0x61
 mov si,c_size
 call prnstr
 call colon
-mov ax,[size]
-call printn
+mov al,[size]
+call printnb
 call space
 mov si,c_head
 call prnstr
@@ -13721,11 +13638,10 @@ dec dh
 call setpos
 xor dx,dx
 mov [var_a],dx
-; xor ax,ax
-; mov al,[size]
-; mov bx,0x200
-; imul ax,bx
-mov ax,[size]
+xor ax,ax
+mov al,[size]
+mov bx,0x200
+imul ax,bx
 mov [var_b],ax
 .read_loop:
 mov si,[loc]
@@ -13950,10 +13866,8 @@ dw 0x0000
 filesize:
 dw 0x0000,0x0200
 
-var_x:
-dw 0x00
-var_y:
-dw 0x01
+var_x	db 0x00
+var_y	db 0x01
 
 row	db 0x00
 col	db 0x00
@@ -14008,7 +13922,7 @@ dw 0x0013
 returncode:
 db 0x00
 size:
-dw 0x0200
+db 0x01
 drive:
 db 0x80
 drive2:
@@ -14016,10 +13930,8 @@ db 0x80
 mode:
 db 0x03
 color:
-;db 27
 db 0x31
 color2:
-;db 49
 db 0x74
 ;frame:
 ;db 0x0A
@@ -14351,9 +14263,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1009
+dw 1007
 verstring:
-db ' Aplaun OS (version 1.0.9) ',0
+db ' Aplaun OS (version 1.0.7) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
@@ -14384,7 +14296,8 @@ interrupt2_api:
 db 'Int: 1c=timer 20=quit 03=debug 06=invalid 07=math 1b=ctrl+brk 33=mouse',0
 mint_list:
 db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-exit',0
-
+alarmtextstr:
+db ' Alarm :Press {any key to jmp to kernel} or {enter to continue}.',0
 doc_helpstr:
 db 0x1B,0x18,0x19,0x1A,'-Move,(Esc,~)-Close, F1-Help,F3-Copy,{F4,Insert-Paste},F5-Details,F6-Fill0',0
 read_helpstr:
@@ -14399,10 +14312,6 @@ db 'F1-help (Esc,q)-quit (Ins,End)-Continue ',0
 ;db ' (PgUp-FrameUp,PgDown-FrameDown), F6-Fill,F7-Clear,F8-Clean,F9-SetWall',0
 edit_help_str:
 db "F1-Help F2-Save F3-Copy F4-Paste F5-New F6-Load F7-LineDel F8-Details F9-Option",0
-
-alarmtextstr:
-db ' Alarm :Press any key - kernel or enter to continue.',0
-
 con:
 db 'ON',0
 coff:
@@ -14463,8 +14372,7 @@ db 'COMMON  TXT'
 dw 0
 prompt:
 db 'Bigger Picture:',0
-;times 5 db 0
-;times 15 db 0
+times 15 db 0
 ;currentprocess:
 ; db 0
 ;totalprocess:
@@ -14520,7 +14428,7 @@ db 'Bigger Picture:',0
 found_tempchar:
 db 0
 found:
-;times 1 db 0
+times 0 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45)-($-$$) db 0 ; Optimal Size

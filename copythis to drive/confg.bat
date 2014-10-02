@@ -13,6 +13,7 @@ lIPrompt
 prompt <Extic>
 cls
 lIWelcome
-iUisieirl
+iUisieir
 micro
 echo
+roam

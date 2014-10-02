@@ -1,9 +1,12 @@
+extension list to be stored
+
+dir change shouldn't cancel kernel_return
+optimise ChainLoops in FAT16
 extension to app register
 mint can be registered by apps by lists
 previous commands list
 EXE
 talk app impoved by two bytes as address to jump
-alias
 faults
 GUI
 display limits
