@@ -732,7 +732,7 @@ db ' Correct',0
 welcome_str:
 db ' Welcome User.',0
 welcome_str2:
-db ' Thankyou for trying out Ecstatic OS. ',0
+db ' Thankyou for trying out Aplaun OS. ',0
 welcome_recommend:
 db ' We recommend you to enter a new password',0
 welcome_recommend2:

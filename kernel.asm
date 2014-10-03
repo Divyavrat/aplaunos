@@ -228,8 +228,6 @@ kernel:
 ; Checks for all commands
 ; and the returning point for programs
 
-mov al,[found_tempchar]
-mov [found],al
 cmp byte [kernelreturnflag],0xf0
 je kerneldone
 mov byte [step_flag],0x0f
@@ -240,9 +238,35 @@ mov si,prompt
 call prnstr
 call color_switch
 
+;Recieve the given command
+;form Input Stream
 command_line:
-call chkkey
-jz command_line
+call chkkey	;If input is found
+jnz .continue_command
+
+;Else execute free kernel module
+
+mov ah,0x02 ;Get current time
+int 0x1a
+cmp dh,[.free_time_current] ; Check if a second has passed
+je command_line ; Else return to input loop
+mov [.free_time_current],dh	;Update current counter
+inc byte [.free_time_elapsed] ;Increment time counter
+mov al,[.free_time_elapsed]
+cmp al,[free_kernel_waittime]
+jl command_line
+
+mov byte [.free_time_elapsed],0 ;Reset Counter
+; What to execute if kernel is free
+mov si,free_kenel_commandstr
+call pipespace2enter
+mov si,free_kenel_commandstr
+call pipestore
+jmp command_line
+
+;If a special key is found
+.continue_command:
+mov byte [.free_time_elapsed],0 ;Reset Counter
 cmp ah,0x48
 je previous_comm
 cmp ah,0x0f
@@ -252,6 +276,10 @@ je help_key
 cmp ah,0x3c
 je setting_key
 jmp command_start
+.free_time_current:
+db 0
+.free_time_elapsed:
+db 0
 
 help_key:
 call getkey
@@ -290,8 +318,6 @@ call getarg
 ; mov bx,prompt
 ; call os_input_dialog
 command_received:
-mov al,[found]
-mov [found_tempchar],al
 cmp byte [found],0	;Checking for empty command
 ;cmp al,0
 je kernel
@@ -698,9 +724,9 @@ call cmpstr
 jc del_link
 
 mov si,found
-mov di,c_cd
+mov di,c_cddot
 call cmpstr
-jc cd_link
+jc cddot_link
 
 mov si,found
 mov di,c_roam
@@ -834,12 +860,12 @@ call command
 jmp kernel
 
 dirnew_link:
-mov byte [found],'d'
+mov byte [command_tempchar],'d'
 call filenew
 jmp kernel
 
 filenew_link:
-mov byte [found],'f'
+mov byte [command_tempchar],'f'
 call filenew
 jmp kernel
 
@@ -849,7 +875,7 @@ call filesave_c
 jmp kernel
 
 rename_link:
-mov byte [found],'r'
+mov byte [command_tempchar],'r'
 call filenew
 jmp kernel
 
@@ -879,11 +905,11 @@ call os_input_dialog
 	jmp kernel
 
 del_link:
-mov byte [found],'x'
+mov byte [command_tempchar],'x'
 call filenew
 jmp kernel
 
-cd_link:
+cddot_link:
 mov di,ImageName
 mov al,'.'
 stosb
@@ -891,24 +917,25 @@ stosb
 mov al,0x20
 mov cx,9
 rep stosb
-mov byte [found],'q'
-;jmp fdir_link
+mov byte [command_tempchar],'q'
+jmp fdir
 
 fdir_link:
-mov byte [comm2],'q'
+mov al,[found]
+mov [command_tempchar],al
 jmp fdir
 
 roam_link:
-mov byte [found],'r'
+mov byte [command_tempchar],'r'
 jmp fdir
 
 command_link:
 call command ;; Checking for mints
 cmp byte [echo_flag],0x0f
 je .done
-mov al,[found_tempchar]
-cmp [found],al
-jne .done
+; mov al,[found_tempchar]
+; cmp [found],al
+; jne .done
 call print_error
 .done:
 jmp kernel ;Return to main loop
@@ -924,7 +951,7 @@ mov ah,0x03
 jmp drive_comm
 
 c_dir_f:
-mov byte [found],'q'
+mov byte [command_tempchar],'q'
 mov byte [comm2],'q'
 jmp fdir
 
@@ -945,7 +972,7 @@ call bx
 mov ax,0
 mov ds,ax
 mov es,ax
-call reg_int	;;TODO
+call reg_int	;;TODO fix replacement of calls
 jmp kernel
 ;mov word bx,0x0001
 ;push bx
@@ -1394,18 +1421,13 @@ mov di,ImageName+8
 mov cx,0x003
 rep movsb
 call checkfname
-mov si,found
-call strshiftr
 
 mov word [comm],0x0f0f
-mov byte [found],'c'
+mov byte [command_tempchar],'c'
 mov bx,.return_address
 mov [extra],bx
 jmp fdir
 .return_address:
-
-mov si,found
-call strshift
 
 mov dx,[comm]
 cmp dx,0xf0f0
@@ -1453,9 +1475,9 @@ mov si,[loc]
 ;lodsb
 mov al,[es:si]
 inc si
-cmp byte [found],'c'
+cmp byte [command_tempchar],'c'
 je .code_show
-cmp byte [found],'p'
+cmp byte [command_tempchar],'p'
 je .print_file
 call printf
 jmp .text_loop_check
@@ -1802,7 +1824,7 @@ int 0x10
 call clear_screen
 ;call newline
 
-;;TODO
+;;TODO causing problems in some PCs
 ;;call os_mouse_setup
 
 call os_memory_reset
@@ -2892,22 +2914,22 @@ command:
 mov bx,found
 mov al,'d'
 cmp [bx],al
-je c_date_f_link
+je c_date_f
 mov al,'t'
 cmp [bx],al
 je c_time_f
 mov al,'c'
 cmp [bx],al
-je c_timer_f_link
+je c_timer_f
 mov al,'i'
 cmp [bx],al
-je c_char_f_link
+je c_char_f
 mov al,'I'
 cmp [bx],al
-je c_string_f_link
+je c_string_f
 mov al,'h'
 cmp [bx],al
-je c_help_mint_link
+je c_help_mint
 mov al,'v'
 cmp [bx],al
 je c_ver_f
@@ -2919,41 +2941,17 @@ je c_ver_f
 ; je c_mousemode_c_link
 mov al,'s'
 cmp [bx],al
-je c_space_f_link
+je c_space_f
 mov al,'p'
 cmp [bx],al
-je c_pause_f_link
+je c_pause_f
 mov al,'l'
 cmp [bx],al
-je c_line_f_link
+je c_line_f
 mov al,'e'
 cmp [bx],al
 je c_exit_f
 ret
-
-c_date_f_link:
-jmp c_date_f
-
-c_timer_f_link:
-jmp c_timer_f
-
-c_char_f_link:
-jmp c_char_f
-
-c_string_f_link:
-jmp c_string_f
-
-c_pause_f_link:
-jmp c_pause_f
-
-c_line_f_link:
-jmp c_line_f
-
-c_space_f_link:
-jmp c_space_f
-
-c_help_mint_link:
-jmp c_help_mint
 
 c_ver_f:
 mov si,verstring
@@ -3002,6 +3000,7 @@ mov si,found
 call prnstr
 ret
 
+; Shutdown the computer
 c_exit_f:
 call printf
 
@@ -3160,15 +3159,15 @@ jmp kernel
 db 0x46
 
 time:
-mov ah,0x02
-int 0x1a
-mov al,ch
+mov ah,0x02	;Get CMOS time
+int 0x1a	;through BIOS interrupt
+mov al,ch	;Hours
 call printh
 call colon
-mov al,cl
+mov al,cl	;Minutes
 call printh
 call colon
-mov al,dh
+mov al,dh	;Seconds
 call printh
 ret
 
@@ -3617,11 +3616,10 @@ dw 24
 c_driveinfo_f:
 push es
 mov dl,[drive]
-xor ax,ax
-mov es,ax
 mov di,ax
 mov ah, 8
 int 13h                       ; get drive parameters
+pop es
 mov [DRIVE_TYPE], bl
 and cx, 3Fh                   ; maximum sector number
 mov [SECTORS_PER_TRACK], cx
@@ -3629,7 +3627,6 @@ mov [NUMBER_OF_DRIVES], dl
 movzx dx, dh                  ; maximum head number
 add dx, 1
 mov [NUMBER_OF_HEADS], dx
-pop es
 
 mov si,drive_f
 call prnstr
@@ -4394,19 +4391,23 @@ ret
 ; stc
 ; ret
 
+; Expression Calculator
 c_calc_f:
+
+;Initialization
 mov eax,0
 mov [.no1],eax
 mov [.no2],eax
 mov [.symbol],al
-mov si,.enterstr
+mov si,.enterstr ;Print prompt string
 call prnstr
 mov di,[locf2]
-call getstr
+call getstr	; Receive expression string
 mov si,[locf2]
 .loop:
-lodsb
+lodsb ;Next Character
 
+;Check if input has ended
 cmp al,0
 je .end
 cmp al,0x0D
@@ -4414,6 +4415,7 @@ je .end
 cmp al,0x0A
 je .end
 
+;See if Operators are found
 cmp al,'+'
 je .sym
 cmp al,'-'
@@ -4425,10 +4427,14 @@ je .sym
 cmp al,'%'
 je .sym
 
+;Check if character is a number
 cmp al,'0'
 jge .num
+
+;Ignore other characters
 jmp .loop
 
+;End Program
 .end:
 mov ah,0x0B
 int 0x61
@@ -4437,7 +4443,7 @@ call .endsym
 mov edx,[.no2]
 mov ah,0x27
 int 0x61
-jmp kernel
+jmp kernel ;Return
 
 .endsym:
 cmp al,'+'
@@ -4809,7 +4815,10 @@ mov ah,0x05
 int 0x1a
 jmp kernel
 
+;************************************************;
+; Convert CHS to LBA
 ; LBA = (cluster - 2) * sectors per cluster
+;************************************************;
 
 ClusterLBA:
           sub     ax, 0x0002                          ; zero base cluster number
@@ -4819,9 +4828,16 @@ ClusterLBA:
           add     ax, WORD [datasector]               ; base data sector
           ret
 
+		  
+;************************************************;
+; Convert LBA to CHS
+; AX=>LBA Address to convert
+;
 ; absolute sector = (logical sector / sectors per track) + 1
 ; absolute head   = (logical sector / sectors per track) MOD number of heads
 ; absolute track  = logical sector / (sectors per track * number of heads)
+;
+;************************************************;
 
 LBACHS:
           xor     dx, dx                              ; prepare dx:ax for operation
@@ -4867,7 +4883,7 @@ mov     ah, 0x02
           mov     cl, BYTE [absoluteSector]           ; sector
           mov     dh, BYTE [absoluteHead]             ; head
 ;mov al,[size]
-mov al,1	;;TODO
+mov al,1
 ; pusha
 ; call printnb
 ; popa
@@ -4890,20 +4906,22 @@ mov byte dl,[drive]
           jnz     .Read_Sectors_SECTORLOOP             ; attempt to read again
           int     0x18
      .Read_Sectors_SUCCESS:
-cmp byte [found],'i'
-je .callnodata
-cmp byte [found],'c'
-je .callnodata
-	      mov     al, '.'
-          call    printf
-		  .callnodata:
-		  ;ret;;TODO
+; cmp byte [command_tempchar],'i'
+; je .callnodata
+; cmp byte [command_tempchar],'c'
+; je .callnodata
+	      
+		  ; .callnodata:
+		  ;ret
           pop     cx
           pop     bx
           pop     ax
           add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
           inc     ax                                  ; queue next sector
           loop    .Read_Sectors_MAIN                   ; read next sector
+		  
+		  ; mov     al, '.' ;;TODO better way to indicate progress
+          ; call    printf
           ret
 .failflag: db 0x0f
 
@@ -5025,11 +5043,11 @@ ret
 
 fdir:
 mov [var_k],sp
-cmp byte [found],'i'
+cmp byte [command_tempchar],'i'
 je .fdir_interrupt
-cmp byte [found],'t'
+cmp byte [command_tempchar],'t'
 je .fdir_interrupt
-;cmp byte [found],'c'
+;cmp byte [command_tempchar],'c'
 ;je .fdir_interrupt
 jmp .fdir_not_interrupt
 ;mov di,ImageName
@@ -5061,9 +5079,9 @@ add     ax, WORD [bpbReservedSectors]         ; adjust for bootsector
 mov     WORD [datasector], ax                 ; base of root directory
 add     WORD [datasector], cx
 mov ax,[currentdir]
-cmp byte [found],'i'
+cmp byte [command_tempchar],'i'
 je .callnodata
-cmp byte [found],'c'
+cmp byte [command_tempchar],'c'
 je .callnodata
 pusha
 call newline
@@ -5142,26 +5160,7 @@ mov word [player_x],ax
           mov     ax, WORD [cluster]                  ; cluster to read
           pop     bx                                  ; buffer to read into
           call    ClusterLBA                          ; convert cluster to LBA
-cmp byte [found],'i'
-je .callnodata
-cmp byte [found],'c'
-je .callnodata
-pusha
-call newline
-call space
-mov al,'L'
-call printf
-call colon
-popa
-pusha
-call printwordh
-popa
-pusha
-call LBACHS
-call space
 call print_HTS_details
-popa
-.callnodata:
           xor     cx, cx
           mov     cl, BYTE [bpbSectorsPerCluster]     ; sectors to read
           call    ReadSectors
@@ -5216,6 +5215,27 @@ mov es,dx
 ret
 
 print_HTS_details:
+cmp byte [advanced_flag],0x0f
+je .done
+pusha
+
+call newline
+call space
+mov al,'C'
+call printf
+call colon
+mov ax,[cluster]
+call printwordh
+call space
+mov si,c_loc
+call prnstr
+call colon
+mov ax,[datasector]
+add ax,[cluster]
+sub ax,2
+call printwordh
+call space
+
 mov al,'H'
 call printf
 mov al,'='
@@ -5236,6 +5256,21 @@ mov al,'='
 call printf
 mov byte al,[absoluteSector]
 call printh
+
+call space
+mov si,c_size
+call prnstr
+call colon
+mov ax,[filesize+2]
+call printwordh
+mov ax,[filesize]
+call printwordh
+call colon
+call calculate_size
+call printn
+
+popa
+.done:
 ret
 
 fileload:
@@ -5243,12 +5278,12 @@ fileload:
 		  mov ax,[dir_seg]
 		  mov es,ax
           mov di, [loc2]
-cmp byte [found],'l'
+cmp byte [command_tempchar],'l'
 je .makelist
-cmp byte [found],'z'
-je .makelist
-cmp byte [found],'r'
-je .makelist
+cmp byte [command_tempchar],'z'
+je .makelist_clear
+cmp byte [command_tempchar],'r'
+je .makelist_clear
 		  
 		  ;mov si,filestr
 		  ;call memcpyza
@@ -5271,9 +5306,9 @@ je .makelist
 ; mov [ds:eax],bx
 ; popa
 
-cmp byte [found],'i'
+cmp byte [command_tempchar],'i'
 je .intnonameload
-cmp byte [found],'c'
+cmp byte [command_tempchar],'c'
 je .intnonameload
 ;call newline
 ;pop cx
@@ -5305,13 +5340,13 @@ repe  cmpsb
 pop di
 je LOAD_FAT
 ;je DONE
-cmp byte [found],'q';Quick
+cmp byte [command_tempchar],'q';Quick
 je .intload
-cmp byte [found],'i';Interrupt
+cmp byte [command_tempchar],'i';Interrupt
 je .intload
-cmp byte [found],'c';Call
+cmp byte [command_tempchar],'c';Call
 je .intload
-;cmp byte [found],'z';List
+;cmp byte [command_tempchar],'z';List
 ;je .intload
 call getkey
 cmp al,0x0D
@@ -5330,7 +5365,7 @@ je .exitloop
           cmp cx,0
 		  jg .LOOP
 .exit_loop:
-;cmp byte [found],'z';List
+;cmp byte [command_tempchar],'z';List
 ;je .listmade
 		  jmp FAILURE
 .back:
@@ -5342,6 +5377,8 @@ jmp .LOOP
 ;mov byte [kernelreturnflag],0x0f
 stc
 jmp FAILURE
+.makelist_clear:
+call clear_screen
 .makelist:
 ;mov word [.list_pos],found+20
 mov ax,[dir_seg]
@@ -5380,7 +5417,7 @@ mov ds,ax
 ;call reload_words
 ;jmp FAILURE
 
-call clear_screen
+;call clear_screen
 mov ax,found+20
 mov bx,verstring
 mov cx,file_selector_str
@@ -5479,12 +5516,12 @@ ret
 	 popa
 	 ;push ds
 	 ;pop es
-cmp byte [found],'i'
-je .noname
-cmp byte [found],'c'
-je .noname
-	 call newline
-	 .noname:
+; cmp byte [command_tempchar],'i'
+; je .noname
+; cmp byte [command_tempchar],'c'
+; je .noname
+	 ;call newline
+	 ; .noname:
           mov     dx, WORD [es:di + 0x001A]
           mov     WORD [cluster], dx          
      call calculate_fat
@@ -5517,7 +5554,7 @@ jmp .done
 ; mov byte [size],al
 .done:
 popa
-cmp byte [found],'l'
+cmp byte [command_tempchar],'l'
 je fileselected
 .skip:
      ;----------------------------------------------------
@@ -5525,7 +5562,7 @@ je fileselected
      ;----------------------------------------------------
 cmp byte [completeload_flag],0x0f
 je .complete_load_off
-cmp byte [found],'a'
+cmp byte [command_tempchar],'a'
 jne .complete_load_off
 		  mov word [size],1
 		  .complete_load_off:
@@ -5587,7 +5624,7 @@ mov bx,0
 mov es,bx
 cmp byte [completeload_flag],0xf0
 je complete_load_on
-cmp byte [found],'a'
+cmp byte [command_tempchar],'a'
 jne complete_load_off
 complete_load_on:
 		  ;mov     WORD [xmouse], dx                  ; store new cluster
@@ -5622,69 +5659,42 @@ mov byte [kernelreturnflag],0x0f
 clc
 mov word [comm],0xf0f0
 ;mov dx,[comm]
-cmp byte [found],'c'
+cmp byte [command_tempchar],'c'
 je callloaddone
-cmp byte [found],'i'
+cmp byte [command_tempchar],'i'
 je intloaddone
 mov si,successstr
 call prnstr
-call newline
-mov al,'C'
-call printf
-call colon
-mov ax,[cluster]
-call printwordh
-call space
-mov si,c_loc
-call prnstr
-call colon
-mov ax,[datasector]
-add ax,[cluster]
-sub ax,2
-call printwordh
-call space
 call print_HTS_details
 
 mov byte [comm2],'f'
-cmp byte [found],'r'
+cmp byte [command_tempchar],'r'
 je .roam_on
-cmp byte [found],'t'
+cmp byte [command_tempchar],'t'
 je .roamt_on
 
-; cmp byte [found],'z'
-; je .size_skip
-; cmp byte [found],'l'
-; je .size_skip
+; cmp byte [command_tempchar],'z'
+; je .dont_roam
+; cmp byte [command_tempchar],'l'
+; je .dont_roam
 
 jmp .dont_roam
 .roamt_on:
 mov al,[var_x]
 and al,0x10
 cmp al,0x10
-je .size_skip
+je .dont_roam
 mov byte [comm2],'t'
-jmp .size_skip
+jmp .dont_roam
 .roam_on:
 mov byte [comm2],'r'
-; jmp .size_skip
+; jmp .dont_roam
 .dont_roam:
 
-call space
-mov si,c_size
-call prnstr
-call colon
-mov ax,[filesize+2]
-call printwordh
-mov ax,[filesize]
-call printwordh
-call colon
-call calculate_size
-call printn
-
-.size_skip:
-call space
-mov byte [found],'f'
+call newline
 call filetype
+call prnstr
+call file_ext_check
 
 mov al,[var_x]
 and al,0x10
@@ -5707,7 +5717,7 @@ je .dir_roam
 jmp .done
 .dir_roam:
 mov al,[comm2]
-mov [found],al
+mov [command_tempchar],al
 jmp fdir.fdir_not_interrupt
 .done:
 cmp byte [comm2],'t'
@@ -5735,6 +5745,7 @@ call memstr_copy
 ; call pipespace2enter
 ; mov si,tempstr
 ; call pipestore
+call newline
 call microkernel
 jmp kernel
 
@@ -5749,11 +5760,11 @@ mov ax,[var_y]
 mov [size],ax
 stc
 mov word [comm],0x0f0f
-cmp byte [found],'l'
+cmp byte [command_tempchar],'l'
 je fileselected_fail
-cmp byte [found],'i'
+cmp byte [command_tempchar],'i'
 je intloaddone
-cmp byte [found],'c'
+cmp byte [command_tempchar],'c'
 je callloaddone
 call newline
 call print_error
@@ -6088,7 +6099,7 @@ mov byte dl,[drive]
 int 0x13
 ret
 
-; cmp byte [found],'d'
+; cmp byte [command_tempchar],'d'
 ; jne .not_dir
 ; pusha
 ; mov di,bx
@@ -6109,9 +6120,9 @@ mov ax,[size]
 mov [var_x],ax
 mov word [size],0x09 ;size of fat
 
-cmp byte [found],'r'
+cmp byte [command_tempchar],'r'
 je .dont_allocate
-cmp byte [found],'x'
+cmp byte [command_tempchar],'x'
 je .dont_allocate
 call calculate_fat
 ;inc ax
@@ -6147,9 +6158,9 @@ mov ax,[var_x]
 mov [size],ax
 jmp .exitl
 .loop:
-cmp byte [found],'r'
+cmp byte [command_tempchar],'r'
 je .show_name
-cmp byte [found],'x'
+cmp byte [command_tempchar],'x'
 je .show_name
 jmp .jump_name
 .show_name:
@@ -6230,14 +6241,14 @@ call SAVE_FAT
 
 jmp .exitl
 .filenew_not_found:
-cmp byte [found],'r'
+cmp byte [command_tempchar],'r'
 je .exitl
-cmp byte [found],'x'
+cmp byte [command_tempchar],'x'
 je .exitl
 .filenew_found:
-cmp byte [found],'r'
+cmp byte [command_tempchar],'r'
 je .rename_file
-cmp byte [found],'x'
+cmp byte [command_tempchar],'x'
 je .delete_file
 ;sub di,0x0006
 mov word ax,[.cluster]
@@ -6250,7 +6261,7 @@ mov si,ImageName
 mov cx,0x000b
 rep movsb
 ;pop di
-cmp byte [found],'d'
+cmp byte [command_tempchar],'d'
 je .dir
 mov al,0x20
 stosb
@@ -6275,7 +6286,7 @@ lodsw
 stosw
 
 ;; Storing Size
-cmp byte [found],'d'
+cmp byte [command_tempchar],'d'
 je .dir_made
 inc di
 mov al,0x02
@@ -6335,36 +6346,32 @@ cmp al,0x10
 je .dir
 
 mov si,filestr
-call prnstr
-cmp byte [found],'f'
-je .filecheck
 ret
+
 .drive:
 mov si,c_drive
-call prnstr
-call attrib
-ret
+jmp .attrib_return
 .label:
 mov si,labelstr
-call prnstr
-call attrib
-ret
+jmp .attrib_return
 .dir:
 mov si,c_dir
-call prnstr
-call attrib
+;jmp .attrib_return
+
+.attrib_return:
 ret
-.filecheck:
+
+file_ext_check:
 call colon
 mov si,tempstr
 call prnstr
 
 call attrib
 call space
-mov si,tempstr
-mov di,bmps
-call cmpstr
-jc .bmp
+; mov si,tempstr
+; mov di,bmps
+; call cmpstr
+; jc .bmp
 mov si,tempstr
 mov di,txts
 call cmpstr
@@ -6386,13 +6393,13 @@ jc .com
 ; call cmpstr
 ; jc .pnt
 ret
-.bmp:
-mov si,imagestr
-call prnstr
-; call colon
-; mov si,c_paint
+; .bmp:
+; mov si,imagestr
 ; call prnstr
-ret
+; ; call colon
+; ; mov si,c_paint
+; ; call prnstr
+; ret
 .txt:
 mov si,c_text
 call prnstr
@@ -6448,8 +6455,6 @@ ret
 ; ret
 
 attrib:
-cmp byte [found],'f'
-jne .done
 
 call newline
 mov si,attribstr
@@ -6584,6 +6589,7 @@ jg .hexloop
 .done:
 call space
 call filetype
+call prnstr
 ret
 
 ;vedit:
@@ -8011,7 +8017,7 @@ rep movsb
 call checkfname
 
 mov di,[locf4]
-mov byte [found],'i'
+mov byte [command_tempchar],'i'
 
 ;call clrport64
 jmp fdir
@@ -8480,7 +8486,7 @@ mov al,0
 mov di,ImageName
 mov cx,11
 rep stosb
-mov byte [found],'l'
+mov byte [command_tempchar],'l'
 call fdir
 ret
 
@@ -8848,7 +8854,7 @@ ret
 os_create_file:
 pusha
 call get_name
-mov byte [found],'f'
+mov byte [command_tempchar],'f'
 call filenew
 popa
 ret
@@ -8861,7 +8867,7 @@ ret
 os_rename_file:
 pusha
 call get_name
-mov byte [found],'r'
+mov byte [command_tempchar],'r'
 call filenew
 popa
 clc
@@ -8874,7 +8880,7 @@ ret
 os_remove_file:
 pusha
 call get_name
-mov byte [found],'x'
+mov byte [command_tempchar],'x'
 call filenew
 popa
 ret
@@ -12400,7 +12406,7 @@ mov di,dx
 mov bx,[currentdir]
 mov [var_c],bx
 mov word [comm],0x0f0f
-mov byte [found],'t'
+mov byte [command_tempchar],'t'
 mov bx,roam_ret
 mov [extra],bx
 jmp fdir
@@ -12430,13 +12436,13 @@ call get_name
 pop di
 ;pop bx
 ;mov di,bx
-mov byte [found],'i'
+mov byte [command_tempchar],'i'
 ;call clrport64
 jmp fdir
 ;iret
 
 int61_file_selector:
-mov byte [found],'l'
+mov byte [command_tempchar],'l'
 call fdir
 iret
 
@@ -14211,7 +14217,7 @@ c_copy:
 db 'copy',0
 c_del:
 db 'del',0
-c_cd:
+c_cddot:
 db 'cd..',0
 c_roam:
 db 'roam',0
@@ -14296,8 +14302,8 @@ sss:
 db 'SS',0
 css:
 db 'CS',0
-bmps:
-db 'BMP',0
+; bmps:
+; db 'BMP',0
 txts:
 db 'TXT',0
 coms:
@@ -14411,10 +14417,10 @@ oldstr:
 db 'old',0
 newstr:
 db 'new',0
-imagestr:
 commandstr:
 db ' Command: ',0
-db 'image',0
+; imagestr:
+; db 'image',0
 labelstr:
 db 'label',0
 filestr:
@@ -14451,6 +14457,11 @@ autorunstr:
 db 'pwd confg lvlh ',0
 ;db 'confg pwd lvlh ',0
 ;db 'auto ',0
+free_kenel_commandstr:
+;db 'clock screen p ',0
+db 'roam wwwwwwwwwww',0
+free_kernel_waittime:
+db 10
 tempstr:
 times 80 db 0
 tempstr2:
@@ -14517,10 +14528,18 @@ db 'Bigger Picture:',0
 ; db 0x01
 ; times 9 dw 0
 ; dw 0
-found_tempchar:
+command_tempchar:
 db 0
+
+;TODO implementation
+; previous_command_index:
+; dw 0
+; previous_command:
+; times previous_command_buffersize db 0
+; previous_command_buffersize equ 80
+
 found:
-;times 1 db 0
+;times 10 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45)-($-$$) db 0 ; Optimal Size
