@@ -1,4 +1,10 @@
 extension list to be stored
+settime,setdate - wrong dates are stored
+install - command to be fixed
+format - feature to add (FAT16 formatting)
+interdrive copying
+move feature - between directories
+update cx in code and text to use pos variable
 
 dir change shouldn't cancel kernel_return
 optimise ChainLoops in FAT16

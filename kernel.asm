@@ -724,6 +724,11 @@ call cmpstr
 jc del_link
 
 mov si,found
+mov di,c_cd
+call cmpstr
+jc cd_link
+
+mov si,found
 mov di,c_cddot
 call cmpstr
 jc cddot_link
@@ -908,6 +913,13 @@ del_link:
 mov byte [command_tempchar],'x'
 call filenew
 jmp kernel
+
+cd_link:
+mov di,ImageName
+call getstr
+call checkfname
+mov byte [command_tempchar],'q'
+jmp fdir
 
 cddot_link:
 mov di,ImageName
@@ -1226,6 +1238,9 @@ jmp buffer_clear
 .clear:
 ret
 
+;Shell function
+;batch executes each line in file
+;All command combinations are supported
 batch:
 mov word [var_m],0
 batchset:
@@ -1262,13 +1277,18 @@ stosb
 ;add word [var_m],2
 ;mov si,tempstr
 ;call prnstr
+
+;Stores interpreted string in input buffer
 mov si,tempstr
 call pipespace2enter
 mov si,tempstr
 call pipestore
 
+;Sets kernel return point to create loop
 mov byte [kernelreturnflag],0xf0
 mov word [kernelreturnaddr],batchset
+
+;Execute
 jmp command_start
 
 ;Getting arguments if space key is found
@@ -1467,6 +1487,8 @@ text:
 ;mov cx,0x0000
 ;call getpos
 ;push dx
+mov al,[found]
+mov [command_tempchar],al
 mov cx,0x0200
 push cx
 mov es,[data_seg]
@@ -5314,6 +5336,7 @@ je .intnonameload
 ;pop cx
 ;mov     cx, 0x000B
 call show_name
+.intnonameload:
 
 ; .create_list:
 ; ;list of files
@@ -5333,7 +5356,6 @@ call show_name
 ; pop es
 ; popa
 
-.intnonameload:
 mov si,ImageName
 mov cx, 0x000B
 repe  cmpsb
@@ -5392,23 +5414,36 @@ mov di,found+20
 
 .makelistloop:
 push si
-;pusha
-;mov ax,si
-;call printwordh
-;popa
+
+;Store name of the file
 mov cx,0x000B
 rep movsb
 ;mov [.list_pos],di
+
+;Store file type
+mov byte [es:di],' '
+inc di
+lodsb
+mov [es:var_x],al
+push ds
+mov ax,0
+mov ds,ax
+call filetype
+mov cx,0x05
+rep movsb
+pop ds
+
+;Add comma
 mov byte [es:di],','
 inc di
 pop si
-add si,0x0020
-cmp word [ds:si],0
+add si,0x0020 ;Update counter to next file
+cmp word [ds:si],0 ;If end is reached then stop
 je .exitmakelistloop
 jmp .makelistloop
 .exitmakelistloop:
 ;dec di
-mov word [es:di-1],0
+mov word [es:di-1],0 ;Truncate the list
 
 mov ax,[kernel_seg]
 mov ds,ax
@@ -5421,12 +5456,12 @@ mov ds,ax
 mov ax,found+20
 mov bx,verstring
 mov cx,file_selector_str
-call os_list_dialog
+call os_list_dialog ; Show the list selector
 jc FAILURE
 dec ax
 imul ax,0x20
 mov word di,[loc2]
-add di,ax
+add di,ax ; Get di pointing to file data
 
 mov dx,[dir_seg];Directory Segment
 mov es,dx
@@ -6328,6 +6363,8 @@ db 0x18,0x1a,0x9a,0x42,0x7c,0x43,0x7c,0x43,0x00,0x00,0xca,0x93,0x76,0x43
 .new_file_str:
 db "New File Name :",0
 
+;IN: nothing
+;OUT: si=description string
 filetype:
 
 mov al,[var_x]
@@ -6349,13 +6386,13 @@ mov si,filestr
 ret
 
 .drive:
-mov si,c_drive
+mov si,drivestr
 jmp .attrib_return
 .label:
 mov si,labelstr
 jmp .attrib_return
 .dir:
-mov si,c_dir
+mov si,dirstr
 ;jmp .attrib_return
 
 .attrib_return:
@@ -6589,7 +6626,13 @@ jg .hexloop
 .done:
 call space
 call filetype
-call prnstr
+push es
+mov bx,[kernel_seg]
+mov es,bx
+mov bx,si
+mov cx,5
+call reload_words
+pop es
 ret
 
 ;vedit:
@@ -13731,7 +13774,7 @@ mov [var_a],dx
 ; mov al,[size]
 ; mov bx,0x200
 ; imul ax,bx
-mov ax,[size]
+mov ax,[filesize]
 mov [var_b],ax
 .read_loop:
 mov si,[loc]
@@ -14205,10 +14248,30 @@ c_advanced:
 db 'advanced',0
 c_completeload:
 db 'completeload',0
-c_fnew:
-db 'fnew',0
+
+c_q:
+db 'q',0
+c_a:
+db 'a',0
+c_z:
+db 'z',0
+c_roam:
+db 'roam',0
+c_dir:
+db 'dir',0
+c_newdir:
+db 'newdir',0
+c_setdir:
+db 'setdir',0
+c_addpath:
+db 'addpath',0
+c_addpathc:
+db 'addpathc',0
+
 c_nm:
 db 'nm',0
+c_fnew:
+db 'fnew',0
 c_fsave:
 db 'fsave',0
 c_rename:
@@ -14217,26 +14280,11 @@ c_copy:
 db 'copy',0
 c_del:
 db 'del',0
+c_cd:
+db 'cd',0
 c_cddot:
 db 'cd..',0
-c_roam:
-db 'roam',0
-c_dir:
-db 'dir',0
-c_setdir:
-db 'setdir',0
-c_addpath:
-db 'addpath',0
-c_addpathc:
-db 'addpathc',0
-c_newdir:
-db 'newdir',0
-c_q:
-db 'q',0
-c_a:
-db 'a',0
-c_z:
-db 'z',0
+
 c_sound:
 db 'sound',0
 c_reboot:
@@ -14365,7 +14413,7 @@ db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
 db 'View/Editors: text,code,doc,read,edit,type,sound',0
 setting_list:
-db 'Settings: loc,loc2,loc3,prompt,color,color2,drive',0
+db 'Settings: loc,loc2,loc3,prompt,color,color2,drive,autosize',0
 setting2_list:
 db 'Extra: echo,head,track,page,size,install,help,exit,calc,clock',0
 showsetting_list:
@@ -14381,13 +14429,13 @@ db 'Locations: loc(files and programs),loc2(Folder),loc3(FAT)',0
 ; experimental:
 ; db 'Experimental: ',0
 file_command:
-db 'FileComms: z,fsave,{fname,nm},autosize,a-cmpload,fnew,q-quickload',0
+db 'FileComms: q-quick,a-cmp,z,{fname,nm},fnew,del,fsave',0
 dir_command:
-db 'DirCmd: dir,setdir,newdir,del,cd..,rename,copy,roam',0
+db 'DirCmd: dir,setdir,newdir,cd,cd..,rename,copy,roam',0
 interrupt_api:
-db 'Int/API: 01=step 05=prnscr 21,2b,61,64=api 2c=msg 4a=alarm 60=debug',0
+db 'Int/API: 01=step 05=prnscr 21,22,2B,61,64=api 2C=msg 4A=alarm',0
 interrupt2_api:
-db 'Int: 1c=timer 20=quit 03=debug 06=invalid 07=math 1b=ctrl+brk 33=mouse',0
+db 'Int: 1C=timer 20=quit 03,60=debug 1b=ctrl+brk 33=mouse',0
 mint_list:
 db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-exit',0
 
@@ -14421,10 +14469,14 @@ commandstr:
 db ' Command: ',0
 ; imagestr:
 ; db 'image',0
+drivestr:
+db 'drive',0
 labelstr:
 db 'label',0
+dirstr:
+db 'dir  ',0
 filestr:
-db 'file',0
+db 'file ',0
 attribstr:
 db 'attrib',0
 normalstr:
