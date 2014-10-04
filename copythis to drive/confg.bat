@@ -11,6 +11,8 @@ lISize
 size 1
 lIPrompt
 prompt <Extic>
+waittime 5
+waitcmd roam w
 cls
 lIWelcome
 iUisieir

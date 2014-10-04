@@ -200,16 +200,14 @@ jl .cmploop
 .cmploop_end:
 
 ;Presence checks
-cmp byte [foundcolor.found],0
-jne foundcolor.process
-cmp byte [foundlike.found],0
-jne foundlike.process
-cmp byte [founddo.found],0
-jne founddo.process
-cmp byte [foundwhat.found],0
-jne foundwhat.process
-cmp byte [foundyou.found],0
-jne foundyou.process
+mov si,found_presence
+lodsw
+cmp ax,0
+je .presence_not_found
+mov bx,ax
+call shift_presence_pop
+jmp bx
+.presence_not_found:
 
 ;mov ah,0x33
 ;mov dx,[loc]
@@ -353,6 +351,8 @@ call prnstr
 jmp start
 
 foundlike:
+mov dx,.process
+call add_presence_location
 mov bx,.found
 jmp presence_word
 .process:
@@ -373,6 +373,8 @@ call prnstr
 jmp start
 
 foundwhat:
+mov dx,.process
+call add_presence_location
 mov bx,.found
 jmp presence_word
 .process:
@@ -388,6 +390,8 @@ int 0x61
 jmp start
 
 foundcolor:
+mov dx,.process
+call add_presence_location
 mov bx,.found
 jmp presence_word
 .process:
@@ -416,6 +420,8 @@ int 0x61
 ret
 
 foundyou:
+mov dx,.process
+call add_presence_location
 mov bx,.found
 jmp presence_word
 .process:
@@ -495,10 +501,29 @@ pusha
 mov si,found_presence
 .loop:
 lodsw
+cmp si,found_presence_end
+jg .end
 cmp ax,0
 jne .loop
+.end:
 mov [si-2],dx
 popa
+ret
+
+;IN: si=string to shift by word
+;ended when string-end is encountered
+shift_presence_pop:
+mov si,found_presence
+;inc si
+.loop:
+add si,2
+mov ax,[si]
+;dec si
+sub si,2
+mov [si],ax
+add si,2
+cmp ax,0
+jne .loop
 ret
 
 helpstr:

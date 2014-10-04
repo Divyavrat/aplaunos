@@ -2,27 +2,34 @@
 use16
 org		0					; we will set regisers later
 
-start:	jmp	main					; jump to start of bootloader
+start:	jmp main					; jump to start of bootloader
+;nop				; Pad out before disk description
 
-bpbOEM			db "MY USBOS"
-bpbBytesPerSector:  	DW 512
-bpbSectorsPerCluster: 	DB 1
-bpbReservedSectors: 	DW 1
-bpbNumberOfFATs: 	DB 2
-bpbRootEntries: 	DW 224
-bpbTotalSectors: 	DW 2880
-bpbMedia: 		DB 0xf0  ;; 0xF1
-bpbSectorsPerFAT: 	DW 9
-bpbSectorsPerTrack: 	DW 18
-bpbHeadsPerCylinder: 	DW 2
-bpbHiddenSectors: 	DD 0
-bpbTotalSectorsBig:     DD 0
-bsDriveNumber: 	        DB 0
+; ------------------------------------------------------------------
+; Disk description table, to make it a valid floppy
+; Note: some of these values are hard-coded in the source!
+; Values are those used by IBM for 1.44 MB, 3.5" diskette
+
+bpbOEM			db "MY USBOS" ; Disk label
+bpbBytesPerSector:  	DW 512 ; Bytes per sector
+bpbSectorsPerCluster: 	DB 1 ; Sectors per cluster
+bpbReservedSectors: 	DW 1 ; Reserved sectors for boot record
+bpbNumberOfFATs: 	DB 2 ; Number of copies of the FAT
+bpbRootEntries: 	DW 224 ; Number of entries in root dir
+; (224 * 32 = 7168 = 14 sectors to read)
+bpbTotalSectors: 	DW 2880 ; Number of logical sectors
+bpbMedia: 		DB 0xf0  ;; 0xF1 ; Medium descriptor byte
+bpbSectorsPerFAT: 	DW 9 ; Sectors per FAT
+bpbSectorsPerTrack: 	DW 18 ; Sectors per track (36/cylinder)
+bpbHeadsPerCylinder: 	DW 2 ; Number of sides/heads
+bpbHiddenSectors: 	DD 0 ; Number of hidden sectors
+bpbTotalSectorsBig:     DD 0 ; Number of LBA sectors
+bsDriveNumber: 	        DB 0 ; Drive No: 0
 bsUnused: 		DB 0
-bsExtBootSignature: 	DB 0x29
-bsSerialNumber:	        DD 0xa0a1a2a3
-bsVolumeLabel: 	        DB " OS FLOPPY "
-bsFileSystem: 	        DB "FAT12   "
+bsExtBootSignature: 	DB 0x41;0x29 ; Drive signature: 41 for floppy
+bsSerialNumber:	        DD 0xa0a1a2a3 ; Volume ID: any number
+bsVolumeLabel: 	        DB " OS FLOPPY " ; Volume Label: any 11 chars
+bsFileSystem: 	        DB "FAT12   " ; File system type: don't change!
 
 absoluteSector db 0x00
 absoluteHead   db 0x00
@@ -139,6 +146,10 @@ main:
 ; mov [bootdevice],al
 ; mov [bsDriveNumber],al
 
+	; NOTE: A few early BIOSes are reported to improperly set DL
+
+; ******************************************************************
+
 cmp dl, 0
 	je no_change
 	mov [bootdevice], dl		; Save boot device number
@@ -154,6 +165,9 @@ cmp dl, 0
 	mov [bpbHeadsPerCylinder], dx
 
 no_change:
+; ******************************************************************
+
+	mov eax, 0			; Needed for some older BIOSes
 
      ;----------------------------------------------------
      ; Load root directory table
