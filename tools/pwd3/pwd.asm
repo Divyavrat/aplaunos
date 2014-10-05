@@ -1,4 +1,7 @@
-org 0x6000
+CODELOC equ 0x6000
+TEMPLOC equ 0x9000
+FILESIZE equ 9
+org CODELOC
 use16
 ;jmp start
 ;db '  Define your password here (any length just after colon) :'
@@ -48,7 +51,7 @@ mov dx,haveamsg
 int 61h
 mov ah,0x03
 ;mov dx,[message]
-mov dx,0x9000
+mov dx,TEMPLOC
 int 61h
 mov ah,0x0B
 int 61h
@@ -192,20 +195,28 @@ mov dx,msg
 int 61h
 mov ah,0x04
 ;mov dx,[message]
-mov dx,0x9000
+mov dx,TEMPLOC
 int 61h
 jmp start
 
 .save_quit:
+
 mov ah,0x07
-mov dl,8
+mov dl,FILESIZE
 int 0x61
 mov ah,0x81
-mov dx,0x6000
+mov dx,CODELOC
 int 0x61
 mov ah,0x07
 mov dl,1
 int 0x61
+
+; mov cx,FILESIZE*512
+; mov dx,filename
+; mov bx,CODELOC
+; mov ah,0x51
+; int 0x2B
+
 jmp .quit
 
 .newpwd:
@@ -255,6 +266,8 @@ ret
 .wrong:
 pop ax
 jmp start
+
+filename: db "pwd.com",0
 
 getpwd:
 mov ah,0x07
@@ -766,4 +779,4 @@ pwd:
 ;times 10 db 0
 times 256 db 0
 include 'mouse.lib'
-times (512*9)-($-$$) db 0
+times (512*FILESIZE)-($-$$) db 0

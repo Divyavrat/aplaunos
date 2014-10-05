@@ -9,6 +9,7 @@ more help content. mhelp. video. pics.
 more arguments and features must be added.
 shell language with - vars,logic,loops
 more documentation, more comments to explain code
+batch files can be copied to different location to allow multitasking
 
 dir change shouldn't cancel kernel_return
 optimise ChainLoops in FAT16

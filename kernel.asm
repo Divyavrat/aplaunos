@@ -334,61 +334,63 @@ call newline
 ;; Matching command against all known commands
 
 mov si,found
+; Received command to match
+
 mov di,c_load
 call cmpstr
 jc load_f
 
-mov si,found
+
 mov di,c_save
 call cmpstr
 jc save_f
 
-mov si,found
+
 mov di,c_execute
 call cmpstr
 jc execute
 
-mov si,found
+
 mov di,c_batch
 call cmpstr
 jc batch
 
-mov si,found
+
 mov di,c_text
 call cmpstr
 jc text
 
-mov si,found
+
 mov di,c_code
 call cmpstr
 jc text
 
-mov si,found
+
 mov di,c_print
 call cmpstr
 jc text
 
-;mov si,found
+;
 ;mov di,c_video
 ;call cmpstr
 ;jc video
 
-;mov si,found
+;
 ;mov di,c_vedit
 ;call cmpstr
 ;jc vedit
 
-; mov si,found
+; 
 ; mov di,c_frame
 ; call cmpstr
 ; jc c_frame_f
 
-mov si,found
+
 mov di,c_wall
 call cmpstr
 jc c_wall_f
 
-mov si,found
+
 mov di,c_clock
 call cmpstr
 jc clock
@@ -402,432 +404,432 @@ jmp kernel
 
 extracomms:
 
-mov si,found
+
 mov di,c_run
 call cmpstr
 jc run
 
-mov si,found
+
 mov di,c_runa
 call cmpstr
 jc runa
 
-mov si,found
+
 mov di,c_drive
 call cmpstr
 jc c_drive_f
 
-mov si,found
+
 mov di,c_drive2
 call cmpstr
 jc c_drive2_f
 
-mov si,found
+
 mov di,c_loc
 call cmpstr
 jc c_loc_f
 
-mov si,found
+
 mov di,c_loc2
 call cmpstr
 jc c_loc2_f
 
-mov si,found
+
 mov di,c_loc3
 call cmpstr
 jc c_loc3_f
 
-mov si,found
+
 mov di,c_dataseg
 call cmpstr
 jc c_dataseg_f
 
-mov si,found
+
 mov di,c_setdir
 call cmpstr
 jc c_setdir_f
 
-mov si,found
+
 mov di,c_addpath
 call cmpstr
 jc c_addpath_f
 
-mov si,found
+
 mov di,c_addpathc
 call cmpstr
 jc c_addpathc_f
 
-mov si,found
+
 mov di,c_dir
 call cmpstr
 jc c_dir_f
 
-mov si,found
+
 mov di,c_htod
 call cmpstr
 jc c_htod_f
 
-mov si,found
+
 mov di,c_dtoh
 call cmpstr
 jc c_dtoh_f
 
-mov si,found
+
 mov di,c_reset
 call cmpstr
 jc c_reset_f
 
-mov si,found
+
 mov di,c_cls
 call cmpstr
 jc c_cls_f
 
-mov si,found
+
 mov di,c_prompt
 call cmpstr
 jc c_prompt_f
 
-mov si,found
+
 mov di,c_alias
 call cmpstr
 jc c_alias_f
 
-mov si,found
+
 mov di,c_border
 call cmpstr
 jc c_border_f
 
-mov si,found
+
 mov di,c_color
 call cmpstr
 jc c_color_f
 
-mov si,found
+
 mov di,c_color2
 call cmpstr
 jc c_color2_f
 
-mov si,found
+
 mov di,c_typemode
 call cmpstr
 jc c_typemode_f
 
-mov si,found
+
 mov di,c_videomode
 call cmpstr
 jc c_videomode_f
 
-; mov si,found
+; 
 ; mov di,c_memsize
 ; call cmpstr
 ; jc c_memsize_f
 
-mov si,found
+
 mov di,c_reboot
 call cmpstr
 jc c_reboot_f
 
-mov si,found
+
 mov di,c_restart
 call cmpstr
 jc c_restart_f
 
-mov si,found
+
 mov di,c_page
 call cmpstr
 jc c_page_f
 
-; mov si,found
+; 
 ; mov di,c_star
 ; call cmpstr
 ; jc c_star_f_link
 
-mov si,found
+
 mov di,c_sound
 call cmpstr
 jc c_sound_f
 
-mov si,found
+
 mov di,c_fhlt
 call cmpstr
 jc c_fhlt_f
 
-mov si,found
+
 mov di,c_jmp
 call cmpstr
 jc c_jmp_f
 
-mov si,found
+
 mov di,c_paint
 call cmpstr
 jc c_paint_f
 
-; mov si,found
+; 
 ; mov di,c_score
 ; call cmpstr
 ; jc c_score_f
 
-; mov si,found
+; 
 ; mov di,c_play
 ; call cmpstr
 ; jc c_play_f_link
 
-mov si,found
+
 mov di,c_calc
 call cmpstr
 jc c_calc_f
 
-mov si,found
+
 mov di,c_size
 call cmpstr
 jc c_size_f
 
-mov si,found
+
 mov di,c_scrollmode
 call cmpstr
 jc c_scrollmode_f
 
-mov si,found
+
 mov di,c_slowmode
 call cmpstr
 jc c_slowmode_f
 
-mov si,found
+
 mov di,c_debug
 call cmpstr
 jc debug
 
-mov si,found
+
 mov di,c_driveinfo
 call cmpstr
 jc c_driveinfo_f
 
-mov si,found
+
 mov di,c_settime
 call cmpstr
 jc c_settime_f
 
-mov si,found
+
 mov di,c_setdate
 call cmpstr
 jc c_setdate_f
 
-mov si,found
+
 mov di,c_install
 call cmpstr
 jc c_install_f
 
-mov si,found
+
 mov di,c_head
 call cmpstr
 jc c_head_f
 
-mov si,found
+
 mov di,c_track
 call cmpstr
 jc c_track_f
 
-; mov si,found
+; 
 ; mov di,c_point
 ; call cmpstr
 ; jc c_point_f
 
-; mov si,found
+; 
 ; mov di,c_icon
 ; call cmpstr
 ; jc c_icon_f
 
-; mov si,found
+; 
 ; mov di,c_length
 ; call cmpstr
 ; jc c_length_f
 
-mov si,found
+
 mov di,c_rollcolor
 call cmpstr
 jc c_rollcolor_f
 
-mov si,found
+
 mov di,c_scrolllen
 call cmpstr
 jc c_scrolllen_f
 
-; mov si,found
+; 
 ; mov di,c_difficulty
 ; call cmpstr
 ; jc c_difficulty_f
 
-mov si,found
+
 mov di,c_doc
 call cmpstr
 jc doc
 
-mov si,found
+
 mov di,c_read
 call cmpstr
 jc read
 
-mov si,found
+
 mov di,c_edit
 call cmpstr
 jc edit
 
-mov si,found
+
 mov di,c_type
 call cmpstr
 jc c_type_f
 
-mov si,found
+
 mov di,c_fname
 call cmpstr
 jc fname
 
-mov si,found
+
 mov di,c_nm
 call cmpstr
 jc fname
 
-mov si,found
+
 mov di,c_autosize
 call cmpstr
 jc c_autosize_f
 
-mov si,found
+
 mov di,c_advanced
 call cmpstr
 jc c_advanced_f
 
-mov si,found
+
 mov di,c_completeload
 call cmpstr
 jc c_completeload_f
 
-mov si,found
+
 mov di,c_wait_time
 call cmpstr
 jc c_wait_time_f
 
-mov si,found
+
 mov di,c_wait_command
 call cmpstr
 jc c_wait_command_f
 
-mov si,found
+
 mov di,c_fnew
 call cmpstr
 jc filenew_link
 
-mov si,found
+
 mov di,c_fsave
 call cmpstr
 jc filesave_link
 
-mov si,found
+
 mov di,c_rename
 call cmpstr
 jc rename_link
 
-mov si,found
+
 mov di,c_copy
 call cmpstr
 jc copy_link
 
-mov si,found
+
 mov di,c_del
 call cmpstr
 jc del_link
 
-mov si,found
+
 mov di,c_cd
 call cmpstr
 jc cd_link
 
-mov si,found
+
 mov di,c_cddot
 call cmpstr
 jc cddot_link
 
-mov si,found
+
 mov di,c_roam
 call cmpstr
 jc roam_link
 
-mov si,found
+
 mov di,c_alarm
 call cmpstr
 jc alarm
 
-mov si,found
+
 mov di,c_alarmtext
 call cmpstr
 jc alarmtext
 
-mov si,found
+
 mov di,c_autostart
 call cmpstr
 jc autostart
 
-mov si,found
+
 mov di,c_setting
 call cmpstr
 jc c_setting_f
 
-mov si,found
+
 mov di,c_pipe
 call cmpstr
 jc pipe
 
-mov si,found
+
 mov di,c_micro
 call cmpstr
 jc c_micro_f
 
-; mov si,found
+; 
 ; mov di,c_multi
 ; call cmpstr
 ; jc c_multi_f
 
-mov si,found
+
 mov di,c_cursor
 call cmpstr
 jc c_cursor_f
 
-mov si,found
+
 mov di,c_echo
 call cmpstr
 jc c_echo_f
 
-mov si,found
+
 mov di,c_help
 call cmpstr
 jc c_help_f
 
-mov si,found
+
 mov di,c_exit
 call cmpstr
 jc c_exit_f2
 
-mov si,found
+
 mov di,c_step
 call cmpstr
 jc step_f
 
-mov si,found
+
 mov di,c_newdir
 call cmpstr
 jc dirnew_link
 
-mov si,found
+
 mov di,c_q
 call cmpstr
 jc fdir_link
 
-mov si,found
+
 mov di,c_a
 call cmpstr
 jc fdir_link
 
-mov si,found
+
 mov di,c_z
 call cmpstr
 jc fdir_link
@@ -1301,11 +1303,25 @@ call buffer_clear
 call newline
 mov si,[loc]
 add word si,[var_e]
-mov di,tempstr
 ;add di,[var_e]
 cmp byte [si],0x00
 je kernel
-batchloop:
+mov al,[si]
+mov [.batch_command],al
+
+mov di,.batch_end
+mov ax,di
+call os_string_length
+mov cx,ax
+call cmpstr_s
+jc kernel
+
+mov di,tempstr
+cmp byte [.batch_command],'@'
+jne .batchloop
+inc word [var_e]
+inc si
+.batchloop:
 lodsb
 inc word [var_e]
 cmp al,0x00
@@ -1316,14 +1332,14 @@ cmp al,0x0A
 je .skip
 stosb
 ;inc word [var_e]
-jmp batchloop
+jmp .batchloop
 .end:
 cmp byte [si],0x0A
 jne .skip
 inc word [var_e]
 ;add word [var_e],0x0002
 .skip:
-mov al,0x20
+mov al,0x0D
 stosb
 xor al,al
 stosb
@@ -1332,8 +1348,11 @@ stosb
 ;call prnstr
 
 ;Stores interpreted string in input buffer
+cmp byte [.batch_command],'@'
+je .store_as_it_is
 mov si,tempstr
 call pipespace2enter
+.store_as_it_is:
 mov si,tempstr
 call pipestore
 
@@ -1343,6 +1362,8 @@ mov word [kernelreturnaddr],batchset
 
 ;Execute
 jmp command_start
+.batch_command: db 0
+.batch_end: db 'end',0
 
 ;Getting arguments if space key is found
 ;Arguments is stored at the standard 0x81 location
@@ -2783,53 +2804,43 @@ ret
 ; popa
 ; ret
 
+cmpstr_s:
+mov byte [cmpstr.mode],1
+os_string_compare:
 cmpstr:
+pusha
 ;cmp byte [si],0
 ;je .nequal
 ;cmp byte [di],0
 ;je .nequal
 .loop:
-mov al,[si]
+lodsb
 mov bl,[di]
-cmp al,bl
-jne .nequal
-;cmp al,dh
-;je .cmpend
-cmp al,0
-je .cmpend
 inc di
-inc si
-jmp .loop
-.nequal:
-clc
-ret
-.cmpend:
-stc
-ret
-
-cmpstr_s:
-mov al,[si]
-mov bl,[di]
+cmp byte [.mode],0
+je .skip
 dec cx
 cmp cx,0
 je .cmpend
-;cmp al,0x20
-;je .cmpend
+.skip:
 cmp al,bl
 jne .nequal
 ;cmp al,dh
 ;je .cmpend
 cmp al,0
 je .cmpend
-inc di
-inc si
-jmp cmpstr_s
+jmp .loop
 .nequal:
+mov byte [.mode],0
+popa
 clc
 ret
 .cmpend:
+mov byte [.mode],0
+popa
 stc
 ret
+.mode: db 0
 
 newline:
 pusha
@@ -5003,7 +5014,6 @@ mov byte dl,[drive]
 ; pop ds
 ; pop es
 ; popa
-
           int     0x13                                ; invoke BIOS
           jnc     .Read_Sectors_SUCCESS                ; test for read error
 		  cmp byte [.failflag],0xf0
@@ -5030,8 +5040,8 @@ mov byte dl,[drive]
           pop     cx
           pop     bx
           pop     ax
-          ;add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
-		  add     bx, 0x200        ; queue next buffer
+          add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
+		  ;add     bx, 0x200        ; queue next buffer
           inc     ax                                  ; queue next sector
           loop    .Read_Sectors_MAIN                   ; read next sector
 		  
@@ -5726,11 +5736,11 @@ mov [LOAD_IMAGE.temp_dataseg],dx
 mov dx,[.temp_dataseg]
 mov es,dx
 call    ReadSectors
+push    bx
 mov [.temp_dataseg],es
 mov dx,[dir_seg]
 ; mov dx,0
 mov es,dx
-          push    bx
           ;call calculate_next_cluster
 		  ; compute next cluster
      ;.loop:
@@ -5772,6 +5782,10 @@ jne .complete_load_off
 		  je .complete_load_off
 		  cmp WORD [cluster],0
 		  je .complete_load_off
+		  ; push bx
+		  ; pop bx
+		  ; cmp bx,0xF500
+		  ; jg .complete_load_off
 		  cmp dx,0
 		  je .complete_load_off
 ; mov al,[var_x]
@@ -6214,8 +6228,8 @@ pusha
 ;mov dx,ds
 ;xor bx,bx
 ;mov es,dx
-;call calculate_size
-mov al,[size]
+call calculate_size
+;mov al,[size]
 mov byte ah,0x03
 mov byte ch,[absoluteTrack]
 mov byte cl,[absoluteSector]
@@ -6226,6 +6240,10 @@ jc .error
 jmp .done
 .error:
 call print_error
+; pusha
+; db 0xcc
+; call getkey
+; popa
 .done:
 popa
 ret
@@ -8199,7 +8217,7 @@ iret
 
 int2bh:
 pusha
-xor ax,ax
+mov ax,0
 mov ds,ax
 mov es,ax
 mov al,0x2b
@@ -8314,6 +8332,7 @@ os_load_file_i:
 call os_load_file
 iret
 os_write_file_i:
+mov ax,dx
 call os_write_file
 iret
 os_file_exists_i:
@@ -8531,7 +8550,7 @@ jmp .save_file
 
 os_file_exists:
 pusha
-mov bx,[temploc]
+mov bx,0xF000;[temploc]
 mov dx,ax
 mov ah,0x85
 int 0x61
@@ -10086,23 +10105,6 @@ os_string_charchange:
 .finish:
 	popa
 	ret
-
-os_string_compare:
-pusha
-mov bx,si
-mov dx,di
-mov ah,0x05
-int 0x61
-mov [.os_string_compare_tmp],al
-popa
-cmp byte [.os_string_compare_tmp],0xF0
-je .equal
-clc
-ret
-.equal:
-stc
-ret
-.os_string_compare_tmp db 0
 
 ; ------------------------------------------------------------------
 ; os_serial_port_enable -- Set up the serial port for transmitting data
@@ -12611,7 +12613,6 @@ iret
 
 int61_save_file:
 mov bx,dx
-
 mov dx,[kernel_seg]
 mov es,dx
 call filesave_c
