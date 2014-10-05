@@ -1007,9 +1007,9 @@ cmp byte [found],0
 jne run
 mov si,0
 run:
-mov ax,[data_seg]
-mov es,ax
-mov word bx,[loc]
+
+;push ds
+;push es
 
 ;Fix compatibility with DOS programs
 mov byte [0], 0xCD		; int 20h
@@ -1017,10 +1017,26 @@ mov byte [1], 0x20
 mov byte [2], 0xA0		; Always 0xA000 for COM executables
 mov byte [3], 0x00
 
-call bx
-mov ax,0
+	xor ax, ax			; Clear registers to be DOS compatible
+	xor bx, bx
+	xor cx, cx
+	xor dx, dx
+	;xor si, si ;Arguments are provided using this
+	xor di, di
+	xor bp, bp
+
+mov ax,[data_seg]
 mov ds,ax
 mov es,ax
+
+call word [loc]	;;Jump to execution
+
+mov ax,0 ;[kernel_seg]
+mov ds,ax
+mov es,ax
+;pop es
+;pop ds
+
 call reg_int	;;TODO fix replacement of calls
 jmp kernel
 ;mov word bx,0x0001
@@ -1279,19 +1295,19 @@ ret
 ;batch executes each line in file
 ;All command combinations are supported
 batch:
-mov word [var_m],0
+mov word [var_e],0
 batchset:
 call buffer_clear
 call newline
 mov si,[loc]
-add word si,[var_m]
+add word si,[var_e]
 mov di,tempstr
-;add di,[var_m]
+;add di,[var_e]
 cmp byte [si],0x00
 je kernel
 batchloop:
 lodsb
-inc word [var_m]
+inc word [var_e]
 cmp al,0x00
 je .end
 cmp al,0x0D
@@ -1299,19 +1315,19 @@ je .end
 cmp al,0x0A
 je .skip
 stosb
-;inc word [var_m]
+;inc word [var_e]
 jmp batchloop
 .end:
 cmp byte [si],0x0A
 jne .skip
-inc word [var_m]
-;add word [var_m],0x0002
+inc word [var_e]
+;add word [var_e],0x0002
 .skip:
 mov al,0x20
 stosb
 xor al,al
 stosb
-;add word [var_m],2
+;add word [var_e],2
 ;mov si,tempstr
 ;call prnstr
 
@@ -3583,8 +3599,8 @@ mov [border_min_y],ax
 call newline
 mov si,.max_y
 call prnstr
-mov si,border_str
-call prnstr
+; mov si,border_str
+; call prnstr
 call getno
 mov [border_max_y],ax
 jmp kernel
@@ -3595,7 +3611,7 @@ db "Right",0
 .min_y:
 db "Top",0
 .max_y:
-db "Bottom",0
+db "Bottom"
 border_str:
 db ' Border :',0
 border_min_x:
@@ -3649,23 +3665,33 @@ mov al,[drive]
 call printnb
 call newline
 
-mov si,drive_type_string
+mov si,c_drive
 call prnstr
+call space
+mov si,c_type
+call prnstr
+call colon
 mov al,[DRIVE_TYPE]
 call printh
 call newline
-mov si,drive_number_string
+mov si,numberof_str
 call prnstr
+mov si,c_drive
+call prnstr
+call colon
 mov al,[NUMBER_OF_DRIVES]
 call printh
 call newline
-mov si,drive_spt_string
+mov si,drive_spt_str
 call prnstr
 mov al,[SECTORS_PER_TRACK]
 call printwordh
 call newline
-mov si,drive_head_string
+mov si,numberof_str
 call prnstr
+mov si,c_head
+call prnstr
+call colon
 mov al,[NUMBER_OF_HEADS]
 call printwordh
 
@@ -4851,9 +4877,9 @@ call colon
 mov si,var_k
 call change
 
-mov byte ch,[var_i]
-mov byte cl,[var_j]
-mov byte dh,[var_k]
+mov ch,[var_i]
+mov cl,[var_j]
+mov dh,[var_k]
 xor dl,dl
 mov ah,0x03
 int 0x1a
@@ -4884,10 +4910,11 @@ call colon
 mov si,var_l
 call change
 
-mov byte ch,[var_i]
-mov byte cl,[var_j]
-mov byte dh,[var_k]
-mov byte dl,[var_l]
+;mov ch,[var_i]
+mov ch,0x20
+mov cl,[var_j]
+mov dh,[var_k]
+mov dl,[var_l]
 mov ah,0x05
 int 0x1a
 jmp kernel
@@ -4966,6 +4993,17 @@ mov al,1
 ; popa
 		  ;mov     dl, BYTE [bsDriveNumber]            ; drive
 mov byte dl,[drive]
+
+; pusha
+; push es
+; push ds
+; ;db 0xcc
+; mov ax,bx
+; call printwordh
+; pop ds
+; pop es
+; popa
+
           int     0x13                                ; invoke BIOS
           jnc     .Read_Sectors_SUCCESS                ; test for read error
 		  cmp byte [.failflag],0xf0
@@ -4987,12 +5025,13 @@ mov byte dl,[drive]
 ; je .callnodata
 ; cmp byte [command_tempchar],'c'
 ; je .callnodata
-		  .callnodata:
+		  ; .callnodata:
 		  ;ret
           pop     cx
           pop     bx
           pop     ax
-          add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
+          ;add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
+		  add     bx, 0x200        ; queue next buffer
           inc     ax                                  ; queue next sector
           loop    .Read_Sectors_MAIN                   ; read next sector
 		  
@@ -5469,7 +5508,7 @@ mov ax,[kernel_seg]
 mov es,ax
 ;mov di,[.list_pos]
 mov si,[loc2]
-mov di,found+20
+mov di,0xF000;[temploc]
 
 .makelistloop:
 push si
@@ -5512,7 +5551,7 @@ mov ds,ax
 ;jmp FAILURE
 
 ;call clear_screen
-mov ax,found+20
+mov ax,0xF000;[temploc]
 mov bx,verstring
 mov cx,file_selector_str
 call os_list_dialog ; Show the list selector
@@ -5666,6 +5705,8 @@ mov word ax,[cluster]
 mov word [var_i],ax
 mov dx,[kernel_seg]
 mov es,dx
+mov dx,[data_seg]
+mov [LOAD_IMAGE.temp_dataseg],dx
      LOAD_IMAGE:
           mov     ax, WORD [cluster]                  ; cluster to read
           pop     bx                                  ; buffer to read into
@@ -5682,9 +5723,10 @@ mov es,dx
 ; .dontstop:
 		  ; popa
 		  ;mov cx,[size]
-mov dx,[data_seg]
+mov dx,[.temp_dataseg]
 mov es,dx
 call    ReadSectors
+mov [.temp_dataseg],es
 mov dx,[dir_seg]
 ; mov dx,0
 mov es,dx
@@ -5721,17 +5763,17 @@ mov es,dx
 mov bx,[kernel_seg]
 mov es,bx
 cmp byte [completeload_flag],0xf0
-je complete_load_on
+je .complete_load_on
 cmp byte [command_tempchar],'a'
-jne complete_load_off
-complete_load_on:
+jne .complete_load_off
+.complete_load_on:
 		  ;mov     WORD [xmouse], dx                  ; store new cluster
 		  cmp WORD [cluster], dx
-		  je complete_load_off
+		  je .complete_load_off
 		  cmp WORD [cluster],0
-		  je complete_load_off
+		  je .complete_load_off
 		  cmp dx,0
-		  je complete_load_off
+		  je .complete_load_off
 ; mov al,[var_x]
 ; and al,0x10
 ; cmp al,0x10
@@ -5739,10 +5781,12 @@ complete_load_on:
 		  mov     WORD [cluster], dx
           cmp     dx, 0x0FF0                          ; test for end of file
 		  jb LOAD_IMAGE
-		  complete_load_off:
+		  .complete_load_off:
 		  ;mov word [xmouse],0
 mov word ax,[var_i]
 mov word [cluster],ax
+jmp FileSystem_DONE
+.temp_dataseg: dw 0x0000
 
      FileSystem_DONE:
 mov ax,0
@@ -8487,7 +8531,7 @@ jmp .save_file
 
 os_file_exists:
 pusha
-mov bx,0xF000
+mov bx,[temploc]
 mov dx,ax
 mov ah,0x85
 int 0x61
@@ -9971,7 +10015,7 @@ os_draw_vertical_line:
 
 os_get_file_size:
 pusha
-mov bx,0xF000
+mov bx,[temploc]
 mov dx,ax
 mov ah,0x85
 int 0x61
@@ -10320,6 +10364,8 @@ os_list_dialog:
 	je .go_down
 	cmp al, 13			; Enter pressed?
 	je .option_selected
+	cmp al, ' '			; Space pressed?
+	je .option_selected_with_arg
 	cmp al, 27			; Esc pressed?
 	je .esc_pressed
 	; cmp al,1			; Up pressed?
@@ -10424,7 +10470,8 @@ call os_get_cursor_pos
 	popa
 	stc				; Set carry for Esc
 	ret
-
+.option_selected_with_arg:
+mov byte [getarg.end],0x20
 .option_selected:
 	call os_show_cursor
 	call os_get_cursor_pos
@@ -12775,6 +12822,7 @@ push bx
 mov bx,ax
 mov ax,tempstr
 call os_input_dialog
+mov si,tempstr
 call atoi
 pop bx
 mov [bx],al
@@ -14099,15 +14147,6 @@ signature:
 db 'DivJ'
 ;jmp kernel
 
-drive_type_string:
-db 'DrvType:',0
-drive_number_string:
-db 'No.Drives:',0
-drive_spt_string:
-db 'Sector/Track:',0
-drive_head_string:
-db 'No.Heads:',0
-
 ;EnableDigitized     db 0
 
 bpbBytesPerSector:  	DW 512
@@ -14164,13 +14203,13 @@ vars:
 var_a:
 dw 0x0000
 var_b:
-dw 0x0000
+dw 0x0000 ; Temp one time uses
 var_c:
+dw 0x0000 ;Temp stores currentdir in roam
+var_d: ;Microkernel path loop
 dw 0x0000
-var_d:
+var_e: ;Batch pos variable
 dw 0x0000
-; var_e:
-; dw 0x0000
 var_f db 0x0f,0x0f
 
 var_i:
@@ -14294,6 +14333,8 @@ loc2:
 dw 0x0000
 loc3:
 dw 0x7000
+temploc:
+dw 0xF000
 extra:
 dw 0x0000
 comm:
@@ -14567,9 +14608,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1010
+dw 1011
 verstring:
-db ' Aplaun OS (version 1.1.0) ',0
+db ' Aplaun OS (version 1.01.1) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
@@ -14650,6 +14691,12 @@ toobigstr:
 db 'Too big',0
 argstr:
 db 'Arguments: ',0
+; drive_type_str:
+; db 'DrvType:',0
+numberof_str:
+db 'No. of ',0
+drive_spt_str:
+db 'Sector/Track:',0
 new_file_str:
 db 'New '
 file_name_str:

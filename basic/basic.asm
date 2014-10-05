@@ -4895,7 +4895,7 @@ mov ah,0x01
 int 0x61
 ret
 
-loc:	dw 0xA000
+loc:	dw 0x9000
 temp_color: db 0x00
 
 ; ------------------------------------------------------------------
@@ -5232,5 +5232,5 @@ vars_loc:
 	disp_page		db 0		; Page to display
 	graphicsmode		db 0		; Keeps track of whether the system is in graphics mode
 
-;times (512*24)-($-$$) db 0
 times (512*24)-($-$$) db 0
+;times (512*25)-($-$$) db 0
