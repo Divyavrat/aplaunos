@@ -100,9 +100,8 @@ section .data
 	
 section .text
 main:
-	call renderworld
-	
 .gameloop:
+call renderworld
 	;sleep
 	mov ah, 0x86
 	xor dx, dx     ; lsw
@@ -124,7 +123,10 @@ main:
 	mov ax, BLACK
 	push ax
 	call fillrect
-
+push word [pos_x]
+push word [pos_y]
+call is_tile_wall
+jnz .skip
 .dxnespeed:
 	cmp word [dir_x], -SPEED
 	jne .dxnemspeed
@@ -183,7 +185,7 @@ main:
 	mov ax, YELLOW
 	push ax
 	call fillrect
-
+.skip:
 	jmp .gameloop
 	
 input:
@@ -222,10 +224,16 @@ input:
 	
 .rightbreak:
 	cmp ah, 0x48 ; up arrow scan code
-	jne input ;repeat
+	jne .escapekey ;repeat
 	mov word [dir_x], 0
 	mov word [dir_y], -SPEED
 	jmp input ;repeat
+
+.escapekey:
+	cmp ah, 0x01 ; esc scan code
+	jne input ;repeat
+	pop ax
+	jmp terminate
 
 ; Gets the pixel position of a tile.
 ;

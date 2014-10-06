@@ -395,15 +395,6 @@ mov di,c_clock
 call cmpstr
 jc clock
 
-jmp extracomms
-
-c_wall_f:
-mov ah,0x50
-int 0x61
-jmp kernel
-
-extracomms:
-
 
 mov di,c_run
 call cmpstr
@@ -832,7 +823,7 @@ jc fdir_link
 
 mov di,c_z
 call cmpstr
-jc fdir_link
+jc roam_link
 
 ;; Command is not known
 ; Hence checking for a program with same name
@@ -890,6 +881,11 @@ call colon
 mov di,free_kenel_commandstr
 call getstr
 mov byte [di-1],0x20
+jmp kernel
+
+c_wall_f:
+mov ah,0x50
+int 0x61
 jmp kernel
 
 c_echo_f:
@@ -1317,8 +1313,12 @@ call cmpstr_s
 jc kernel
 
 mov di,tempstr
+cmp byte [.batch_command],'*'
+je .skipcommand
 cmp byte [.batch_command],'@'
-jne .batchloop
+je .skipcommand
+jmp .batchloop
+.skipcommand:
 inc word [var_e]
 inc si
 .batchloop:
@@ -1339,8 +1339,11 @@ jne .skip
 inc word [var_e]
 ;add word [var_e],0x0002
 .skip:
+cmp byte [.batch_command],'*'
+je .skip_end_character
 mov al,0x0D
 stosb
+.skip_end_character:
 xor al,al
 stosb
 ;add word [var_e],2
@@ -1404,14 +1407,31 @@ mov di,ImageName
 mov cx,0x000B
 rep movsb
 ret
+store_HTS:
+mov dl,[absoluteSector]
+mov [var_j],dl
+mov dl,[absoluteHead]
+mov [var_k],dl
+mov dl,[absoluteTrack]
+mov [var_l],dl
+ret
+restore_HTS:
+mov dl,[var_j]
+mov [absoluteSector],dl
+mov dl,[var_k]
+mov [absoluteHead],dl
+mov dl,[var_l]
+mov [absoluteTrack],dl
+ret
 
 microkernel:
 
 ;; Searches for file with command as name
 ; From a list of directories in the path list
-
 mov ax,[currentdir]
 mov [currentdirtemp],ax
+call store_HTS
+call storename
 mov word [var_d],0
 cmp byte [micro],0xf0
 je .enabled
@@ -1419,12 +1439,7 @@ ret
 .microsearch_done:
 mov ax,[currentdirtemp]
 mov [currentdir],ax
-mov dl,[var_j]
-mov [absoluteSector],dl
-mov dl,[var_k]
-mov [absoluteHead],dl
-mov dl,[var_l]
-mov [absoluteTrack],dl
+call restore_HTS
 ret
 .start_search:
 mov si,path_list
@@ -1440,14 +1455,6 @@ cmp word cx,[var_d]
 jl .start_loop
 mov [currentdir],ax
 .enabled:
-mov dl,[absoluteSector]
-mov [var_j],dl
-mov dl,[absoluteHead]
-mov [var_k],dl
-mov dl,[absoluteTrack]
-mov [var_l],dl
-
-call storename
 
 mov si,found
 mov di,ImageName
@@ -1550,6 +1557,7 @@ microkernel_restoredata:
 call restorename
 mov ax,[currentdirtemp]
 mov [currentdir],ax
+call restore_HTS
 ret
 
 text.move_right:
@@ -4978,10 +4986,30 @@ ReadSectors:
 ;call calculate_size
 ;mov cx,ax
 ;mov cx,[size]
+push es
 mov byte [.failflag],0x0f
      .Read_Sectors_MAIN:
           mov     di, 0x0005                          ; five retres for error
 	.Read_Sectors_SECTORLOOP:
+		
+		  mov dx,0xFFFF
+		  sub dx,[bpbBytesPerSector]
+		  cmp bx,dx
+		  jb .skip_segmentchange
+		  mov dx,es
+		  add dx,0x0020
+		  ;not bx
+		  pusha
+		  mov ax,dx
+		  call printwordh
+		  mov ax,bx
+		  call printwordh
+		  popa
+		  sub bx,[bpbBytesPerSector]
+		  ;mov es,dx;;TODO segment shift
+		  ;mov cx,0
+		  .skip_segmentchange:
+		  
           push    ax
           push    bx
           push    cx
@@ -5035,6 +5063,7 @@ mov byte dl,[drive]
 ; je .callnodata
 ; cmp byte [command_tempchar],'c'
 ; je .callnodata
+
 		  ; .callnodata:
 		  ;ret
           pop     cx
@@ -5042,11 +5071,14 @@ mov byte dl,[drive]
           pop     ax
           add     bx, WORD [bpbBytesPerSector]        ; queue next buffer
 		  ;add     bx, 0x200        ; queue next buffer
-          inc     ax                                  ; queue next sector
+; cmp bx,0xFC00
+; jnb .fault_stop
+		  inc     ax                                  ; queue next sector
           loop    .Read_Sectors_MAIN                   ; read next sector
-		  
+		  .fault_stop:
 		  ; mov     al, '.' ;;TODO better way to indicate progress
           ; call    printf
+		  pop es
           ret
 .failflag: db 0x0f
 
@@ -5166,8 +5198,20 @@ mov [filesize+2],ax
 popa
 ret
 
+;
+;Commands :
+;q=quickload
+;a=cmpload
+;l=file selector
+;r=roam selector
+;e=file exists
+;i=interrupt
+;c=call
+;t=roam selector interrupt
+;
 fdir:
-mov [var_k],sp
+call store_HTS
+mov [var_n],sp
 cmp byte [command_tempchar],'i'
 je .fdir_interrupt
 cmp byte [command_tempchar],'t'
@@ -5410,8 +5454,6 @@ fileload:
           mov di, [loc2]
 cmp byte [command_tempchar],'l'
 je .makelist
-cmp byte [command_tempchar],'z'
-je .makelist_clear
 cmp byte [command_tempchar],'r'
 je .makelist_clear
 		  
@@ -5439,6 +5481,8 @@ je .makelist_clear
 cmp byte [command_tempchar],'i'
 je .intnonameload
 cmp byte [command_tempchar],'c'
+je .intnonameload
+cmp byte [command_tempchar],'e'
 je .intnonameload
 ;call newline
 ;pop cx
@@ -5476,8 +5520,8 @@ cmp byte [command_tempchar],'i';Interrupt
 je .intload
 cmp byte [command_tempchar],'c';Call
 je .intload
-;cmp byte [command_tempchar],'z';List
-;je .intload
+cmp byte [command_tempchar],'e';Exists
+je .intload
 call getkey
 cmp al,0x0D
 je LOAD_FAT
@@ -5495,9 +5539,9 @@ je .exitloop
           cmp cx,0
 		  jg .LOOP
 .exit_loop:
-;cmp byte [command_tempchar],'z';List
-;je .listmade
-		  jmp FAILURE
+cmp byte [command_tempchar],'e'
+je no_file_exists
+jmp FAILURE
 .back:
 sub di,0x0020
 mov ax,0x0702
@@ -5612,11 +5656,11 @@ sub ax,0x0C
 .dir_child:
 mov [currentdir],ax
 popa
-mov sp,[var_k]
+mov sp,[var_n]
 jmp fdir.fdir_next
 .done:
 popa
-mov sp,[var_k]
+mov sp,[var_n]
 mov dx,[dir_seg]
 mov es,dx
 mov di,[FileSystem_DONE.selected_file]
@@ -5641,7 +5685,7 @@ mov byte [bx+11],0
 ; xor ah,ah
 ; int 0x61
 ; popa
-mov dx,0
+mov dx,[data_seg]
 mov es,dx
 clc
 ret
@@ -5649,6 +5693,27 @@ fileselected_fail:
 stc
 mov dx,0x0f0f
 mov bx,0
+ret
+
+restore_fdirdata:
+mov dx,[data_seg]
+mov es,dx
+mov ax,[cluster]
+call ClusterLBA
+call LBACHS
+ret
+
+file_exists:
+mov sp,[var_n]
+call restore_fdirdata
+popa
+clc
+ret
+no_file_exists:
+mov sp,[var_n]
+call restore_fdirdata
+popa
+stc
 ret
 
      LOAD_FAT:
@@ -5679,28 +5744,30 @@ call ReadSectors
           mov bx,[loc]                          ; destination for image
           push bx
 mov al,[var_y]
-mov [var_j],al
-cmp byte [autosize_flag],0xf0
-jne .skip
-mov al,[var_x]
-and al,0x10
-cmp al,0x10
-je .skip
-pusha
+mov [var_i],al
+; cmp byte [autosize_flag],0xf0
+; jne .skip
+; mov al,[var_x]
+; and al,0x10
+; cmp al,0x10
+; je .skip
+; pusha
 ;call calculate_size
-mov ax,[size]
-mov [var_j],ax
+; mov ax,[size]
+; mov [var_i],ax
 ; cmp al,25
 ; jg .too_big
-mov word [size],ax
-jmp .done
+; mov word [size],ax
+; jmp .done
 ; .too_big:
 ; mov byte al,[var_y]
 ; mov byte [size],al
-.done:
-popa
+;.done:
+; popa
 cmp byte [command_tempchar],'l'
 je fileselected
+cmp byte [command_tempchar],'e'
+je file_exists
 .skip:
      ;----------------------------------------------------
      ; Load Stage 2
@@ -5802,11 +5869,11 @@ mov word [cluster],ax
 jmp FileSystem_DONE
 .temp_dataseg: dw 0x0000
 
-     FileSystem_DONE:
+FileSystem_DONE:
 mov ax,0
 mov es,ax
 	 pop bx
-	 mov sp,[var_k]
+	 mov sp,[var_n]
 mov ax,[var_y]
 mov [size],ax
 
@@ -5909,15 +5976,18 @@ jmp kernel
 dw 0
 
 FAILURE:
-mov ax,0
+call restore_HTS
+mov ax,[data_seg]
 mov es,ax
-mov sp,[var_k]
+mov sp,[var_n]
 mov ax,[var_y]
 mov [size],ax
 stc
 mov word [comm],0x0f0f
 cmp byte [command_tempchar],'l'
 je fileselected_fail
+; cmp byte [command_tempchar],'e'
+; je no_file_exists
 cmp byte [command_tempchar],'i'
 je intloaddone
 cmp byte [command_tempchar],'c'
@@ -6275,10 +6345,17 @@ mov bx,new_file_str
 call os_input_dialog
 ret
 
+;
+;Commands
+;f=new file
+;d=new directory
+;r=rename file
+;x=delete file
+;
 filenew:
 mov ax,[size]
 mov [var_x],ax
-mov word [size],0x09 ;size of fat
+;mov word [size],0x09 ;size of fat
 
 cmp byte [command_tempchar],'r'
 je .dont_allocate
@@ -6470,8 +6547,8 @@ mov cx,bx
 mov al,0
 rep stosb
 
-mov ah,0x07
-mov dl,0x00
+mov ah,0x70
+;mov dl,0x00
 int 0x61
 mov bx,[loc]
 mov ah,0x73
@@ -8531,16 +8608,11 @@ pusha
 .save_file:
 call os_file_exists
 jc .create_file
+call filesave_c
 popa
-pusha
-mov dx,bx
-mov ah,0x81
-int 0x61
-popa
+clc
 ret
 .create_file:
-popa
-pusha
 call os_create_file
 jmp .save_file
 
@@ -8550,22 +8622,57 @@ jmp .save_file
 
 os_file_exists:
 pusha
-mov bx,0xF000;[temploc]
-mov dx,ax
-mov ah,0x85
-int 0x61
-mov [.temp],dx
+call get_name
+mov byte [command_tempchar],'e'
+jmp fdir
+
+get_name:
+pusha
+mov si,ax
+mov di,ImageName
+mov cx,0x000C
+rep movsb
+call checkfname
 popa
-cmp word [.temp],0xf0f0
-jne .notfound
-;jmp .found
-;.found:
+ret
+
+; --------------------------------------------------------------------------
+; os_create_file -- Creates a new 0-byte file on the floppy disk
+; IN: AX = location of filename; OUT: Nothing
+
+os_create_file:
+pusha
+call get_name
+mov byte [command_tempchar],'f'
+call filenew
+popa
+ret
+
+; --------------------------------------------------------------------------
+; os_rename_file -- Change the name of a file on the disk
+; IN: AX = filename to change, BX = new filename (zero-terminated strings)
+; OUT: carry set on error
+
+os_rename_file:
+pusha
+call get_name
+mov byte [command_tempchar],'r'
+call filenew
+popa
 clc
 ret
-.notfound:
-stc
+
+; --------------------------------------------------------------------------
+; os_remove_file -- Deletes the specified file from the filesystem
+; IN: AX = location of filename to remove
+
+os_remove_file:
+pusha
+call get_name
+mov byte [command_tempchar],'x'
+call filenew
+popa
 ret
-.temp:dw 0
 
 os_pause:
 	pusha
@@ -8671,6 +8778,7 @@ jne .loop
 popa
 ret
 
+;ax=selected file name
 os_file_selector:
 ;mov ah,0x86
 ;int 0x61
@@ -9034,52 +9142,6 @@ os_memory_write:
 	
 .source_segment						dw 0
 .source_address						dw 0
-
-get_name:
-mov si,ax
-mov di,ImageName
-mov cx,0x000C
-rep movsb
-call checkfname
-ret
-
-; --------------------------------------------------------------------------
-; os_create_file -- Creates a new 0-byte file on the floppy disk
-; IN: AX = location of filename; OUT: Nothing
-
-os_create_file:
-pusha
-call get_name
-mov byte [command_tempchar],'f'
-call filenew
-popa
-ret
-
-; --------------------------------------------------------------------------
-; os_rename_file -- Change the name of a file on the disk
-; IN: AX = filename to change, BX = new filename (zero-terminated strings)
-; OUT: carry set on error
-
-os_rename_file:
-pusha
-call get_name
-mov byte [command_tempchar],'r'
-call filenew
-popa
-clc
-ret
-
-; --------------------------------------------------------------------------
-; os_remove_file -- Deletes the specified file from the filesystem
-; IN: AX = location of filename to remove
-
-os_remove_file:
-pusha
-call get_name
-mov byte [command_tempchar],'x'
-call filenew
-popa
-ret
 
 ; ------------------------------------------------------------------
 ; os_string_tokenize -- Reads tokens separated by specified char from
@@ -9596,72 +9658,72 @@ os_get_pixel:
 	; .y1				dw 0
 	; .y2				dw 0
 
-; ; Draw freeform shape
-; ; IN: BH = number of points, BL = colour, SI = location of shape points data
-; ; OUT: None, registers preserved
-; ; DATA FORMAT: x1, y1, x2, y2, x3, y3, etc
-; os_draw_polygon:
-	; pusha
+; Draw freeform shape
+; IN: BH = number of points, BL = colour, SI = location of shape points data
+; OUT: None, registers preserved
+; DATA FORMAT: x1, y1, x2, y2, x3, y3, etc
+os_draw_polygon:
+	pusha
 	
-	; ;mov ax, 1000h
-	; ;mov ds, ax
-	; ;mov es, ax
+	;mov ax, 1000h
+	;mov ds, ax
+	;mov es, ax
 	
-	; ;inc byte [internal_call]
+	;inc byte [internal_call]
 	
-	; dec bh
-	; mov byte [.points], bh
+	dec bh
+	mov byte [.points], bh
 	
-	; mov word ax, [fs:si]
-	; add si, 2
-	; mov word [.xi], ax
-	; mov word [.xl], ax
+	mov word ax, [fs:si]
+	add si, 2
+	mov word [.xi], ax
+	mov word [.xl], ax
 	
-	; mov word ax, [fs:si]
-	; add si, 2
-	; mov word [.yi], ax
-	; mov word [.yl], ax
+	mov word ax, [fs:si]
+	add si, 2
+	mov word [.yi], ax
+	mov word [.yl], ax
 	
-	; .draw_points:
-		; mov cx, [.xl]
-		; mov dx, [.yl]
+	.draw_points:
+		mov cx, [.xl]
+		mov dx, [.yl]
 		
-		; mov word ax, [fs:si]
-		; add si, 2
-		; mov word [.xl], ax
+		mov word ax, [fs:si]
+		add si, 2
+		mov word [.xl], ax
 		
-		; mov word ax, [fs:si]
-		; add si, 2
-		; mov word [.yl], ax
+		mov word ax, [fs:si]
+		add si, 2
+		mov word [.yl], ax
 		
-		; push si
+		push si
 		
-		; mov si, [.xl]
-		; mov di, [.yl]
+		mov si, [.xl]
+		mov di, [.yl]
 		
-		; call os_draw_line
+		call os_draw_line
 		
-		; pop si
+		pop si
 		
-		; dec byte [.points]
-		; cmp byte [.points], 0
-		; jne .draw_points
+		dec byte [.points]
+		cmp byte [.points], 0
+		jne .draw_points
 		
-	; mov cx, [.xl]
-	; mov dx, [.yl]
-	; mov si, [.xi]
-	; mov di, [.yi]
-	; call os_draw_line
+	mov cx, [.xl]
+	mov dx, [.yl]
+	mov si, [.xi]
+	mov di, [.yi]
+	call os_draw_line
 	
-	; popa
-	; ;dec byte [internal_call]
-	; ret
+	popa
+	;dec byte [internal_call]
+	ret
 	
-	; .xi				dw 0
-	; .yi				dw 0
-	; .xl				dw 0
-	; .yl				dw 0
-	; .points				db 0
+	.xi				dw 0
+	.yi				dw 0
+	.xl				dw 0
+	.yl				dw 0
+	.points				db 0
 	
 
 ; Clear the screen by setting all pixels to a single colour
@@ -9944,7 +10006,6 @@ os_get_file_list:
 
 os_draw_line:
 os_draw_rectangle:
-os_draw_polygon:
 os_draw_border:
 
 os_square_root:
@@ -12669,14 +12730,14 @@ je int64_getbytesize
 iret
 
 int64_getsize:
-push ax
+;push ax
 mov dx,[size]
-mov ax,[var_j]
-cmp  ax,dx
-jl .ok
-mov dx,ax
-.ok:
-pop ax
+;mov ax,[var_j]
+;cmp  ax,dx
+;jl .ok
+;mov dx,ax
+;.ok:
+;pop ax
 iret
 
 int64_getbytesize:
@@ -13671,6 +13732,10 @@ jmp .enter
 mov bx,new_file_str
 mov ax,tempstr2
 call os_input_dialog
+mov ax,tempstr2
+mov bx,[loc]
+;call os_create_file
+call os_write_file
 mov di,[loc]
 mov cx,0x0400
 mov ax,0
@@ -13681,12 +13746,12 @@ mov bx,[loc]
 call os_write_file
 jmp edit
 .loadfile:
-mov bx,file_name_str
-mov ax,found
-call os_input_dialog
-mov ax,found
+; mov bx,file_name_str
+; mov ax,found
+; call os_input_dialog
+call os_file_selector
+;mov ax,found
 mov cx,[loc]
-;call os_create_file
 call os_load_file
 jmp edit
 .deleteline:
@@ -14214,14 +14279,21 @@ dw 0x0000
 var_f db 0x0f,0x0f
 
 var_i:
-dw 0x0000
+dw 0x0000 ;Temp swap uses
+
+;---------------------------
+;Used for temporarily storing HTS
 var_j:
 dw 0x0000
 var_k:
 dw 0x0000
 var_l:
 dw 0x0000
-var_m:
+;---------------------------
+
+var_m: ;Temp uses
+dw 0x0000
+var_n: ;Temp fdir sp storage
 dw 0x0000
 
 filesize:
@@ -14609,9 +14681,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1011
+dw 1012
 verstring:
-db ' Aplaun OS (version 1.01.1) ',0
+db ' Aplaun OS (version 1.01.2) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:

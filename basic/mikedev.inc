@@ -168,6 +168,7 @@ os_clear_graphics equ os_main+00EAh
 os_draw_horizontal_line equ os_main+010Bh
 os_draw_vertical_line equ os_main+010Eh
 
+os_draw_polygon equ os_main+00E7h
 os_draw_circle equ os_main+0165h
 
 ;os_return:
@@ -442,73 +443,6 @@ os_draw_rectangle:
 	.x2				dw 0
 	.y1				dw 0
 	.y2				dw 0
-
-; Draw freeform shape
-; IN: BH = number of points, BL = colour, SI = location of shape points data
-; OUT: None, registers preserved
-; DATA FORMAT: x1, y1, x2, y2, x3, y3, etc
-os_draw_polygon:
-	pusha
-	
-	;mov ax, 1000h
-	;mov ds, ax
-	;mov es, ax
-	
-	;inc byte [internal_call]
-	
-	dec bh
-	mov byte [.points], bh
-	
-	mov word ax, [fs:si]
-	add si, 2
-	mov word [.xi], ax
-	mov word [.xl], ax
-	
-	mov word ax, [fs:si]
-	add si, 2
-	mov word [.yi], ax
-	mov word [.yl], ax
-	
-	.draw_points:
-		mov cx, [.xl]
-		mov dx, [.yl]
-		
-		mov word ax, [fs:si]
-		add si, 2
-		mov word [.xl], ax
-		
-		mov word ax, [fs:si]
-		add si, 2
-		mov word [.yl], ax
-		
-		push si
-		
-		mov si, [.xl]
-		mov di, [.yl]
-		
-		call os_draw_line
-		
-		pop si
-		
-		dec byte [.points]
-		cmp byte [.points], 0
-		jne .draw_points
-		
-	mov cx, [.xl]
-	mov dx, [.yl]
-	mov si, [.xi]
-	mov di, [.yi]
-	call os_draw_line
-	
-	popa
-	;dec byte [internal_call]
-	ret
-	
-	.xi				dw 0
-	.yi				dw 0
-	.xl				dw 0
-	.yl				dw 0
-	.points				db 0
 
 ; ------------------------------------------------------------------
 ; os_draw_border -- draw a single character border
