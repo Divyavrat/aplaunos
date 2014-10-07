@@ -13,6 +13,7 @@ batch files can be copied to different location to allow multitasking
 segmentation fault, integer cmp - to solve file system error
 stack instability in fdir must be solved
 os_rename_file fix two filename input
+status bar for default editor
 
 dir change shouldn't cancel kernel_return
 optimise ChainLoops in FAT16

@@ -18,5 +18,6 @@ lIWelcome
 iUisieir
 micro
 echo
+logo.pcx
 roam
 end
