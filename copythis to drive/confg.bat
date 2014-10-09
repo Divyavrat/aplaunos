@@ -4,7 +4,7 @@ sssiOiSi-vsss
 lIColors
 color 49
 color2 116
-@lIPath List
+@lIPathList
 setdir 0013
 addpath 0013
 lISize

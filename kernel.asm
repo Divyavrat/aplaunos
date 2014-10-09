@@ -14681,9 +14681,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1012
+dw 1013
 verstring:
-db ' Aplaun OS (version 1.01.2) ',0
+db ' Aplaun OS (version 1.01.3) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
