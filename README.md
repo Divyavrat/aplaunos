@@ -1,20 +1,21 @@
-Aplaun
-========
+Aplaun OS
+=========
 
 A portable OS with common features.
 
-Open Source with - *GPLv3 License*
-
-##Aplaun OS
+Open Source with - **GPLv3 License**
 
 (Created by DivJ)
+
+[For any help visit wiki pages](https://github.com/Divyavrat/aplaun/wiki)
 
 To run BASIC programs from any folder -
 
 1. go in the BASIC folder >> `nm basic q q`
 2. and add to path with the command >> `addpathc`
 
-## Setup
+Setup
+-----
 
 1. Format a pendrive(Careful).
 2. Use any Hex Editor such as *HxD* to write boot.img on drive's first sector.
@@ -23,14 +24,16 @@ To run BASIC programs from any folder -
 
 ######Recommended: Copy the *copythis folder* contents to drive too.
 
-## How to Boot with older bootloader -
+How to Boot with older bootloader -
+-----------------------------------
 
 1. Tell what drive it is.(commonly it is 80).
 2. Tell where FAT12 file is.(commonly it is 13).
 3. Try first by 80:13 ,else 00:13 ,other than that god knows.
 4. Press any key until Kernel file i.e. kernel.COM shows up and press Enter or Space.
 
-## Contributing
+Contributing
+------------
 
 You can contribute by making apps, games, testing
 or even add modules to main system.
@@ -44,7 +47,8 @@ or even add modules to main system.
 We'd prefer if your contributions were well commented
 for better understanding of its working and for ease in future use.
 
-## Bug Tracker
+Bug Tracker
+-----------
 
 Found a bug? Report it [here](https://github.com/Divyavrat/aplaun/issues/)!
 
@@ -54,13 +58,15 @@ Odd results or un-handled features that we may have overlooked.
 If a basic hardware is not working,
 you can list out the used configuration.
 
-## Feature Request
+Feature Request
+---------------
 
 We are happy to receive any suggestions or customizations.
 
 Have an idea? Add it [here](https://github.com/Divyavrat/aplaun/issues/)!
 
-## License
+License
+-------
 
 ##### Aplaun OS
 is released under the [General Public License , Version 3.0](http://www.gnu.org/licenses/gpl.html).
@@ -69,20 +75,22 @@ is released under the [General Public License , Version 3.0](http://www.gnu.org/
 
 The full license text is included in `LICENSE` file.
 
-## Authors
+Authors
+-------
 
 A full list of [contributors](https://github.com/Divyavrat/aplaun/graphs/contributors)
 can be found on GitHub.
 
-## Acknowledgements
+Acknowledgements
+----------------
 
 We would like to acknowledge
 the following open source projects used
-for development of *Aplaun OS* -
+for development of **Aplaun OS** -
 
-1. MikeOS - *BASIC* interpreter, and Applications (Also TachyonOS, CompOS)
+1. MikeOS - **BASIC** interpreter, and Applications (Also TachyonOS, CompOS)
 2. BrokenThorn NeptuneOS - Bootloader and FAT12 driver
-3. Sean Haas - *Drek* game
+3. Sean Haas - **Drek** game
 4. Mike Saunders - MikeOS
-5. Leonardo Ono - *asm4mo* Assembler
+5. Leonardo Ono - **asm4mo** Assembler
 6. Joshua Beck - MikeOS apps
