@@ -1459,7 +1459,8 @@ mov [currentdir],ax
 mov si,found
 mov di,ImageName
 mov cx,0x0008
-call memcpys
+;call memcpys
+repnz movsb
 call checkfname
 
 ;mov si,.extension_com
@@ -1512,13 +1513,66 @@ db 'BAT'
 
 mov si,.extension_pcx
 call microkernel_findfile
-jnc .fail
+jnc .extra_search
 
 call microkernel_restoredata
 pop ax
 jmp c_paint_f
 .extension_pcx:
 db 'PCX'
+
+;Searches for more extensions
+;that can be supported in a file
+.extra_search:
+mov ax,.extra_file_name
+;call get_name
+call os_file_exists
+jc .fail
+mov ax,[dir_seg]
+mov es,ax
+call calculate_size
+mov cx,ax
+push cx
+mov ax,[cluster]
+call ClusterLBA
+pop cx
+mov bx,[loc4]
+call ReadSectors
+; mov al,[es:loc4]
+; call printf
+; when list is loaded,
+; parse the list to check
+
+; ; mov cx,0x200;[filesize]
+; ; mov si,[loc4]
+; ; jmp .end_loop;;TODO Implementation
+; ; .extra_loop:
+; ; push ds
+; ; mov dx,[dir_seg]
+; ; mov ds,dx
+; ; mov al,0x20
+; ; repne scasb
+; ; pop ds
+
+; ; pusha
+; ; mov di,tempstr2
+; ; mov cx,3
+; ; rep movsb
+; ; mov byte [di],0
+; ; mov si,tempstr2
+; ; call prnstr
+; ; popa
+
+; ; loop .extra_loop
+;jmp .end_loop
+.end_loop:
+mov ax,[kernel_seg]
+mov es,ax
+jmp .fail
+
+;File Name of the extension list
+.extra_file_name:
+db "progs.txt",0
 
 .fail:
 inc word [var_d]
@@ -6044,12 +6098,14 @@ memstr_copy:
 	 pop si
 ret
 
+; Returns size of a file in sectors
+; AX=size
 calculate_size:
 pusha
 mov dx,[filesize+2]
 mov ax,[filesize]
 ; xchg ax,dx
-mov cx,0x0200
+mov cx,[bpbBytesPerSector]
 cmp dx,0x1fff
 jge .skip
 cmp dx,0
@@ -7199,19 +7255,6 @@ add bx,2
 loop .loop
 xor bx,bx
 mov es,bx
-ret
-
-memcpys:
-lodsb
-cmp al,0x00
-je .zero
-stosb
-loop memcpys
-ret
-.zero:
-mov al,0x20
-stosb
-loop .zero
 ret
 
 ;IN: si-Source String,di-Destination String
@@ -13601,8 +13644,9 @@ check_for_eof:
 pusha
 cmp byte [free_roam],0x0f
 jne .skipsizecheck
-mov ah,0x06	;Get file size
-int 0x64
+mov dx,[filesize]	;Get file size
+;mov ah,0x06
+;int 0x64
 ;mov dh,0
 mov bx,si
 sub bx,[loc]
@@ -14394,18 +14438,19 @@ locf6:
 dw 0x9000
 locf7:
 dw 0x9500
-; loc2:
-; dw 0x9400
 kernel_seg:
 dw 0x0000
 data_seg:
 dw 0x0000
 dir_seg:
 dw 0x2000
-loc2:
+loc2: ; Folder
 dw 0x0000
-loc3:
+; dw 0x9400
+loc3: ; Root
 dw 0x7000
+loc4: ; Program List
+dw 0xA000
 temploc:
 dw 0xF000
 extra:

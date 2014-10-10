@@ -11,12 +11,14 @@ mov dx,cmpstr
 int 0x61
 mov [strlen],dx
 .loop:
-mov ah,0x71
+; mov ah,0x71
+; mov dx,[cluster]
+; int 0x61
 mov dx,[cluster]
-int 0x61
+mov bx,[loc]
 mov ah,0x72
 int 0x61
-mov [loc],ax
+;mov [loc],ax
 cmp byte [show],0xf0
 jne .cmploop
 mov ah,0x0B
@@ -83,6 +85,9 @@ call printspace
 mov dl,':'
 call print
 
+mov ah,0x71
+mov dx,[cluster]
+int 0x61
 mov ah,0x74
 int 0x61
 pusha
@@ -181,7 +186,7 @@ dw 0
 cluster:
 dw 0
 loc:
-dw 0
+dw 0xA000
 pos:
 dw 0
 enterstr:
