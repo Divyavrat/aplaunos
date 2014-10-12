@@ -1541,35 +1541,9 @@ db 'PCX'
 ;that can be supported in a file
 .extra_search:
 
-;Check if extension list exists
-mov ax,.extra_file_name
-call os_file_exists
-;jc .fail ; exit if file not found
-jc .skip_loading ; skip loading if file not found
-
-;Load the file to directory segment
-push es
-mov ax,[dir_seg]
-mov es,ax
-call calculate_size
-mov cx,ax
-push cx
-mov ax,[cluster]
-call ClusterLBA
-pop cx
-mov bx,[loc4]
-call ReadSectors
-pop es
-
-.skip_loading:
-
 ;Check if given filename exists
-mov si,found
-mov di,ImageName
-mov cx,0x000B
-;call memcpys
-repnz movsb
-call checkfname
+mov ax,found
+call get_name
 ; mov ax,ImageName
 ; call os_file_exists
 ;jc .fail
@@ -1621,30 +1595,34 @@ add word [.extra_pos],cx
 call memcpy_far_dir
 mov byte [di],0
 
-;debug
-; pusha
-; mov si,tempstr2
-; call prnstr
-; popa
+pop ax
+mov ax,[kernel_seg]
+mov es,ax
 
 mov si,tempstr2
 call pipespace2enter
 mov si,tempstr2
-call pipestore
-mov ax,0x2020
-; mov ax,0x1C0D
-call keybsto
+call prnstr
+call space
+mov si,ImageName
+call prnstr
+
+mov ax,tempstr2
+call os_string_length
+mov si,tempstr2
+mov di,found
+mov cx,ax
+rep movsb
+mov al,0
+stosb
+mov byte [getarg.end],0x20
 mov si,ImageName
 call pipestore
-pop ax
-mov ax,[kernel_seg]
-mov es,ax
-jmp kernel
+mov ax,0x1C0D
+call keybsto
 
-; pusha
-; mov ax,si
-; call printwordh
-; popa
+jmp command_received
+; jmp kernel
 
 ;If extension not same
 .not_equal:
@@ -2051,6 +2029,30 @@ call os_mouse_scale
 call reg_int
 mov word [currentdir],0x0013
 call buffer_clear
+
+call storename
+;Check if extension list exists
+mov ax,microkernel.extra_file_name
+call os_file_exists
+;jc .fail ; exit if file not found
+jc .skip_loading ; skip loading if file not found
+
+;Load the file to directory segment
+push es
+mov ax,[dir_seg]
+mov es,ax
+call calculate_size
+mov cx,ax
+push cx
+mov ax,[cluster]
+call ClusterLBA
+pop cx
+mov bx,[loc4]
+call ReadSectors
+pop es
+call restorename
+
+.skip_loading:
 ret
 
 c_reset_f:

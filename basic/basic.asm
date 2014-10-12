@@ -42,7 +42,8 @@ cmp si,0
 je .getfilename
 mov di,token
 call os_string_copy
-jmp .recieved_file
+;jmp .recieved_file
+jmp .name_ok
 .getfilename:
 mov si,filename_msg
 call os_print_string
@@ -50,7 +51,7 @@ call os_print_string
 mov ax,token
 call os_input_string
 
-.recieved_file:
+; .recieved_file:
 mov si,token
 .loop:
 lodsb
