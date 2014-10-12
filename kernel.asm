@@ -1026,7 +1026,6 @@ mov byte [3], 0x00
 mov ax,[data_seg]
 mov ds,ax
 mov es,ax
-
 call word [loc]	;;Jump to execution
 
 mov ax,0 ;[kernel_seg]
@@ -1371,6 +1370,23 @@ jmp command_start
 ;Getting arguments if space key is found
 ;Arguments is stored at the standard 0x81 location
 ;In 0x81 the number of characters is stored
+
+; argument:
+; mov si,0
+; cmp byte [getarg.end],0x20
+; jne .run
+; mov di,tempstr
+; ;mov di,found
+; call getstr
+; ;mov si,found
+; mov si,tempstr
+; cmp byte [si],0
+; ;cmp byte [found],0
+; jne .run
+; mov si,0
+; .run:
+; ret
+
 argument:
 mov si,0
 mov byte [0x80],0
@@ -1524,10 +1540,15 @@ db 'PCX'
 ;Searches for more extensions
 ;that can be supported in a file
 .extra_search:
+
+;Check if extension list exists
 mov ax,.extra_file_name
-;call get_name
 call os_file_exists
-jc .fail
+;jc .fail ; exit if file not found
+jc .skip_loading ; skip loading if file not found
+
+;Load the file to directory segment
+push es
 mov ax,[dir_seg]
 mov es,ax
 call calculate_size
@@ -1538,32 +1559,114 @@ call ClusterLBA
 pop cx
 mov bx,[loc4]
 call ReadSectors
-; mov al,[es:loc4]
-; call printf
+pop es
+
+.skip_loading:
+
+;Check if given filename exists
+mov si,found
+mov di,ImageName
+mov cx,0x000B
+;call memcpys
+repnz movsb
+call checkfname
+; mov ax,ImageName
+; call os_file_exists
+;jc .fail
+
 ; when list is loaded,
 ; parse the list to check
+mov ax,[dir_seg]
+mov es,ax
+mov si,[loc4]
+mov [.extra_pos],si
+.extra_loop:
+; push ds
+; mov dx,[dir_seg]
+; mov ds,dx
+; mov al,0
+; repne scasb
+; pop ds
 
-; ; mov cx,0x200;[filesize]
-; ; mov si,[loc4]
-; ; jmp .end_loop;;TODO Implementation
-; ; .extra_loop:
-; ; push ds
-; ; mov dx,[dir_seg]
-; ; mov ds,dx
-; ; mov al,0x20
-; ; repne scasb
-; ; pop ds
+mov si,[.extra_pos]
+mov di,tempstr2
+mov cx,3
+call memcpy_far_dir
+mov byte [di],0
+add word [.extra_pos],3
 
-; ; pusha
-; ; mov di,tempstr2
-; ; mov cx,3
-; ; rep movsb
-; ; mov byte [di],0
-; ; mov si,tempstr2
-; ; call prnstr
-; ; popa
+mov si,ImageName+8
+mov di,tempstr2
+mov cx,3
+call cmpstr_s
+jnc .not_equal
 
-; ; loop .extra_loop
+;If extension is found
+.space_loop:
+mov bx,[.extra_pos]
+mov al,[es:bx]
+inc word [.extra_pos]
+cmp al,0
+je .end_loop
+cmp al,0x20
+jne .space_loop
+
+mov si,[.extra_pos]
+call .extra_enter_loop
+mov di,tempstr2
+sub bx,si
+dec bx
+mov cx,bx
+add word [.extra_pos],cx
+call memcpy_far_dir
+mov byte [di],0
+
+;debug
+; pusha
+; mov si,tempstr2
+; call prnstr
+; popa
+
+mov si,tempstr2
+call pipespace2enter
+mov si,tempstr2
+call pipestore
+mov ax,0x2020
+; mov ax,0x1C0D
+call keybsto
+mov si,ImageName
+call pipestore
+pop ax
+mov ax,[kernel_seg]
+mov es,ax
+jmp kernel
+
+; pusha
+; mov ax,si
+; call printwordh
+; popa
+
+;If extension not same
+.not_equal:
+
+;.enter_loop:
+call .extra_enter_loop
+jmp .extra_loop
+
+.extra_enter_loop:
+mov bx,[.extra_pos]
+mov al,[es:bx]
+inc word [.extra_pos]
+pop dx
+cmp al,0
+je .end_loop
+push dx
+cmp al,0xA
+jne .extra_enter_loop
+ret
+.extra_pos: dw 0xA000
+
+;loop .extra_loop
 ;jmp .end_loop
 .end_loop:
 mov ax,[kernel_seg]
@@ -1863,53 +1966,18 @@ call change
 jmp kernel
 
 c_loc_f:
+mov bx,loc
 cmp byte [getarg.end],0x20
-jne .locf0
+jne .get
 mov al,'F'
 call printf
 call colon
-call newline
 call getno
-cmp ax,0
-je .locf0
-cmp ax,1
-je .locf1
-cmp ax,2
-je .locf2
-cmp ax,3
-je .locf3
-cmp ax,4
-je .locf4
-cmp ax,5
-je .locf5
-cmp ax,6
-je .locf6
-cmp ax,7
-je .locf7
-.locf0:
+call newline
+
+imul ax,2
 mov bx,loc
-jmp .get
-.locf1:
-mov bx,locf1
-jmp .get
-.locf2:
-mov bx,locf2
-jmp .get
-.locf3:
-mov bx,locf3
-jmp .get
-.locf4:
-mov bx,locf4
-jmp .get
-.locf5:
-mov bx,locf5
-jmp .get
-.locf6:
-mov bx,locf6
-jmp .get
-.locf7:
-mov bx,locf7
-;jmp .get
+add bx,ax
 .get:
 jmp getwordh_j
 
@@ -2119,7 +2187,7 @@ ret
 getpos:
 mov ah,0x03
 mov bh,[page]
-int 10h
+int 0x10
 ret
 
 setpos:
@@ -3848,7 +3916,8 @@ call space
 ; mov si,0xfff5
 ; mov di,found
 ; mov cx,0x9
-; call memcpy_far
+; ; call memcpy_far
+; rep movsb
 ; mov dx,0x0
 ; mov es,dx
 ; mov si,.bios_date
@@ -5971,7 +6040,7 @@ mov byte [comm2],'r'
 call newline
 call filetype
 call prnstr
-call file_ext_check
+;call file_ext_check
 
 mov al,[var_x]
 and al,0x10
@@ -6244,13 +6313,14 @@ mov es,dx
 ret
 
 delete_cluster:
+mov dx,[dir_seg]
+mov es,dx
 mov ax,[filenew.cluster]
           mov     cx, ax                              ; copy current cluster
           mov     dx, ax                              ; copy current cluster
           shr     dx, 0x0001                          ; divide by two
           add     cx, dx                              ; sum for (3/2)
-mov dx,[dir_seg]
-mov es,dx
+
           mov word bx, [loc3]                          ; location of FAT in memory
           add     bx, cx                              ; index into FAT
           mov     dx, WORD [es:bx]                       ; read two bytes from FAT
@@ -6289,7 +6359,7 @@ mov dx,[filenew.cluster]
 cmp dx,0x0000
 je .done
 cmp dx,0x0ff0
-jle delete_cluster
+jb delete_cluster
 .done:
 ret
 
@@ -6475,8 +6545,11 @@ cmp ax,0x0000
 je .filenew_not_found
 add di,0x0020
 jmp .loop
+
+;Rename a file
 .rename_file:
 push di
+;Get input for new file name
 call get_newfilename
 mov ax,found
 call get_name
@@ -6492,10 +6565,13 @@ mov ds,dx
 ;mov si,di
 mov si,ImageName
 mov cx,0x000C
-call memcpy_far
+;call memcpy_far
+rep movsb
 call SAVE_ROOT
-
 jmp .exitl
+
+;Delete a file
+;shift all directory list
 .delete_file:
 push di
 add di,0x001A
@@ -6531,8 +6607,8 @@ call calculate_fat
 inc ax
 xchg ax,cx
 call SAVE_FAT
-
 jmp .exitl
+
 .filenew_not_found:
 cmp byte [command_tempchar],'r'
 je .exitl
@@ -6584,7 +6660,6 @@ je .dir_made
 inc di
 mov al,0x02
 stosb
-
 call SAVE_ROOT
 
 .exitl:
@@ -6654,68 +6729,68 @@ mov si,dirstr
 .attrib_return:
 ret
 
-file_ext_check:
-call colon
-mov si,tempstr
-call prnstr
-
-call attrib
-call space
+; file_ext_check:
+; call colon
 ; mov si,tempstr
-; mov di,bmps
-; call cmpstr
-; jc .bmp
-mov si,tempstr
-mov di,txts
-call cmpstr
-jc .txt
-mov si,tempstr
-mov di,coms
-call cmpstr
-jc .com
-;mov si,tempstr
-;mov di,vids
-;call cmpstr
-;jc .vid
-;mov si,tempstr
-;mov di,pics
-;call cmpstr
-;jc .pic
-; mov si,tempstr
-; mov di,pnts
-; call cmpstr
-; jc .pnt
-ret
-; .bmp:
-; mov si,imagestr
 ; call prnstr
-; ; call colon
-; ; mov si,c_paint
-; ; call prnstr
+
+; call attrib
+; call space
+; ; mov si,tempstr
+; ; mov di,bmps
+; ; call cmpstr
+; ; jc .bmp
+; mov si,tempstr
+; mov di,txts
+; call cmpstr
+; jc .txt
+; mov si,tempstr
+; mov di,coms
+; call cmpstr
+; jc .com
+; ;mov si,tempstr
+; ;mov di,vids
+; ;call cmpstr
+; ;jc .vid
+; ;mov si,tempstr
+; ;mov di,pics
+; ;call cmpstr
+; ;jc .pic
+; ; mov si,tempstr
+; ; mov di,pnts
+; ; call cmpstr
+; ; jc .pnt
 ; ret
-.txt:
-mov si,c_text
-call prnstr
-call colon
-mov si,c_doc
-call prnstr
-call comma
-mov si,c_type
-call prnstr
-call comma
-mov si,c_text
-call prnstr
-ret
-.com:
-mov si,coms
-call prnstr
-call colon
-mov si,c_code
-call prnstr
-call comma
-mov si,c_run
-call prnstr
-ret
+; ; .bmp:
+; ; mov si,imagestr
+; ; call prnstr
+; ; ; call colon
+; ; ; mov si,c_paint
+; ; ; call prnstr
+; ; ret
+; .txt:
+; mov si,c_text
+; call prnstr
+; call colon
+; mov si,c_doc
+; call prnstr
+; call comma
+; mov si,c_type
+; call prnstr
+; call comma
+; mov si,c_text
+; call prnstr
+; ret
+; .com:
+; mov si,coms
+; call prnstr
+; call colon
+; mov si,c_code
+; call prnstr
+; call comma
+; mov si,c_run
+; call prnstr
+; ret
 ;.vid:
 ;mov si,c_video
 ;call prnstr
@@ -7287,12 +7362,18 @@ sub di,2
 loop memcpyr
 ret
 
-memcpy_far:
-mov al,[ds:si]
-inc si
-mov [es:di],al
-inc di
-loop memcpy_far
+memcpy_far_dir:
+push es
+push ds
+push dx
+mov dx,[kernel_seg]
+mov es,dx
+mov dx,[dir_seg]
+mov ds,dx
+pop dx
+rep movsb
+pop ds
+pop es
 ret
 
 step_f:
@@ -8632,6 +8713,8 @@ ret
 ; OUT: BX = file size (in bytes), carry set if file not found
 
 os_load_file:
+call os_file_exists
+jc .quit
 pusha
 mov bx,cx
 mov dx,ax
@@ -8639,6 +8722,7 @@ mov ah,0x85
 int 0x61
 popa
 call os_get_file_size
+.quit:
 ret
 
 ; --------------------------------------------------------------------------
@@ -8680,6 +8764,20 @@ popa
 ret
 
 ; --------------------------------------------------------------------------
+; os_get_file_size -- Get file size information for specified file
+; IN: AX = filename; OUT: BX = file size in bytes (up to 64K)
+; or carry set if file not found
+
+os_get_file_size:
+call os_file_exists
+;jc .quit
+;sub bx,50
+;dec bx
+mov bx,[filesize]
+.quit:
+ret
+
+; --------------------------------------------------------------------------
 ; os_create_file -- Creates a new 0-byte file on the floppy disk
 ; IN: AX = location of filename; OUT: Nothing
 
@@ -8697,12 +8795,15 @@ ret
 ; OUT: carry set on error
 
 os_rename_file:
+call os_file_exists
+jc .quit
 pusha
 call get_name
 mov byte [command_tempchar],'r'
 call filenew
 popa
 clc
+.quit:
 ret
 
 ; --------------------------------------------------------------------------
@@ -10135,18 +10236,6 @@ os_draw_vertical_line:
 
 	popa
 	ret
-
-os_get_file_size:
-pusha
-mov bx,[temploc]
-mov dx,ax
-mov ah,0x85
-int 0x61
-;sub bx,50
-;dec bx
-popa
-mov bx,[filesize]
-ret
 
 ; ------------------------------------------------------------------
 ; os_find_char_in_string -- Find location of character in a string
@@ -11685,7 +11774,7 @@ cmp ah,0x07
 je int33_mouse_horzlimit
 cmp ah,0x08
 je int33_mouse_vertlimit
-cmp ah,0x21
+cmp ah,0x21;33
 je int33_mouse_setup
 
 call debug_int
@@ -13548,14 +13637,14 @@ mov word [rowpos],0
 mov byte [row],0
 mov byte [col],0
 
-; call argument
-; cmp si,0
-; je mainloop
-; cmp byte [si],0
-; je mainloop
-; mov ax,si
-; mov cx,[loc]
-; call os_load_file
+call argument
+cmp si,0
+je mainloop
+cmp byte [si],0
+je mainloop
+mov ax,si
+mov cx,[loc]
+call os_load_file
 
 mainloop:
 cmp word [rowpos],79
@@ -13575,8 +13664,7 @@ jmp showscreen.firstline
 showscreen:
 ;call newline
 push cx
-mov ah,0x0B
-int 0x61
+call newline
 pop cx
 .firstline:
 push cx
@@ -14031,21 +14119,21 @@ jmp .loop
 .eol:
 ret
 
-printf2:
-cmp al,0x09
-je .tab
-mov ah,0x02
-mov dl,al
-int 0x21
-ret
-.tab:
-mov cx,8
-.loop:
-mov ah,0x02
-mov dl,0x20
-int 0x21
-loop .loop
-ret
+; printf2:
+; cmp al,0x09
+; je .tab
+; mov ah,0x02
+; mov dl,al
+; int 0x21
+; ret
+; .tab:
+; mov cx,8
+; .loop:
+; mov ah,0x02
+; mov dl,0x20
+; int 0x21
+; loop .loop
+; ret
 
 ;---------------------------
 ;IN: nothing
@@ -14088,7 +14176,11 @@ je .done
 call getpos
 cmp dx,0x184F
 jge .done
-call printf2
+call printt
+;call printf2
+;mov ah,0x02
+;mov dl,al
+;int 0x21
 jmp showline
 .done:
 ret
@@ -14374,14 +14466,12 @@ scrollmode:
 db 0xf0
 slowmode:
 db 0x0f
-score:
-db 0xf0
 autostart:
 db 0x0f
 micro:
 db 0xf0
-multi:
-db 0x0f
+; multi:
+; db 0x0f
 cursor:
 db 0xf0
 echo_flag:
@@ -14422,6 +14512,8 @@ db 0x74
 ; dw 0x0000
 page:
 dw 0x0000
+;--------
+;File Locations
 loc:
 dw 0x6000
 locf1:
@@ -14438,12 +14530,7 @@ locf6:
 dw 0x9000
 locf7:
 dw 0x9500
-kernel_seg:
-dw 0x0000
-data_seg:
-dw 0x0000
-dir_seg:
-dw 0x2000
+;--------
 loc2: ; Folder
 dw 0x0000
 ; dw 0x9400
@@ -14453,6 +14540,12 @@ loc4: ; Program List
 dw 0xA000
 temploc:
 dw 0xF000
+kernel_seg:
+dw 0x0000
+data_seg:
+dw 0x0000
+dir_seg:
+dw 0x2000
 extra:
 dw 0x0000
 comm:
@@ -14726,9 +14819,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1013
+dw 1014
 verstring:
-db ' Aplaun OS (version 1.01.3) ',0
+db ' Aplaun OS (version 1.01.4) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
@@ -14750,9 +14843,9 @@ db 'Locations: loc(files and programs),loc2(Folder),loc3(FAT)',0
 ; experimental:
 ; db 'Experimental: ',0
 file_command:
-db 'FileComms: q-quick,a-cmp,z,{fname,nm},fnew,del,fsave',0
+db 'File: q-quick,a-cmp,z,{fname,nm},fnew,del,fsave',0
 dir_command:
-db 'DirCmd: dir,setdir,newdir,cd,cd..,rename,copy,roam',0
+db 'Dir: dir,setdir,newdir,cd,cd..,rename,copy,roam',0
 interrupt_api:
 db 'Int/API: 01=step 05=prnscr 21,22,2B,61,64=api 2C=msg 4A=alarm',0
 interrupt2_api:
@@ -14872,8 +14965,8 @@ exception_str:
 db 'Exception ',0
 
 alarmtextstr:
-;db ' Alarm : anykey=kernel enter=continue',0
-db ' Alarm :Press anykey=kernel or enter=continue.',0
+db ' Alarm ',0 ; anykey=kernel enter=continue
+;db ' Alarm :Press anykey=kernel or enter=continue.',0
 
 path_list:
 times 10 dw 0

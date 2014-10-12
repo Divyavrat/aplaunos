@@ -1,3 +1,9 @@
 BAS basic
-AAP viewer
+AAP display
 TXT edit
+RTF edit
+PIC vedit
+VID vedit
+BFI bfc
+HLP help
+SND mplay

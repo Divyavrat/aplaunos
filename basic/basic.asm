@@ -37,13 +37,20 @@ mov	ax,1003h
 		
 call clear_ram				; Clear variables etc. from previous run
 							; of a BASIC program
-
+pop si
+cmp si,0
+je .getfilename
+mov di,token
+call os_string_copy
+jmp .recieved_file
+.getfilename:
 mov si,filename_msg
 call os_print_string
 
 mov ax,token
 call os_input_string
 
+.recieved_file:
 mov si,token
 .loop:
 lodsb
@@ -67,7 +74,7 @@ jc .notfound
 mov cx,[loc]
 mov ax,token
 call os_load_file
-pop si
+;pop si
 mov si,[string_buffer]
 jmp .found
 
@@ -77,7 +84,7 @@ call os_print_string
 mov dx,[loc]
 mov ah,0x80
 int 0x61
-pop si
+;pop si
 mov di, string_vars			; If so, copy it into $1
 call os_string_copy
 .found:
