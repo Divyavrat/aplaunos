@@ -191,7 +191,7 @@ They are executed one-by-one by the kernel.
 
 Sample **bat** file -
 
-```batch
+```shell
 echo
 IHelloWorld
 sstlsstlsscl
