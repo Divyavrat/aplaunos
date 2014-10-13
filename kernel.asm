@@ -5159,6 +5159,7 @@ mov byte [.failflag],0x0f
 		
 		  mov dx,0xFFFF
 		  sub dx,[bpbBytesPerSector]
+		  
 		  cmp bx,dx
 		  jb .skip_segmentchange
 		  mov dx,es
@@ -6562,15 +6563,14 @@ inc ax
 xchg ax,cx
 ;call colon
 ;call printwordh
+mov dx,[dir_seg]
+mov es,dx
 mov word bx,[loc3]
 call SAVE_FAT
 
 .dont_allocate:
-
 call LOAD_ROOT
 mov cx, WORD [bpbRootEntries]
-mov ax,[dir_seg]
-mov es,ax
 mov word di,[loc2]
 call newline
 jmp .loop
@@ -6580,6 +6580,8 @@ mov ax,[var_x]
 mov [size],ax
 jmp .exitl
 .loop:
+mov ax,[dir_seg]
+mov es,ax
 cmp byte [command_tempchar],'r'
 je .show_name
 cmp byte [command_tempchar],'x'
@@ -6673,6 +6675,8 @@ pop ds
 call SAVE_ROOT
 
 call calculate_fat
+mov dx,[dir_seg]
+mov es,dx
 mov word bx,[loc3]
 call ReadSectors
 call delete_cluster
@@ -8833,7 +8837,7 @@ get_name:
 pusha
 mov si,ax
 mov di,ImageName
-mov cx,0x000B
+mov cx,0x000C
 rep movsb
 call checkfname
 popa
@@ -14610,6 +14614,7 @@ db 'clock',0
 ;db 'frame',0
 c_wall:
 db 'wall',0
+drivestr:
 c_drive:
 db 'drive',0
 c_drive2:
@@ -14835,21 +14840,21 @@ gdt_end:
 db 0
 
 ver:
-dw 1015
+dw 1016
 verstring:
-db ' Aplaun OS (version 1.01.5) ',0
+db ' Aplaun OS (version 1.01.6) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
 db 'View/Editors: text,code,doc,edit,type,sound,paint',0
 setting_list:
-db 'Settings: loc,loc2,loc3,prompt,color,drive,autosize',0
+db 'Settings: loc,prompt,color,drive,autosize',0
 setting2_list:
-db 'Extra: echo,head,track,page,size,install,help,exit,calc,clock',0
+db 'Extra: echo,page,size,install,help,exit,calc,clock',0
 showsetting_list:
 db 'Settings: driveinfo,debug,alias,border,setting',0
 setting_switch_list:
-db 'Switches/RE: micro,videomode,typemode,wall,restart,reboot,reset,cls',0
+db 'Switches/RE: micro,wall,restart,reboot,reset,cls',0
 advanced_cmd:
 db 'Adv/pro: jmp,fhlt,step,addpathc,dataseg,runa',0
 ; common_control:
@@ -14945,8 +14950,8 @@ commandstr:
 db ' Command: ',0
 ; imagestr:
 ; db 'image',0
-drivestr:
-db 'drive',0
+; drivestr:
+; db 'drive',0
 labelstr:
 db 'label',0
 dirstr:
@@ -15076,5 +15081,5 @@ found:
 ;times 10 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
-times (512*45+0x100+0x20)-($-$$) db 0 ; Optimal Size
+times (512*45+0x100)-($-$$) db 0 ; Optimal Size
 ;times (512*47)-($-$$) db 0 ; Healthy Size

@@ -1,2 +1,2 @@
-nasm asm.asm -O1 -o asm.com
+nasm asm.asm -O5 -o asm.com
 pause
