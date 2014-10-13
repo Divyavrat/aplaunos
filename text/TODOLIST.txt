@@ -1,6 +1,4 @@
-default bfc name
-#high command to move batch to higher ram
-
+wav file player can be shifted to app
 settime,setdate - wrong dates are stored
 install - command to be fixed
 format - feature to add (FAT16 formatting)
@@ -13,9 +11,7 @@ more documentation, more comments to explain code
 segmentation fault, integer cmp - to solve file system error
 stack instability in fdir must be solved
 os_rename_file fix two filename input
-status bar for default editor
 
-dir change shouldn't cancel kernel_return
 optimise ChainLoops in FAT16
 mint can be registered by apps by lists
 previous commands list
@@ -23,7 +19,7 @@ EXE
 faults
 GUI
 display limits
-AAP PIC
+AAP PIC PCX
 memory size and manager
 games - invaders, cards, reversi, pinball, pacman, mario, chess
 font hindi,unicode

@@ -6,6 +6,5 @@ PIC vedit
 VID vedit
 BFI bfc
 ASM asm
-S   asm
 HLP help
 SND mplay

@@ -656,9 +656,9 @@ call cmpstr
 jc doc
 
 
-mov di,c_read
-call cmpstr
-jc read
+; mov di,c_read
+; call cmpstr
+; jc read
 
 
 mov di,c_edit
@@ -1261,7 +1261,7 @@ mov si,.notmzstr
 call prnstr
 jmp kernel
 .notmzstr:
-db "Not a EXE file.",0
+db "NotEXE",0
 .exereloc:
 dw 0
 .exehead:
@@ -1292,12 +1292,13 @@ ret
 ;batch executes each line in file
 ;All command combinations are supported
 batch:
-mov word [var_e],0
+mov si,[loc]
+mov [var_e],si
+
 batchset:
 call buffer_clear
 call newline
-mov si,[loc]
-add word si,[var_e]
+mov si,[var_e]
 ;add di,[var_e]
 cmp byte [si],0x00
 je kernel
@@ -1312,6 +1313,8 @@ call cmpstr_s
 jc kernel
 
 mov di,tempstr
+cmp byte [.batch_command],'#'
+je .shell_command
 cmp byte [.batch_command],'*'
 je .skipcommand
 cmp byte [.batch_command],'@'
@@ -1366,6 +1369,42 @@ mov word [kernelreturnaddr],batchset
 jmp command_start
 .batch_command: db 0
 .batch_end: db 'end',0
+.batch_high: db 'high',0
+
+.shell_command:
+inc si
+inc word [var_e]
+
+mov di,.batch_high
+mov ax,di
+call os_string_length
+mov cx,ax
+call cmpstr_s
+jc .batch_high_f
+
+.shell_done:
+mov si,[var_e]
+.shell_done_loop:
+lodsb
+cmp al,0x0A
+je .shell_done_end
+jmp .shell_done_loop
+.shell_done_end:
+mov [var_e],si
+jmp batchset
+
+.batch_high_f:
+mov cx,[filesize] ;Amount of data to copy
+mov di,0xffff ;End of current segment
+sub di,cx ;How back to start copy
+push di
+mov si,[loc] ;Source File
+rep movsb ; Copy to higher memory
+pop di
+mov si,[loc] ;Current Start
+sub [var_e],si ; Absolute offset
+add [var_e],di ; New Start
+jmp .shell_done ; Continue
 
 ;Getting arguments if space key is found
 ;Arguments is stored at the standard 0x81 location
@@ -2148,14 +2187,14 @@ int 0x10
 popa
 ret
 
-printf_b:
-pusha
-call printf_c
-call getpos
-inc dl
-call setpos_c
-popa
-ret
+; printf_b:
+; pusha
+; call printf_c
+; call getpos
+; inc dl
+; call setpos_c
+; popa
+; ret
 
 printf:
 
@@ -2335,7 +2374,8 @@ xor ax,ax
 stosb
 ret
 
-printn_big:
+;printn_big:
+printn:
 mov edx,eax
 xor eax,eax
 push ax
@@ -2358,28 +2398,28 @@ jmp .printloop
 .done:
 ret
 
-printn:
-mov dx,ax
-xor ax,ax
-push ax
-.loop:
-mov ax,dx
-xor dx,dx
-mov cx,10
-div cx
-xchg ax,dx
-add ax,0x30
-push ax
-cmp dx,0
-jg .loop
-.printloop:
-pop ax
-cmp ax,0
-je .done
-call printf
-jmp .printloop
-.done:
-ret
+; printn:
+; mov dx,ax
+; xor ax,ax
+; push ax
+; .loop:
+; mov ax,dx
+; xor dx,dx
+; mov cx,10
+; div cx
+; xchg ax,dx
+; add ax,0x30
+; push ax
+; cmp dx,0
+; jg .loop
+; .printloop:
+; pop ax
+; cmp ax,0
+; je .done
+; call printf
+; jmp .printloop
+; .done:
+; ret
 
 printnb:
 mov bl,'A'
@@ -2827,7 +2867,7 @@ ret
 
 storeline:
 pusha
-mov cx,0x0050
+mov cx,80 ;0x0050
 mov di,tempstr
 .loop:
 push cx
@@ -2844,7 +2884,7 @@ ret
 
 restoreline:
 pusha
-mov cx,0x0050
+mov cx,80;0x0050
 mov si,tempstr
 ;sub si,0x0500
 .loop:
@@ -5661,8 +5701,9 @@ je .exitloop
 .intload:
           ;pop     cx
           add     di, 0x0020
-          cmp cx,0
-		  jg .LOOP
+		  loop .LOOP
+          ;cmp cx,0
+		  ;jg .LOOP
 .exit_loop:
 cmp byte [command_tempchar],'e'
 je no_file_exists
@@ -5694,7 +5735,14 @@ push si
 
 ;Store name of the file
 mov cx,0x000B
-rep movsb
+.store_loop:
+; repnz movsb
+lodsb
+cmp al,0
+je .store_loop
+stosb
+loop .store_loop
+;stosb
 ;mov [.list_pos],di
 
 ;Store file type
@@ -6003,7 +6051,13 @@ mov ax,[var_y]
 mov [size],ax
 
 ;pop sp
+mov bx,[loc]
+add bx,[filesize]
+mov ax,[var_e]
+cmp ax,bx
+ja .skip_return_close
 mov byte [kernelreturnflag],0x0f
+.skip_return_close:
 clc
 mov word [comm],0xf0f0
 ;mov dx,[comm]
@@ -6478,6 +6532,7 @@ ret
 ;f=new file
 ;d=new directory
 ;r=rename file
+;t=rename filename given
 ;x=delete file
 ;
 filenew:
@@ -6485,10 +6540,12 @@ mov ax,[size]
 mov [var_x],ax
 ;mov word [size],0x09 ;size of fat
 
-cmp byte [command_tempchar],'r'
-je .dont_allocate
-cmp byte [command_tempchar],'x'
-je .dont_allocate
+cmp byte [command_tempchar],'f'
+je .allocate
+cmp byte [command_tempchar],'d'
+je .allocate
+jmp .dont_allocate
+.allocate:
 call calculate_fat
 ;inc ax
 ;xchg ax,cx
@@ -6548,13 +6605,27 @@ je .filenew_not_found
 add di,0x0020
 jmp .loop
 
+.rename_filename_already_recieved:
+push es
+mov ax,0
+mov es,ax
+mov ax,[os_rename_file.temp]
+call get_name
+pop es
+jmp .rename_filename_t
+
 ;Rename a file
 .rename_file:
 push di
+;;TODO two name call
+cmp byte [command_tempchar],'t'
+je .rename_filename_already_recieved
 ;Get input for new file name
 call get_newfilename
+; .rename_filename_already_recieved:
 mov ax,found
 call get_name
+.rename_filename_t:
 pop di
 ; mov si,ImageName
 ; mov cx,0x000b
@@ -6566,7 +6637,7 @@ mov ds,dx
 ;mov di,[FileSystem_DONE.selected_file]
 ;mov si,di
 mov si,ImageName
-mov cx,0x000C
+mov cx,0x000B
 ;call memcpy_far
 rep movsb
 call SAVE_ROOT
@@ -6614,10 +6685,14 @@ jmp .exitl
 .filenew_not_found:
 cmp byte [command_tempchar],'r'
 je .exitl
+cmp byte [command_tempchar],'t'
+je .exitl
 cmp byte [command_tempchar],'x'
 je .exitl
 .filenew_found:
 cmp byte [command_tempchar],'r'
+je .rename_file
+cmp byte [command_tempchar],'t'
 je .rename_file
 cmp byte [command_tempchar],'x'
 je .delete_file
@@ -7609,7 +7684,7 @@ mov ah,bl
 push ax
 call colon
 pop ax
-call printn_big
+call printn
 jmp kernel
 
 c_scrolllen_f:
@@ -8530,7 +8605,6 @@ iret
 os_draw_block_i:
 call os_draw_block
 iret
-
 os_load_file_i:
 call os_load_file
 iret
@@ -8759,7 +8833,7 @@ get_name:
 pusha
 mov si,ax
 mov di,ImageName
-mov cx,0x000C
+mov cx,0x000B
 rep movsb
 call checkfname
 popa
@@ -8801,12 +8875,27 @@ call os_file_exists
 jc .quit
 pusha
 call get_name
+popa
+pusha
+mov [.temp],bx
+; pusha
+; push es
+; mov ax,0
+; mov es,ax
+; mov si,ImageName
+; call prnstr
+; call getkey
+; pop es
+; popa
+
+;;TODO
 mov byte [command_tempchar],'r'
 call filenew
 popa
 clc
 .quit:
 ret
+.temp: dw 0xA000
 
 ; --------------------------------------------------------------------------
 ; os_remove_file -- Deletes the specified file from the filesystem
@@ -9534,201 +9623,201 @@ os_get_pixel:
 	.pixel				db 0
 	
 	
-; ; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
-; ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
-; ; OUT: None, registers preserved
-; os_draw_line:
-	; pusha				; Save parameters
+; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
+; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
+; OUT: None, registers preserved
+os_draw_line:
+	pusha				; Save parameters
 	
-	; ;mov ax, 1000h
-	; ;mov ds, ax
-	; ;mov es, ax
-	; ;inc byte [internal_call]
+	;mov ax, 1000h
+	;mov ds, ax
+	;mov es, ax
+	;inc byte [internal_call]
 	
-	; xor ax, ax			; Clear variables
-	; mov di, .x1
-	; mov cx, 11
-	; rep stosw
+	xor ax, ax			; Clear variables
+	mov di, .x1
+	mov cx, 11
+	rep stosw
 	
-	; popa				; Restore and save parameters
-	; pusha
+	popa				; Restore and save parameters
+	pusha
 	
-	; mov [.x1], cx			; Save points
-	; mov [.x], cx
-	; mov [.y1], dx
-	; mov [.y], dx
-	; mov [.x2], si
-	; mov [.y2], di
+	mov [.x1], cx			; Save points
+	mov [.x], cx
+	mov [.y1], dx
+	mov [.y], dx
+	mov [.x2], si
+	mov [.y2], di
 	
-	; mov [.colour], bl		; Save the colour
+	mov [.colour], bl		; Save the colour
 	
-	; mov bx, [.x2]
-	; mov ax, [.x1]
-	; cmp bx, ax
-	; jl .x1gtx2
+	mov bx, [.x2]
+	mov ax, [.x1]
+	cmp bx, ax
+	jl .x1gtx2
 	
-	; sub bx, ax
-	; mov [.dx], bx
-	; mov ax, 1
-	; mov [.incx], ax
-	; jmp .test2
+	sub bx, ax
+	mov [.dx], bx
+	mov ax, 1
+	mov [.incx], ax
+	jmp .test2
 	
-; .x1gtx2:
-	; sub ax, bx
-	; mov [.dx], ax
-	; mov ax, -1
-	; mov [.incx], ax
+.x1gtx2:
+	sub ax, bx
+	mov [.dx], ax
+	mov ax, -1
+	mov [.incx], ax
 	
-; .test2:
-	; mov bx, [.y2]
-	; mov ax, [.y1]
-	; cmp bx, ax
-	; jl .y1gty2
+.test2:
+	mov bx, [.y2]
+	mov ax, [.y1]
+	cmp bx, ax
+	jl .y1gty2
 	
-	; sub bx, ax
-	; mov [.dy], bx
-	; mov ax, 1
-	; mov [.incy], ax
-	; jmp .test3
+	sub bx, ax
+	mov [.dy], bx
+	mov ax, 1
+	mov [.incy], ax
+	jmp .test3
 	
-	; .done:
-	; mov ax, [.x]
-	; mov cx, [.y]
-	; mov bl, [.colour]
-	; call os_set_pixel
+	.done:
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
 	
-	; popa
-	; ;dec byte [internal_call]
-	; ret
+	popa
+	;dec byte [internal_call]
+	ret
 	
-; .y1gty2:
-	; sub ax, bx
-	; mov [.dy], ax
-	; mov ax, -1
-	; mov [.incy], ax
+.y1gty2:
+	sub ax, bx
+	mov [.dy], ax
+	mov ax, -1
+	mov [.incy], ax
 	
-; .test3:
-	; mov bx, [.dx]
-	; mov ax, [.dy]
-	; cmp bx, ax
-	; jl .dygtdx
+.test3:
+	mov bx, [.dx]
+	mov ax, [.dy]
+	cmp bx, ax
+	jl .dygtdx
 	
-	; mov ax, [.dy]
-	; shl ax, 1
-	; mov [.dy], ax
+	mov ax, [.dy]
+	shl ax, 1
+	mov [.dy], ax
 	
-	; mov bx, [.dx]
-	; sub ax, bx
-	; mov [.balance], ax
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
 	
-	; shl bx, 1
-	; mov [.dx], bx
+	shl bx, 1
+	mov [.dx], bx
 	
-; .xloop:
-	; mov ax, [.x]
-	; mov bx, [.x2]
-	; cmp ax, bx
-	; je .done
+.xloop:
+	mov ax, [.x]
+	mov bx, [.x2]
+	cmp ax, bx
+	je .done
 	
-	; mov ax, [.x]
-	; mov cx, [.y]
-	; mov bl, [.colour]
-	; call os_set_pixel
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
 	
-	; xor si, si
-	; mov di, [.balance]
-	; cmp di, si
-	; jl .xloop1
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .xloop1
 	
-	; mov ax, [.y]
-	; mov bx, [.incy]
-	; add ax, bx
-	; mov [.y], ax
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
 	
-	; mov ax, [.balance]
-	; mov bx, [.dx]
-	; sub ax, bx
-	; mov [.balance], ax
+	mov ax, [.balance]
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
 	
-; .xloop1:
-	; mov ax, [.balance]
-	; mov bx, [.dy]
-	; add ax, bx
-	; mov [.balance], ax
+.xloop1:
+	mov ax, [.balance]
+	mov bx, [.dy]
+	add ax, bx
+	mov [.balance], ax
 	
-	; mov ax, [.x]
-	; mov bx, [.incx]
-	; add ax, bx
-	; mov [.x], ax
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
 	
-	; jmp .xloop
+	jmp .xloop
 	
-; .dygtdx:
-	; mov ax, [.dx]
-	; shl ax, 1
-	; mov [.dx], ax
+.dygtdx:
+	mov ax, [.dx]
+	shl ax, 1
+	mov [.dx], ax
 	
-	; mov bx, [.dy]
-	; sub ax, bx
-	; mov [.balance], ax
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
 	
-	; shl bx, 1
-	; mov [.dy], bx
+	shl bx, 1
+	mov [.dy], bx
 	
-; .yloop:
-	; mov ax, [.y]
-	; mov bx, [.y2]
-	; cmp ax, bx
-	; je .done
+.yloop:
+	mov ax, [.y]
+	mov bx, [.y2]
+	cmp ax, bx
+	je .done
 	
-	; mov ax, [.x]
-	; mov cx, [.y]
-	; mov bl, [.colour]
-	; call os_set_pixel
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
 	
-	; xor si, si
-	; mov di, [.balance]
-	; cmp di, si
-	; jl .yloop1
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .yloop1
 	
-	; mov ax, [.x]
-	; mov bx, [.incx]
-	; add ax, bx
-	; mov [.x], ax
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
 	
-	; mov ax, [.balance]
-	; mov bx, [.dy]
-	; sub ax, bx
-	; mov [.balance], ax
+	mov ax, [.balance]
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
 	
-; .yloop1:
-	; mov ax, [.balance]
-	; mov bx, [.dx]
-	; add ax, bx
-	; mov [.balance], ax
+.yloop1:
+	mov ax, [.balance]
+	mov bx, [.dx]
+	add ax, bx
+	mov [.balance], ax
 	
-	; mov ax, [.y]
-	; mov bx, [.incy]
-	; add ax, bx
-	; mov [.y], ax
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
 	
-	; jmp .yloop
+	jmp .yloop
 	
 	
-	; .x1 dw 0
-	; .y1 dw 0
-	; .x2 dw 0
-	; .y2 dw 0
+	.x1 dw 0
+	.y1 dw 0
+	.x2 dw 0
+	.y2 dw 0
 	
-	; .x dw 0
-	; .y dw 0
-	; .dx dw 0
-	; .dy dw 0
-	; .incx dw 0
-	; .incy dw 0
-	; .balance dw 0
-	; .colour db 0
-	; .pad db 0
+	.x dw 0
+	.y dw 0
+	.dx dw 0
+	.dy dw 0
+	.incx dw 0
+	.incy dw 0
+	.balance dw 0
+	.colour db 0
+	.pad db 0
 	
 ; ; Draw (straight) rectangle
 ; ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour, CF = set if filled or clear if not
@@ -10150,7 +10239,6 @@ os_long_int_negate:
 
 os_get_file_list:
 
-os_draw_line:
 os_draw_rectangle:
 os_draw_border:
 
@@ -10491,6 +10579,7 @@ os_list_dialog:
 	mov si, ax
 .count_loop:
 	lodsb
+	;cmp word [si], 0
 	cmp al, 0
 	je .done_count
 	cmp al, ','
@@ -10720,6 +10809,7 @@ mov byte [getarg.end],0x20
 .more:
 	lodsb				; Get next character in file name, increment pointer
 
+	;cmp word [si], 0			; End of string?
 	cmp al, 0			; End of string?
 	je .done_list
 
@@ -12348,7 +12438,7 @@ iret
 
 int61h_pipestore:
 mov di,dx
-mov si,di
+mov si,dx
 call pipespace2enter
 mov si,di
 call pipestore
@@ -12530,7 +12620,7 @@ iret
 
 int61_printn_big:
 mov eax,edx
-call printn_big
+call printn
 iret
 
 int61_itoa:
@@ -12596,64 +12686,6 @@ pop dx
 call setpos
 iret
 
-; int61_msgbox_no_byte:
-; mov si,bx
-; mov di,dx
-; push cx
-
-; call color_switch
-
-; call getpos
-; mov bx,dx
-; pop dx
-; push bx
-; push dx
-; call setpos
-; call storeline
-; pop dx
-; push dx
-; call setpos
-; call prnstr
-; mov ax,di
-; call printnb
-; call getkey
-; call color_switch
-; pop dx
-; call setpos
-; call restoreline
-; pop dx
-; call setpos
-; iret
-
-; int61_msgbox_no:
-; mov si,bx
-; mov di,dx
-; push cx
-
-; call color_switch
-
-; call getpos
-; mov bx,dx
-; pop dx
-; push bx
-; push dx
-; call setpos
-; call storeline
-; pop dx
-; push dx
-; call setpos
-; call prnstr
-; mov ax,di
-; call printn
-; call getkey
-; call color_switch
-; pop dx
-; call setpos
-; call restoreline
-; pop dx
-; call setpos
-; iret
-
 int61_msgbox_no:
 mov si,bx
 mov edi,edx
@@ -12685,7 +12717,7 @@ cmp byte [int61h.function],0x49
 je .wordh
 ; cmp [int61h.function],0x47
 ; je .big
-call printn_big
+call printn
 jmp .done
 .in_no:
 call getno
@@ -12708,36 +12740,6 @@ call restoreline
 pop dx
 call setpos
 iret
-
-; int61_msgbox_wordhex:
-; mov si,bx
-; mov di,dx
-; ;push dx
-; push cx
-
-; call color_switch
-
-; call getpos
-; mov bx,dx
-; pop dx
-; push bx
-; push dx
-; call setpos
-; call storeline
-; pop dx
-; push dx
-; call setpos
-; call prnstr
-; mov ax,di
-; call printwordh
-; call getkey
-; call color_switch
-; pop dx
-; call setpos
-; call restoreline
-; pop dx
-; call setpos
-; iret
 
 int61_wall:
 not byte [wall_flag]
@@ -13526,8 +13528,9 @@ ret
 
 keybsto:
 pusha
-mov ch,ah
-mov cl,al
+; mov ch,ah
+; mov cl,al
+mov cx,ax
 mov ah,0x05
 int 16h
 popa
@@ -13711,19 +13714,21 @@ inc dh
 sub cx,80
 jmp .rowloop
 .ok:
-; push dx
+push dx
 ; mov bl,[color2]
-; mov dh,[border_max_y]
+mov dh,[border_max_y]
 ; dec dh
-; mov dl,[border_min_x]
+mov dl,[border_min_x]
 ; mov si,[border_max_x]
-; inc si
+; ;inc si
 ; mov di,[border_max_y]
 ; call os_draw_block
-; call setpos_c
-; mov si,edit_help_str
-; call os_print_string
-; pop dx
+call setpos_c
+mov si,edit_help_str
+call color_switch
+call prnstr
+call color_switch
+pop dx
 call setpos_c
 jmp control
 .popexit:
@@ -13833,10 +13838,15 @@ jmp mainloop
 .quit:
 jmp kernel
 .help:
-xor ah,ah
-mov dx,edit_help_str
-int 0x61
-jmp control
+; xor ah,ah
+; mov dx,edit_help_str
+; int 0x61
+mov ax,verstring
+mov bx,c_edit
+mov cx,signature
+mov dx,0
+call os_dialog_box
+jmp mainloop
 .save:
 mov ah,0x81
 mov dx,[loc]
@@ -14199,143 +14209,147 @@ rowpos: dw 0
 ;loc:
 ;dw 0x7000
 
-read:
-mov al,[teletype]
-mov [col],al
-mov byte [teletype],0xf0
-call newline
-call newline
-call getpos
-dec dh
-call setpos
-xor dx,dx
-mov [var_a],dx
-; xor ax,ax
-; mov al,[size]
-; mov bx,0x200
-; imul ax,bx
-mov ax,[filesize]
-mov [var_b],ax
-.read_loop:
-mov si,[loc]
-add si,[var_a]
-.loop:
-lodsb
-cmp al,0x09
-je .tab
-call printf
-inc word [var_a]
-mov dx,[var_a]
-cmp dx,[var_b]
-jge .filedone
-call getpos
-cmp dh,24
-jge .bottom
-jmp .loop
-.bottom:
-call getpos
-push dx
-xor dl,dl
-call setpos
-call space
-mov si,c_loc
-call prnstr
-call colon
-mov ax,[var_a]
-call printwordh
-mov al,'/'
-call printf
-mov ax,[var_b]
-call printwordh
-call space
-call space
-mov ax,[var_a]
-xor dx,dx
-mov bx,100
-mul bx
-mov bx,[var_b]
-div bx
-call printn
-mov al,'%'
-call printf
-call space
-call space
-pop dx
-.control:
-call getkey
-cmp ah,0x01
-je .filedone
-cmp ah,0x29
-je .filedone
-cmp ah,0x1C
-je .pagedown
-cmp ah,0x51
-je .pagedown
-cmp ah,0x47
-je .pageup
-cmp ah,0x49
-je .pageup
-cmp ah,0x3C
-je .jump
-cmp ah,0x3D
-je .jump
-cmp ah,0x3B
-je .help
-push dx
-call getpos
-xor dl,dl
-call setpos
-call clearline
-call scroll_down
-pop dx
-mov dh,0x17
-sub dh,[scrolllength]
-call setpos
-jmp .read_loop
-.filedone:
-mov al,[col]
-cmp al,0xf0
-je .filedoneskip
-mov byte [teletype],0x0f
-.filedoneskip:
-jmp kernel
-.help:
-mov dx,read_helpstr
-xor ah,ah
-int 61h
-jmp .control
-.jump:
-mov si,c_jmp
-call prnstr
-call space
-call colon
-call gethex
-mov bx,var_a
-inc bx
-mov [bx],al
-call gethex
-dec bx
-mov [bx],al
-jmp .pagedown
-.pageup:
-mov dx,[var_a]
-sub dx,0x07D0
-mov [var_a],dx
-.pagedown:
-call clear_screen
-xor dx,dx
-call setpos
-jmp .read_loop
-.tab:
-mov cl,[length]
-xor ch,ch
-mov al,0x20
-.tabloop:
-call printf
-dec cx
-cmp cx,0
-jg .tabloop
-jmp .loop
+;Simple Text Viewer
+;with percent status
+;and bookmark jump
+; read:
+;
+; mov al,[teletype]
+; mov [col],al
+; mov byte [teletype],0xf0
+; call newline
+; call newline
+; call getpos
+; dec dh
+; call setpos
+; xor dx,dx
+; mov [var_a],dx
+; ; xor ax,ax
+; ; mov al,[size]
+; ; mov bx,0x200
+; ; imul ax,bx
+; mov ax,[filesize]
+; mov [var_b],ax
+; .read_loop:
+; mov si,[loc]
+; add si,[var_a]
+; .loop:
+; lodsb
+; cmp al,0x09
+; je .tab
+; call printf
+; inc word [var_a]
+; mov dx,[var_a]
+; cmp dx,[var_b]
+; jge .filedone
+; call getpos
+; cmp dh,24
+; jge .bottom
+; jmp .loop
+; .bottom:
+; call getpos
+; push dx
+; xor dl,dl
+; call setpos
+; call space
+; mov si,c_loc
+; call prnstr
+; call colon
+; mov ax,[var_a]
+; call printwordh
+; mov al,'/'
+; call printf
+; mov ax,[var_b]
+; call printwordh
+; call space
+; call space
+; mov ax,[var_a]
+; xor dx,dx
+; mov bx,100
+; mul bx
+; mov bx,[var_b]
+; div bx
+; call printn
+; mov al,'%'
+; call printf
+; call space
+; call space
+; pop dx
+; .control:
+; call getkey
+; cmp ah,0x01
+; je .filedone
+; cmp ah,0x29
+; je .filedone
+; cmp ah,0x1C
+; je .pagedown
+; cmp ah,0x51
+; je .pagedown
+; cmp ah,0x47
+; je .pageup
+; cmp ah,0x49
+; je .pageup
+; cmp ah,0x3C
+; je .jump
+; cmp ah,0x3D
+; je .jump
+; cmp ah,0x3B
+; je .help
+; push dx
+; call getpos
+; xor dl,dl
+; call setpos
+; call clearline
+; call scroll_down
+; pop dx
+; mov dh,0x17
+; sub dh,[scrolllength]
+; call setpos
+; jmp .read_loop
+; .filedone:
+; mov al,[col]
+; cmp al,0xf0
+; je .filedoneskip
+; mov byte [teletype],0x0f
+; .filedoneskip:
+; jmp kernel
+; .help:
+; mov dx,read_helpstr
+; xor ah,ah
+; int 61h
+; jmp .control
+; .jump:
+; mov si,c_jmp
+; call prnstr
+; call space
+; call colon
+; call gethex
+; mov bx,var_a
+; inc bx
+; mov [bx],al
+; call gethex
+; dec bx
+; mov [bx],al
+; jmp .pagedown
+; .pageup:
+; mov dx,[var_a]
+; sub dx,0x07D0
+; mov [var_a],dx
+; .pagedown:
+; call clear_screen
+; xor dx,dx
+; call setpos
+; jmp .read_loop
+; .tab:
+; mov cl,[length]
+; xor ch,ch
+; mov al,0x20
+; .tabloop:
+; call printf
+; dec cx
+; cmp cx,0
+; jg .tabloop
+; jmp .loop
 
 c_cursor_f:
 not byte [cursor]
@@ -14348,7 +14362,7 @@ call os_show_cursor
 jmp kernel
 
 signature:
-db 'DivJ'
+db 'DivJ',0
 ;jmp kernel
 
 ;EnableDigitized     db 0
@@ -14582,8 +14596,8 @@ c_code:
 db 'code',0
 c_doc:
 db 'doc',0
-c_read:
-db 'read',0
+; c_read:
+; db 'read',0
 c_edit:
 db 'edit',0
 c_type:
@@ -14798,8 +14812,8 @@ css:
 db 'CS',0
 ; bmps:
 ; db 'BMP',0
-txts:
-db 'TXT',0
+; txts:
+; db 'TXT',0
 coms:
 db 'COM',0
 ;pics:
@@ -14821,15 +14835,15 @@ gdt_end:
 db 0
 
 ver:
-dw 1014
+dw 1015
 verstring:
-db ' Aplaun OS (version 1.01.4) ',0
+db ' Aplaun OS (version 1.01.5) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
-db 'View/Editors: text,code,doc,read,edit,type,sound,paint',0
+db 'View/Editors: text,code,doc,edit,type,sound,paint',0
 setting_list:
-db 'Settings: loc,loc2,loc3,prompt,color,color2,drive,autosize',0
+db 'Settings: loc,loc2,loc3,prompt,color,drive,autosize',0
 setting2_list:
 db 'Extra: echo,head,track,page,size,install,help,exit,calc,clock',0
 showsetting_list:
@@ -14837,7 +14851,7 @@ db 'Settings: driveinfo,debug,alias,border,setting',0
 setting_switch_list:
 db 'Switches/RE: micro,videomode,typemode,wall,restart,reboot,reset,cls',0
 advanced_cmd:
-db 'Adv/pro: jmp,fhlt,step,addpath,addpathc,dataseg,runa',0
+db 'Adv/pro: jmp,fhlt,step,addpathc,dataseg,runa',0
 ; common_control:
 ; db 'Common Keys : Arrow,wasd,F1 series,Tab-Change,(Esc or ~)-Close',0
 loc_command:
@@ -14857,10 +14871,10 @@ db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-
 
 doc_helpstr:
 db 0x1B,0x18,0x19,0x1A,'-Move,(Esc,~)-Close, F1-Help,F3-Copy,{F4,Insert-Paste},F5-Details,F6-Fill0',0
-read_helpstr:
-db '(Enter,PgDwn)-Next Page, (Home,PgUp)-GoBack, (F2,F3)-jmp to loc',0
+; read_helpstr:
+; db '(Enter,PgDwn)-Next Page, (Home,PgUp)-GoBack, (F2,F3)-jmp to loc',0
 step_helpstr:
-db 'F1-help (Esc,q)-quit (Ins,End)-Continue ',0
+db '(Esc,q)-quit (Ins,End)-Continue ',0
 ;vedit_helpstr:
 ;db 0x1B,0x18,0x19,0x1A,'-Move,Esc-Close,F1-Help,F2-chaincopy,F3-Copy,F4-Paste,F5-Details',0
 ;vedit_helpstr2:
@@ -14868,7 +14882,7 @@ db 'F1-help (Esc,q)-quit (Ins,End)-Continue ',0
 ;vedit_helpstr3:
 ;db ' (PgUp-FrameUp,PgDown-FrameDown), F6-Fill,F7-Clear,F8-Clean,F9-SetWall',0
 edit_help_str:
-db "F1-Help F2-Save F3-Copy F4-Paste F5-New F6-Load F7-LineDel F8-Details F9-Option",0
+db "F1About [F2]Save F3Copy F4Paste [F5]New [F6]Load [F7]LineDel F8Details F9Option",0
 
 shutdownstr:
 db 'System Halted. Safe to turn off.',0
@@ -14967,7 +14981,7 @@ exception_str:
 db 'Exception ',0
 
 alarmtextstr:
-db ' Alarm ',0 ; anykey=kernel enter=continue
+db 'Alarm',0 ; anykey=kernel enter=continue
 ;db ' Alarm :Press anykey=kernel or enter=continue.',0
 
 path_list:
@@ -15062,5 +15076,5 @@ found:
 ;times 10 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
-times (512*45+0x100)-($-$$) db 0 ; Optimal Size
+times (512*45+0x100+0x20)-($-$$) db 0 ; Optimal Size
 ;times (512*47)-($-$$) db 0 ; Healthy Size

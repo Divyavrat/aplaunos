@@ -57,11 +57,21 @@ mov di,infile
 .infile_name_loop:	; Getting Input File name
 lodsb
 cmp al,0		; End of input
-je .end
+je .end_after_first
 cmp al,0x20		; End of first name
 je .next
 stosb
 jmp .infile_name_loop
+
+.end_after_first:
+stosb
+mov di,outfile
+mov si,.default_output_name
+mov cx,0xFFFF
+repnz movsb
+jmp .end
+.default_output_name:
+db "out.bin",0
 
 .next:
 mov al,0
@@ -88,12 +98,12 @@ mov ax,infile
 mov cx,infile_location
 call os_load_file
 
-mov ax,outfile
-call os_file_exists
-jc .load_error
-mov ax,outfile
-mov cx,outfile_location
-call os_load_file
+; mov ax,outfile
+; call os_file_exists
+; jc .load_error
+; mov ax,outfile
+; mov cx,outfile_location
+; call os_load_file
 
 jmp main_loop
 
@@ -121,22 +131,22 @@ mov bx,start_functions_end-start_functions+program_location
 jmp bx
 
 input:
-push di
+; push di
 mov ah,0x00
 int 0x16
-pop di
+; pop di
 mov [di],al
 
 output:
-push di
+; push di
 mov al,[di]
 ;mov bh,color	; color
 ;mov bl,0		; page
 mov bx,0x0700
 mov ah,0x0E		; Print character function
 int 0x10
-pop di
-;ret
+; pop di
+; ret
 pop bx
 add bx,9
 jmp bx
@@ -205,12 +215,12 @@ stosw
 add cx,2
 jmp .loop
 .next:
-mov al,0x47
+mov al,0x47 ;inc di
 stosb
 inc cx
 jmp .loop
 .previous:
-mov al,0x4F
+mov al,0x4F ;dec di
 stosb
 inc cx
 jmp .loop
@@ -342,9 +352,6 @@ ret
 
 .end:
 mov byte [di],0xC3
-
-mov bx,outfile_location		; Save the output file back
-call os_write_file
 ret
 .plusminus:
 add cx,2
@@ -376,7 +383,7 @@ ret
 
 ; Data section all Strings can be changed from here
 
-intro:	db 0x0D,0x0A," Brainf*** Compiler (ver 1.3)"
+intro:	db 0x0D,0x0A," Brainf*** Compiler (ver 1.4)"
 		db 0x0D,0x0A," Author: Divyavrat Jugtawat",0x0D,0x0A,0
 help:	db 0x0D,0x0A," Usage: bfc inputfile outputfile"
 		db 0x0D,0x0A," Output would be COM file with no header"

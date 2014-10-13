@@ -80,7 +80,8 @@ mov si,[string_buffer]
 jmp .found
 
 .notfound:
-mov si,select_msg
+;mov si,select_msg
+mov si,filename_msg
 call os_print_string
 mov dx,[loc]
 mov ah,0x80
@@ -4903,7 +4904,8 @@ mov ah,0x01
 int 0x61
 ret
 
-loc:	dw 0x9000
+loc:	;dw 0x9000
+dw 0x6000+(512*FILESIZE)
 temp_color: db 0x00
 
 ; ------------------------------------------------------------------
@@ -5173,8 +5175,8 @@ textmode_finish:
 	variables_keyword	db "VARIABLES", 0
 	version_keyword		db "VERSION", 0
 	
-	filename_msg	db "Filename >> ",0
-	select_msg		db 0x0d,0x0a," Select a file >> ", 0
+	filename_msg	db "File >> ",0
+	;select_msg		db 0x0d,0x0a," Select a file >> ", 0
 	
 	; Error messages text...
 
@@ -5240,5 +5242,7 @@ vars_loc:
 	disp_page		db 0		; Page to display
 	graphicsmode		db 0		; Keeps track of whether the system is in graphics mode
 
-times (512*24)-($-$$) db 0
+	FILESIZE equ 23
+	
+times (512*FILESIZE)-($-$$) db 0
 ;times (512*25)-($-$$) db 0

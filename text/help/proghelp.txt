@@ -200,3 +200,15 @@ driveinfo
 IDone
 echo
 ```
+
+Machine Language
+================
+
+Any current instruction set can be used
+to create program binaries directly.
+
+Sample **hex** code to print `A` on screen.
+
+```binary
+B4 0E B0 41 CD 10 C3
+```
