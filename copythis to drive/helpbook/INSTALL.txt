@@ -5,6 +5,8 @@ Licensed GPLv3 License.
 
 	Recommended: Copy all files from copythis folder to the drive too.
 
+	[See How-To Install Video](http://youtu.be/JYMeiAToqoE)
+	
 # By USB Image Tool -
 	1. go in usbit folder.
 	2. run USBit Image Tool (with admin rights).

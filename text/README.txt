@@ -17,6 +17,8 @@ To run BASIC programs from any folder -
 Setup
 -----
 
+[See How-To Install Video](http://youtu.be/JYMeiAToqoE)
+
 1. Format a pendrive(Careful).
 2. Use any Hex Editor such as *HxD* to write boot.img on drive's first sector.
 	Or use PartCopy? or dd (Linux).
