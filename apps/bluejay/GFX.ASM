@@ -6,7 +6,7 @@
 BITS 16
 	ORG 0x6000
 	jmp start
-	%INCLUDE "bj.inc"
+	%INCLUDE "progapi.inc"
 	
 start:
 

@@ -1,5 +1,5 @@
 ; ------------------------------------------------------------------
-; Include file for MikeOS program development (API version 16)
+; Include file for program development (API version 16)
 ; ------------------------------------------------------------------
 
 ; ------------------------------------------------------------------
@@ -20,6 +20,7 @@ os_main			equ	0500h	; Where the OS code starts
 %DEFINE WHITE_ON_LIGHT_RED	11001111b
 %DEFINE WHITE_ON_GREEN		00101111b
 %DEFINE RED_ON_LIGHT_GREEN	10100100b
+%DEFINE WHITE_ON_RED		01001111b
 
 
 ; ------------------------------------------------------------------
@@ -145,12 +146,24 @@ os_get_via_serial	equ	os_main+0063h	; Returns AL = byte received
 					; OUT: AX = location, or 0 if not found
 
 
+; ------------------------------------------------------------------
+
+; ==================================================================
+; TachyonOS -- The TachyonOS Operating System kernel
+; Copyright (C) 2013 TachyonOS Developers -- see doc/LICENCE.TXT
+;
+; GRAPHICS ROUTINES
+; ==================================================================
 os_set_pixel		equ	os_main+00DBh
 os_get_pixel		equ	os_main+00DEh
 os_draw_line		equ	os_main+00E1h
 os_draw_rectangle	equ	os_main+00E4h
 os_draw_polygon		equ	os_main+00E7h
 os_clear_graphics	equ	os_main+00EAh
+os_draw_horizontal_line equ os_main+010Bh
+os_draw_vertical_line equ os_main+010Eh
+os_draw_border equ os_main+0108h
+os_draw_circle equ os_main+0165h
 
 ; Extended Memory Functions
 
@@ -185,6 +198,11 @@ os_get_api_version	equ	os_main+0057h	; Returns API version in AL
 os_pause		equ	os_main+0024h	; AX = 10ths of second to wait
 os_fatal_error		equ	os_main+0027h	; AX = error string location
 
+os_get_api_ver_string	equ	os_main+0168h	; IN: Nothing; OUT: SI = API version number
+
+
+os_text_mode equ os_main+00D5h
+os_graphics_mode equ os_main+00D8h
 
 ; ------------------------------------------------------------------
 

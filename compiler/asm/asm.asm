@@ -750,7 +750,7 @@
 
 	; includes
 	; ----------------------------------------------------------------------
-	%include	"include/mikedev.inc"
+	%include	"include/progapi.inc"
 	%include	"include/OpcodeGenerator.inc"
 	%include	"include/InstructionsHandler.inc"
 	%include	"include/FileInputStream.inc"

@@ -19,7 +19,7 @@ org 0x6000
 %DEFINE LABEL 8
 jmp basic_main
 ;db "BASIC"
-%INCLUDE "mikedev.inc"
+%INCLUDE "progapi.inc"
 basic_main:
 ; ------------------------------------------------------------------
 ; The BASIC interpreter execution starts here...
@@ -5188,13 +5188,13 @@ textmode_finish:
 	err_goto_notlabel	db "Error: GOTO or GOSUB not followed by label", 0
 	err_graphics		db "Error: Command requires graphics mode", 0
 	err_label_notfound	db "Error: label not found", 0
-	err_nest_limit		db "Error: FOR or GOSUB nest limit exceeded", 0
+	err_nest_limit		db "Error: FOR or GOSUB nest limit", 0
 	err_next		db "Error: NEXT without FOR", 0
 	err_no_endif		db "Error: BLOCKIF without ENDIF", 0
 	err_loop		db "Error: LOOP without DO", 0
-	err_print_type		db "Error: PRINT not followed by quoted text or variable", 0
-	err_polygon_min		db "Error: polygon: at least three points", 0
-	err_polygon_max		db "Error: polygon: not more than ten points", 0
+	err_print_type		db "Error: PRINT text or variable not found", 0
+	err_polygon_min		db "Error: polygon: min three points", 0
+	err_polygon_max		db "Error: polygon: max ten points", 0
 	err_quote_term		db "Error: quoted string or char termination incorrect", 0
 	err_return		db "Error: RETURN without GOSUB", 0
 	err_string_range	db "Error: string location out of range", 0

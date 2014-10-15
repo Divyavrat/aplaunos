@@ -6,7 +6,7 @@
 	BITS 16
 	ORG 0x6000
 	jmp start
-	%INCLUDE "mikedev.inc"
+	%INCLUDE "progapi.inc"
 
 
 	; This is the point used by the disk buffer in the MikeOS kernel

@@ -28,7 +28,7 @@
 BITS 16
 ORG 0x6000
 jmp     do_startup	; maximize use-once code that will be "forgotten"
- 	%INCLUDE "mikedev.inc"
+ 	%INCLUDE "progapi.inc"
 	
   size		EQU 65536
   first         EQU size & 0xffff	; 65536 or memory end for single segment 8086

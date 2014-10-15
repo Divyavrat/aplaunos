@@ -39,7 +39,7 @@
 BITS 16
 	ORG 0x6000
 	jmp start
- 	%INCLUDE "mikedev.inc"
+ 	%INCLUDE "progapi.inc"
 	
 start:  call init               ;initialize game
 

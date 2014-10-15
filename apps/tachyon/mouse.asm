@@ -2,7 +2,7 @@
 use16
 org 0x6000
 jmp start
-include 'tachyonos.inc'
+include 'progapi.inc'
 start:
 ; clear screen beforehand
 call os_clear_screen

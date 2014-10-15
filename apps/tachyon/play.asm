@@ -8,8 +8,7 @@
 use16
 org 0x6000
 jmp start
-;%include 'tachyonos.inc'
-include 'tachyonos.inc'
+include 'progapi.inc'
 start:
 call os_print_newline
 load_parameters:
