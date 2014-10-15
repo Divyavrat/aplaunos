@@ -936,6 +936,14 @@ call os_input_dialog
 	;cmp bx, 28672				; Is file to copy bigger than 28K?
 	;jg .error
 
+	; For Multi Drive Copy
+cmp byte [advanced_flag],0x0f
+je .skip_drive
+	mov ax,c_drive
+	mov bx,drive
+	call os_get_int_dialog
+.skip_drive:
+	
 	;mov cx, bx				; Otherwise write out the copy
 	mov bx, 36864
 	mov ax, tempstr2

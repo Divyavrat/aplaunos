@@ -69,8 +69,11 @@ play:
       rem ***if a movement key was pressed move the character***
       if k = 'a' then gosub goleft
       if k = 'd' then gosub goright
+if k = 3 then gosub goleft
+if k = 4 then gosub goright
 
-      if k = ' ' then gosub fireweapon
+if k = ' ' then gosub fireweapon
+if k = 1 then gosub fireweapon
 
       rem ***loop until we need to scroll***
       n = n + 1
