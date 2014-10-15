@@ -162,10 +162,15 @@ int 61h
 mov ah,0x03
 mov dx,pass
 int 61h
+
 call setcolor1
-mov ah,0x04
-mov dx,pwd
-int 61h
+; mov ah,0x04
+; mov dx,pwd
+; int 61h
+
+mov di,pwd
+call get_string
+
 ; mov ah,0x04
 ; mov dx,[strfound]
 ; int 61h
@@ -270,8 +275,8 @@ jmp start
 filename: db "pwd.com",0
 
 getpwd:
-mov ah,0x07
-int 0x21
+mov ah,0
+int 0x16
 cmp al,13
 je .done
 stosb
@@ -281,6 +286,21 @@ int 0x21
 jmp getpwd
 .done:
 xor al,al
+stosb
+ret
+
+get_string:
+mov ah,0
+int 0x16
+cmp al,13
+je .end
+stosb
+mov dl,al
+mov ah,0x02
+int 0x21
+jmp get_string
+.end:
+mov al,0
 stosb
 ret
 

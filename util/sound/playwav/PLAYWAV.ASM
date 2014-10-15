@@ -88,8 +88,10 @@ Done:      mov  ah,4Ch                  ; exit to DOS
 
 DMAPlay    proc near uses eax ebx edx
 
-           dec word Length1
-           mov byte Page1,00h
+           ;dec word Length1
+           ;mov byte Page1,00h
+		   dec word ptr Length1
+           mov byte ptr Page1,00h
 
            mov  al,(Channel+4)
            mov  dx,0Ah
@@ -109,19 +111,23 @@ DMAPlay    proc near uses eax ebx edx
            mov  edx,eax
            and  eax,65536
            jz   short MemLocN1
-           inc  byte Page1
+           ;inc  byte Page1
+		   inc  byte ptr Page1
 MemLocN1:  mov  eax,edx
            and  eax,131072
            jz   short MemLocN2
-           add  byte Page1,02
+           ;add  byte Page1,02
+		   add  byte ptr Page1,02
 MemLocN2:  mov  eax,edx
            and  eax,262144
            jz   short MemLocN3
-           add  byte Page1,04
+           ;add  byte Page1,04
+		   add  byte ptr Page1,04
 MemLocN3:  mov  eax,edx
            and  eax,524288
            jz   short MemLocN4
-           add  byte Page1,08
+		   ;add  byte Page1,08
+           add  byte ptr Page1,08
 MemLocN4:  mov  dx,PgPort
            mov  al,Page1
            out  dx,al

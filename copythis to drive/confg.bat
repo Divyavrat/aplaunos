@@ -14,6 +14,7 @@ cd..
 cd apps
 addpathc
 cd..
+nm common.txt
 lISize
 size 1
 lIPrompt

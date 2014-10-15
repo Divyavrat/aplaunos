@@ -2816,7 +2816,7 @@ getarg:
 mov si,di
 .loop:
 call getkey
-cmp byte [echo_flag],0x0f
+cmp byte [echo_flag],0x0F
 je .skip
 call printf
 .skip:
@@ -14848,9 +14848,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1016
+dw 1017
 verstring:
-db ' Aplaun OS (version 1.01.6) ',0
+db ' Aplaun OS (version 1.01.7) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
