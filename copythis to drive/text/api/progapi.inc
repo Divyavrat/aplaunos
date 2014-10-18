@@ -1,5 +1,5 @@
 ; ------------------------------------------------------------------
-; Include file for MikeOS program development (API version 16)
+; Include file for program development (API version 16)
 ; ------------------------------------------------------------------
 
 ; ------------------------------------------------------------------
@@ -10,37 +10,37 @@ os_main			equ	0500h	; Where the OS code starts
 
 ; ------------------------------------------------------------------
 ; COLOURS (eg for os_draw_background and os_draw_block)
-DEFINE DIALOG_BOX_OUTER_COLOUR		01001111b
-DEFINE DIALOG_BOX_INNER_COLOUR		11110000b
-DEFINE DIALOG_BOX_SELECT_COLOUR	00001111b
-DEFINE TITLEBAR_COLOUR			01110000b
+%DEFINE DIALOG_BOX_OUTER_COLOUR		01001111b
+%DEFINE DIALOG_BOX_INNER_COLOUR		11110000b
+%DEFINE DIALOG_BOX_SELECT_COLOUR	00001111b
+%DEFINE TITLEBAR_COLOUR			01110000b
 
-DEFINE BLACK_ON_WHITE		11110000b
-DEFINE WHITE_ON_BLACK		00001111b
-DEFINE WHITE_ON_LIGHT_RED	11001111b
-DEFINE WHITE_ON_GREEN		00101111b
-DEFINE RED_ON_LIGHT_GREEN	10100100b
+%DEFINE BLACK_ON_WHITE		11110000b
+%DEFINE WHITE_ON_BLACK		00001111b
+%DEFINE WHITE_ON_LIGHT_RED	11001111b
+%DEFINE WHITE_ON_GREEN		00101111b
+%DEFINE RED_ON_LIGHT_GREEN	10100100b
+%DEFINE WHITE_ON_RED		01001111b
 
 
 ; ------------------------------------------------------------------
 ; KEYS
 
-DEFINE KEY_UP		72
-DEFINE KEY_DOWN	80
-DEFINE KEY_LEFT	75
-DEFINE KEY_RIGHT	77
+%DEFINE KEY_UP		72
+%DEFINE KEY_DOWN	80
+%DEFINE KEY_LEFT	75
+%DEFINE KEY_RIGHT	77
 
-DEFINE KEY_ESC		27
-DEFINE KEY_ENTER	13
+%DEFINE KEY_ESC		27
+%DEFINE KEY_ENTER	13
 
 
 ; ------------------------------------------------------------------
 ; SYSTEM CALLS
 
 ; Screen control
-
-os_clear_screen		equ	os_main+0009h	; (Nothing used)
 os_print_string		equ	os_main+0003h	; SI = zero-terminated string location
+os_clear_screen		equ	os_main+0009h	; (Nothing used)
 os_move_cursor		equ	os_main+0006h	; DH, DL = row, column
 os_print_horiz_line	equ	os_main+000Ch	; AX = 1 for double line, else single
 os_print_newline	equ	os_main+000Fh	; (Nothing used)
@@ -92,7 +92,7 @@ os_get_file_size	equ	os_main+00A5h	; AX = filename, OUT: BX = bytes
 
 
 ; Sound
-os_speaker_freq		equ	os_main+00D2h	; AX = note frequency
+os_speaker_freq		equ	os_main+00FCh	; AX = note frequency
 os_speaker_tone		equ	os_main+001Bh	; AX = note frequency
 os_speaker_off		equ	os_main+001Eh	; (Nothing used)
 
@@ -145,37 +145,49 @@ os_get_via_serial	equ	os_main+0063h	; Returns AL = byte received
 					; OUT: AX = location, or 0 if not found
 
 
-os_set_pixel		equ	os_main+00DBh
-os_get_pixel		equ	os_main+00DEh
-os_draw_line		equ	os_main+00E1h
-os_draw_rectangle	equ	os_main+00E4h
-os_draw_polygon		equ	os_main+00E7h
-os_clear_graphics	equ	os_main+00EAh
+; ------------------------------------------------------------------
+
+; ==================================================================
+; TachyonOS -- The TachyonOS Operating System kernel
+; Copyright (C) 2013 TachyonOS Developers -- see doc/LICENCE.TXT
+;
+; GRAPHICS ROUTINES
+; ==================================================================
+os_set_pixel		equ	os_main+00D8h
+os_get_pixel		equ	os_main+00DBh
+os_draw_line		equ	os_main+00DEh
+os_draw_rectangle	equ	os_main+00E1h
+os_draw_polygon		equ	os_main+00E4h
+os_clear_graphics	equ	os_main+00E7h
+os_draw_horizontal_line equ os_main+0102h
+os_draw_vertical_line equ os_main+0105h
+os_draw_border equ os_main+00FFh
+os_draw_circle equ os_main+013Eh
 
 ; Extended Memory Functions
 
-os_memory_allocate	equ	os_main+00EDh
-os_memory_release	equ	os_main+00F0h
-os_memory_free		equ	os_main+00F3h
-os_memory_reset		equ	os_main+00F6h
-os_memory_read		equ	os_main+00FCh
-os_memory_write		equ	os_main+00FCh
+os_memory_allocate	equ	os_main+00EAh
+os_memory_release	equ	os_main+00EDh
+os_memory_free		equ	os_main+00F0h
+os_memory_reset		equ	os_main+00F3h
+os_memory_read		equ	os_main+00F6h
+os_memory_write		equ	os_main+00F9h
 
 ; Mouse routines
 
-os_mouse_setup		equ	os_main+0117h
-os_mouse_locate		equ	os_main+011Ah
-os_mouse_move		equ	os_main+011Dh
-os_mouse_show		equ	os_main+0120h
-os_mouse_hide		equ	os_main+0123h
-os_mouse_range		equ	os_main+0126h
-os_mouse_wait		equ	os_main+0129h
-os_mouse_anyclick	equ	os_main+012Ch
-os_mouse_leftclick	equ	os_main+012Fh
-os_mouse_middleclick	equ	os_main+0132h
-os_mouse_rightclick	equ	os_main+0135h
-os_input_wait		equ	os_main+0138h
-os_mouse_scale		equ	os_main+013Bh
+os_mouse_setup		equ	os_main+0108h
+os_mouse_locate		equ	os_main+010Bh
+os_mouse_move		equ	os_main+010Eh
+os_mouse_show		equ	os_main+0111h
+os_mouse_hide		equ	os_main+0114h
+os_mouse_range		equ	os_main+0117h
+os_mouse_wait		equ	os_main+011Ah
+os_mouse_anyclick	equ	os_main+011Dh
+os_mouse_leftclick	equ	os_main+0120h
+os_mouse_middleclick	equ	os_main+0123h
+os_mouse_rightclick	equ	os_main+0126h
+os_input_wait		equ	os_main+0129h
+os_mouse_scale		equ	os_main+012Ch
 
 ; Misc OS functions
 
@@ -185,6 +197,11 @@ os_get_api_version	equ	os_main+0057h	; Returns API version in AL
 os_pause		equ	os_main+0024h	; AX = 10ths of second to wait
 os_fatal_error		equ	os_main+0027h	; AX = error string location
 
+os_get_api_ver_string	equ	os_main+0141h	; IN: Nothing; OUT: SI = API version number
+
+
+os_text_mode equ os_main+00D2h
+os_graphics_mode equ os_main+00D5h
 
 ; ------------------------------------------------------------------
 

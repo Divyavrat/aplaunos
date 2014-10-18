@@ -39,9 +39,8 @@ os_main			equ	0500h	; Where the OS code starts
 ; SYSTEM CALLS
 
 ; Screen control
-
-os_clear_screen		equ	os_main+0009h	; (Nothing used)
 os_print_string		equ	os_main+0003h	; SI = zero-terminated string location
+os_clear_screen		equ	os_main+0009h	; (Nothing used)
 os_move_cursor		equ	os_main+0006h	; DH, DL = row, column
 os_print_horiz_line	equ	os_main+000Ch	; AX = 1 for double line, else single
 os_print_newline	equ	os_main+000Fh	; (Nothing used)
@@ -93,7 +92,7 @@ os_get_file_size	equ	os_main+00A5h	; AX = filename, OUT: BX = bytes
 
 
 ; Sound
-os_speaker_freq		equ	os_main+00D2h	; AX = note frequency
+os_speaker_freq		equ	os_main+00FCh	; AX = note frequency
 os_speaker_tone		equ	os_main+001Bh	; AX = note frequency
 os_speaker_off		equ	os_main+001Eh	; (Nothing used)
 
@@ -154,222 +153,41 @@ os_get_via_serial	equ	os_main+0063h	; Returns AL = byte received
 ;
 ; GRAPHICS ROUTINES
 ; ==================================================================
-os_set_pixel		equ	os_main+00DBh
-os_get_pixel		equ	os_main+00DEh
-os_draw_line		equ	os_main+00E1h
-os_draw_polygon		equ	os_main+00E7h
-os_clear_graphics	equ	os_main+00EAh
-os_draw_horizontal_line equ os_main+010Bh
-os_draw_vertical_line equ os_main+010Eh
-
-os_draw_circle equ os_main+0165h
-
-; Draw (straight) rectangle
-; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour, CF = set if filled or clear if not
-; OUT: None, registers preserved
-os_draw_rectangle:
-	pusha
-	pushf
-	
-	;mov ax, 1000h
-	;mov ds, ax
-	;mov es, ax
-	
-	;inc byte [internal_call]
-	
-	mov word [.x1], cx
-	mov word [.y1], dx
-	mov word [.x2], si
-	mov word [.y2], di
-	
-	; top line
-	mov cx, [.x1]
-	mov dx, [.y1]
-	mov si, [.x2]
-	mov di, [.y1]
-	call os_draw_line
-	
-	; left line
-	mov cx, [.x1]
-	mov dx, [.y1]
-	mov si, [.x1]
-	mov di, [.y2]
-	call os_draw_line
-	
-	; right line
-	mov cx, [.x2]
-	mov dx, [.y1]
-	mov si, [.x2]
-	mov di, [.y2]
-	call os_draw_line
-
-	; bottom line
-	mov cx, [.x1]
-	mov dx, [.y2]
-	mov si, [.x2]
-	mov di, [.y2]
-	call os_draw_line
-	
-	popf
-	jnc .finished_fill
-	
-.fill_shape:
-	inc word [.y1]
-	
-	mov ax, [.y1]
-	cmp ax, [.y2]
-	jge .finished_fill
-	
-	mov cx, [.x1]
-	mov dx, [.y1]
-	mov si, [.x2]
-	mov di, [.y1]
-	call os_draw_line
-	
-	jmp .fill_shape
-	
-.finished_fill:
-	popa
-	;dec byte [internal_call]
-	;jmp os_return
-	ret
-	
-	.x1				dw 0
-	.x2				dw 0
-	.y1				dw 0
-	.y2				dw 0
-	
-; ------------------------------------------------------------------
-; os_draw_border -- draw a single character border
-; BL = colour, CH = start row, CL = start column, DH = end row, DL = end column
-
-os_draw_border:
-	pusha
-	
-	;mov ax, 0x1000
-	;mov ds, ax
-	
-	;inc byte [internal_call]
-
-	mov [.start_row], ch
-	mov [.start_column], cl
-	mov [.end_row], dh
-	mov [.end_column], dl
-
-	mov al, [.end_column]
-	sub al, [.start_column]
-	dec al
-	mov [.width], al
-	
-	mov al, [.end_row]
-	sub al, [.start_row]
-	dec al
-	mov [.height], al
-	
-	mov ah, 09h
-	mov bh, 0
-	mov cx, 1
-
-	mov dh, [.start_row]
-	mov dl, [.start_column]
-	call os_move_cursor
-
-	mov al, [.character_set + 0]
-	int 10h
-	
-	mov dh, [.start_row]
-	mov dl, [.end_column]
-	call os_move_cursor
-	
-	mov al, [.character_set + 1]
-	int 10h
-	
-	mov dh, [.end_row]
-	mov dl, [.start_column]
-	call os_move_cursor
-	
-	mov al, [.character_set + 2]
-	int 10h
-	
-	mov dh, [.end_row]
-	mov dl, [.end_column]
-	call os_move_cursor
-	
-	mov al, [.character_set + 3]
-	int 10h
-	
-	mov dh, [.start_row]
-	mov dl, [.start_column]
-	inc dl
-	call os_move_cursor
-	
-	mov al, [.character_set + 4]
-	mov cx, 0
-	mov cl, [.width]
-	int 10h
-	
-	mov dh, [.end_row]
-	call os_move_cursor
-	int 10h
-	
-	mov al, [.character_set + 5]
-	mov cx, 1
-	mov dh, [.start_row]
-	inc dh
-	
-.sides_loop:
-	mov dl, [.start_column]
-	call os_move_cursor
-	int 10h
-	
-	mov dl, [.end_column]
-	call os_move_cursor
-	int 10h
-	
-	inc dh
-	dec byte [.height]
-	cmp byte [.height], 0
-	jne .sides_loop
-	
-	popa
-	;dec byte [internal_call]
-	;jmp os_return
-	ret
-	
-	
-.start_column				db 0
-.end_column				db 0
-.start_row				db 0
-.end_row				db 0
-.height					db 0
-.width					db 0
-
-.character_set				db 218, 191, 192, 217, 196, 179
+os_set_pixel		equ	os_main+00D8h
+os_get_pixel		equ	os_main+00DBh
+os_draw_line		equ	os_main+00DEh
+os_draw_rectangle	equ	os_main+00E1h
+os_draw_polygon		equ	os_main+00E4h
+os_clear_graphics	equ	os_main+00E7h
+os_draw_horizontal_line equ os_main+0102h
+os_draw_vertical_line equ os_main+0105h
+os_draw_border equ os_main+00FFh
+os_draw_circle equ os_main+013Eh
 
 ; Extended Memory Functions
 
-os_memory_allocate	equ	os_main+00EDh
-os_memory_release	equ	os_main+00F0h
-os_memory_free		equ	os_main+00F3h
-os_memory_reset		equ	os_main+00F6h
-os_memory_read		equ	os_main+00FCh
-os_memory_write		equ	os_main+00FCh
+os_memory_allocate	equ	os_main+00EAh
+os_memory_release	equ	os_main+00EDh
+os_memory_free		equ	os_main+00F0h
+os_memory_reset		equ	os_main+00F3h
+os_memory_read		equ	os_main+00F6h
+os_memory_write		equ	os_main+00F9h
 
 ; Mouse routines
 
-os_mouse_setup		equ	os_main+0117h
-os_mouse_locate		equ	os_main+011Ah
-os_mouse_move		equ	os_main+011Dh
-os_mouse_show		equ	os_main+0120h
-os_mouse_hide		equ	os_main+0123h
-os_mouse_range		equ	os_main+0126h
-os_mouse_wait		equ	os_main+0129h
-os_mouse_anyclick	equ	os_main+012Ch
-os_mouse_leftclick	equ	os_main+012Fh
-os_mouse_middleclick	equ	os_main+0132h
-os_mouse_rightclick	equ	os_main+0135h
-os_input_wait		equ	os_main+0138h
-os_mouse_scale		equ	os_main+013Bh
+os_mouse_setup		equ	os_main+0108h
+os_mouse_locate		equ	os_main+010Bh
+os_mouse_move		equ	os_main+010Eh
+os_mouse_show		equ	os_main+0111h
+os_mouse_hide		equ	os_main+0114h
+os_mouse_range		equ	os_main+0117h
+os_mouse_wait		equ	os_main+011Ah
+os_mouse_anyclick	equ	os_main+011Dh
+os_mouse_leftclick	equ	os_main+0120h
+os_mouse_middleclick	equ	os_main+0123h
+os_mouse_rightclick	equ	os_main+0126h
+os_input_wait		equ	os_main+0129h
+os_mouse_scale		equ	os_main+012Ch
 
 ; Misc OS functions
 
@@ -379,11 +197,11 @@ os_get_api_version	equ	os_main+0057h	; Returns API version in AL
 os_pause		equ	os_main+0024h	; AX = 10ths of second to wait
 os_fatal_error		equ	os_main+0027h	; AX = error string location
 
-os_get_api_ver_string	equ	os_main+0168h	; IN: Nothing; OUT: SI = API version number
+os_get_api_ver_string	equ	os_main+0141h	; IN: Nothing; OUT: SI = API version number
 
 
-os_text_mode equ os_main+00D5h
-os_graphics_mode equ os_main+00D8h
+os_text_mode equ os_main+00D2h
+os_graphics_mode equ os_main+00D5h
 
 ; ------------------------------------------------------------------
 

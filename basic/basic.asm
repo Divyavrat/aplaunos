@@ -17,8 +17,7 @@ org 0x6000
 %DEFINE CHAR 6
 %DEFINE UNKNOWN 7
 %DEFINE LABEL 8
-jmp basic_main
-;db "BASIC"
+
 %INCLUDE "progapi.inc"
 basic_main:
 ; ------------------------------------------------------------------
@@ -3417,10 +3416,10 @@ do_polygon:
 	mov cx, [.points]
 	
 	cmp cx, 2					; make sure there is enought points
-	jle .too_few_points
+	jle ._points
 	
 	cmp cx, 10					; but not too many
-	jg .too_many_points
+	jg ._points
 	
 	shl cx, 1					; we need two coordinents for each point
 	mov di, .point_data				; fetch all points to a data array
@@ -3437,12 +3436,8 @@ do_polygon:
 	mov si, err_graphics
 	jmp error
 	
-.too_few_points:
-	mov si, err_polygon_min
-	jmp error
-	
-.too_many_points:
-	mov si, err_polygon_max
+._points:
+	mov si, err_polygon_no
 	jmp error
 
 .points					dw 0
@@ -5180,22 +5175,21 @@ textmode_finish:
 	
 	; Error messages text...
 
-	err_char_in_num		db "Error: unexpected char in no.", 0
+	err_char_in_num		db "Error: char in no.", 0
 	err_cmd_unknown		db "Error: unknown command", 0
 	;err_divide_by_zero	db "Error: attempt to divide by zero", 0
-	err_doloop_maximum	db "Error: DO/LOOP nesting limit exceeded", 0
+	err_doloop_maximum	db "Error: DO/LOOP nesting limit", 0
 	err_file_notfound	db "Error: file not found", 0
-	err_goto_notlabel	db "Error: GOTO or GOSUB not followed by label", 0
-	err_graphics		db "Error: Command requires graphics mode", 0
+	err_goto_notlabel	db "Error: GOTO or GOSUB label", 0
+	err_graphics		db "Error: Command requires graphic mode", 0
 	err_label_notfound	db "Error: label not found", 0
 	err_nest_limit		db "Error: FOR or GOSUB nest limit", 0
 	err_next		db "Error: NEXT without FOR", 0
 	err_no_endif		db "Error: BLOCKIF without ENDIF", 0
 	err_loop		db "Error: LOOP without DO", 0
-	err_print_type		db "Error: PRINT text or variable not found", 0
-	err_polygon_min		db "Error: polygon: min three points", 0
-	err_polygon_max		db "Error: polygon: max ten points", 0
-	err_quote_term		db "Error: quoted string or char termination incorrect", 0
+	err_print_type		db "Error: PRINT text/variable", 0
+	err_polygon_no		db "Error: polygon: points", 0
+	err_quote_term		db "Error: improper quotes", 0
 	err_return		db "Error: RETURN without GOSUB", 0
 	err_string_range	db "Error: string location out of range", 0
 	err_syntax		db "Error: syntax error", 0
@@ -5242,7 +5236,7 @@ vars_loc:
 	disp_page		db 0		; Page to display
 	graphicsmode		db 0		; Keeps track of whether the system is in graphics mode
 
-	FILESIZE equ 23
+	FILESIZE equ 22
 	
 times (512*FILESIZE)-($-$$) db 0
 ;times (512*25)-($-$$) db 0

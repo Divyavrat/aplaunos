@@ -11,6 +11,7 @@ more documentation, more comments to explain code
 segmentation fault, integer cmp - to solve file system error
 stack instability in fdir must be solved
 os_rename_file fix two filename input
+multitasking for programs
 
 optimise ChainLoops in FAT16
 mint can be registered by apps by lists
@@ -24,7 +25,6 @@ memory size and manager
 games - invaders, cards, reversi, pinball, pacman, mario, chess
 font hindi,unicode
 new shell
-multitasking debug
 font size support
 monokernel
 tiny editor com,bmp 25, 18

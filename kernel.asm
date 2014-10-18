@@ -86,58 +86,45 @@ use16
 	jmp os_port_byte_out		; 00C9h
 	jmp os_port_byte_in		; 00CCh
 	jmp os_string_tokenize		; 00CFh
-	jmp os_speaker_freq		; 00D2h
 
-jmp os_text_mode				; 00D5h
-jmp os_graphics_mode				; 00D8h
-jmp os_set_pixel				; 00DBh
-jmp os_get_pixel				; 00DEh
-jmp os_draw_line				; 00E1h
-jmp os_draw_rectangle				; 00E4h
-jmp os_draw_polygon				; 00E7h
-jmp os_clear_graphics				; 00EAh
-jmp os_memory_allocate				; 00EDh
-jmp os_memory_release				; 00F0h
-jmp os_memory_free				; 00F3h
-jmp os_memory_reset				; 00F6h
-jmp os_memory_read				; 00F9h
-jmp os_memory_write				; 00FCh
-jmp os_speaker_freq				; 00FFh
-jmp os_speaker_tone				; 0102h
-jmp os_speaker_off				; 0105h
-jmp os_draw_border				; 0108h
-jmp os_draw_horizontal_line			; 010Bh
-jmp os_draw_vertical_line			; 010Eh
-jmp os_move_cursor				; 0111h
-jmp os_draw_block				; 0114h
-jmp os_mouse_setup				; 0117h
-jmp os_mouse_locate				; 011Ah
-jmp os_mouse_move				; 011Dh
-jmp os_mouse_show				; 0120h
-jmp os_mouse_hide				; 0123h
-jmp os_mouse_range				; 0126h
-jmp os_mouse_wait				; 0129h
-jmp os_mouse_anyclick				; 012Ch
-jmp os_mouse_leftclick				; 012Fh
-jmp os_mouse_middleclick			; 0132h
-jmp os_mouse_rightclick				; 0135h
-jmp os_input_wait				; 0138h
-jmp os_mouse_scale				; 013Bh
-jmp os_wait_for_key				; 013Eh
-jmp os_check_for_key				; 0141h
-jmp os_seed_random				; 0144h
-jmp os_get_random				; 0147h
-jmp os_bcd_to_int				; 014Ah
-jmp os_long_int_negate				; 014Dh
-jmp os_port_byte_out				; 0150h
-jmp os_port_byte_in				; 0153h
-jmp os_serial_port_enable			; 0156h
-jmp os_send_via_serial				; 0159h
-jmp os_get_via_serial				; 015Ch
-jmp os_square_root				; 015Fh
-jmp os_check_for_extkey				; 0162h
-jmp os_draw_circle				; 0165h
-jmp os_get_api_ver_string	;0168h	; IN: Nothing; OUT: SI = API version number
+jmp os_text_mode				; 00D2h
+jmp os_graphics_mode				; 00D5h
+jmp os_set_pixel				; 00D8h
+jmp os_get_pixel				; 00DBh
+jmp os_draw_line				; 00DEh
+jmp os_draw_rectangle				; 00E1h
+jmp os_draw_polygon				; 00E4h
+jmp os_clear_graphics				; 00E7h
+jmp os_memory_allocate				; 00EAh
+jmp os_memory_release				; 00EDh
+jmp os_memory_free				; 00F0h
+jmp os_memory_reset				; 00F3h
+jmp os_memory_read				; 00F6h
+jmp os_memory_write				; 00F9h
+jmp os_speaker_freq				; 00FCh
+jmp os_draw_border				; 00FFh
+jmp os_draw_horizontal_line			; 0102h
+jmp os_draw_vertical_line			; 0105h
+jmp os_mouse_setup				; 0108h
+jmp os_mouse_locate				; 010Bh
+jmp os_mouse_move				; 010Eh
+jmp os_mouse_show				; 0111h
+jmp os_mouse_hide				; 0114h
+jmp os_mouse_range				; 0117h
+jmp os_mouse_wait				; 011Ah
+jmp os_mouse_anyclick				; 011Dh
+jmp os_mouse_leftclick				; 0120h
+jmp os_mouse_middleclick			; 0123h
+jmp os_mouse_rightclick				; 0126h
+jmp os_input_wait				; 0129h
+jmp os_mouse_scale				; 012Ch
+jmp os_seed_random				; 012Fh
+jmp os_bcd_to_int				; 0132h
+jmp os_long_int_negate				; 0135h
+jmp os_square_root				; 0138h
+jmp os_check_for_extkey				; 013Bh
+jmp os_draw_circle				; 013Eh
+jmp os_get_api_ver_string	;0141h	; IN: Nothing; OUT: SI = API version number
 	
 ; ===========================
 ;	Main Code
@@ -546,9 +533,9 @@ call cmpstr
 jc c_fhlt_f
 
 
-mov di,c_jmp
-call cmpstr
-jc c_jmp_f
+; mov di,c_jmp
+; call cmpstr
+; jc c_jmp_f
 
 
 mov di,c_paint
@@ -2609,8 +2596,8 @@ int 0x16
 ret
 
 getkey:
-call chkkey
-jz getkey
+; call chkkey
+; jz getkey
 
 mov ah,0x10
 ;mov ah,0
@@ -2638,8 +2625,8 @@ call debug
 jmp getkey
 
 directgetkey:
-call chkkey
-jz directgetkey
+; call chkkey
+; jz directgetkey
 mov ah,0x10
 ;xor ah,ah
 int 0x16
@@ -3279,12 +3266,12 @@ call prnstr
 call newline
 mov si,dir_command
 call prnstr
-call newline
-mov si,interrupt_api
-call prnstr
-call newline
-mov si,interrupt2_api
-call prnstr
+; call newline
+; mov si,interrupt_api
+; call prnstr
+; call newline
+; mov si,interrupt2_api
+; call prnstr
 call newline
 mov si,mint_list
 call prnstr
@@ -3369,11 +3356,9 @@ cli
 hlt
 jmp .loop
 
-c_jmp_f:
-mov word bx,[loc]
-;sub bx,0x0500
-jmp bx
-;jmp kernel
+; c_jmp_f:
+; mov word bx,[loc]
+; jmp bx
 
 c_reboot_f:
 mov byte dl,[drive]
@@ -3897,8 +3882,6 @@ call printn
 call newline
 mov si,freespacestr
 call prnstr
-call colon
-call space
 call calculate_fat
 mov dx,[dir_seg]
 mov es,dx
@@ -6709,9 +6692,9 @@ je .rename_file
 cmp byte [command_tempchar],'x'
 je .delete_file
 ;sub di,0x0006
-mov word ax,[.cluster]
+;mov word ax,[.cluster]
 ;inc word ax
-mov word [comm],ax
+;mov word [comm],ax
 ;mov word [cluster],ax
 ;add di,0x0006
 ;push di
@@ -6739,7 +6722,7 @@ rep movsb
 ;inc bx
 ;mov al,[bx]
 ;stosb
-mov si,comm
+mov si,.cluster
 lodsw
 stosw
 
@@ -6754,29 +6737,83 @@ call SAVE_ROOT
 .exitl:
 mov ax,[var_x]
 mov [size],ax
-mov dx,0
+mov dx,[kernel_seg]
 mov es,dx
 ret
 .dir_made:
 call SAVE_ROOT
-mov ax,ImageName
-mov cx,[loc]
-call os_load_file
+
+; mov ax,[.cluster]
+; ;add ax,[datasector]
+; add ax,0x1F
+; call printwordh
+
+;Loading new directory
+mov bx,[loc]
+mov dx,[.cluster]
+add dx,0x1F
+mov ah,0x72
+int 0x61
+
+; mov bx,[loc]
+; mov cx,0x200
+; call reload_words
+
 mov di,[loc]
-mov cx,bx
+
+;Current directory link
+mov al,'.'
+stosb
+mov al,' '
+mov cx,0x000B-1
+rep stosb
+mov al,0x10
+stosb
+mov si,.file_attributes
+mov cx,14
+rep movsb
+mov si,.cluster
+lodsw
+stosw
+mov ax,0
+stosw
+stosw
+
+;Previous directory link
+mov al,'.'
+stosb
+stosb
+mov al,' '
+mov cx,0x000B-2
+rep stosb
+mov al,0x10
+stosb
+mov si,.file_attributes
+mov cx,14
+rep movsb
+cmp word [currentdir],0x0013
+je .parent_dir_is_root
+mov ax,[currentdir]
+sub ax,0x001F
+stosw
+.parent_dir_is_root:
+
+;Padding with zeroes
+mov cx,[loc]
+add cx,[bpbBytesPerSector]
+sub cx,di
 mov al,0
 rep stosb
 
-mov ah,0x70
-;mov dl,0x00
-int 0x61
+;Saving directory
+mov dx,[.cluster]
+add dx,0x1F
+mov word [filesize],0x200
+mov [cluster],dx
 mov bx,[loc]
 mov ah,0x73
 int 0x61
 
-; mov dx,[loc]
-; mov ah,0x81
-; int 0x61
 jmp .exitl
 .file_attributes:
 db 0x18,0x1a,0x9a,0x42,0x7c,0x43,0x7c,0x43,0x00,0x00,0xca,0x93,0x76,0x43
@@ -9831,79 +9868,79 @@ os_draw_line:
 	.colour db 0
 	.pad db 0
 	
-; ; Draw (straight) rectangle
-; ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour, CF = set if filled or clear if not
-; ; OUT: None, registers preserved
-; os_draw_rectangle:
-	; pusha
-	; pushf
+; Draw (straight) rectangle
+; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour, CF = set if filled or clear if not
+; OUT: None, registers preserved
+os_draw_rectangle:
+	pusha
+	pushf
 	
-	; ;mov ax, 1000h
-	; ;mov ds, ax
-	; ;mov es, ax
+	;mov ax, 1000h
+	;mov ds, ax
+	;mov es, ax
 	
-	; ;inc byte [internal_call]
+	;inc byte [internal_call]
 	
-	; mov word [.x1], cx
-	; mov word [.y1], dx
-	; mov word [.x2], si
-	; mov word [.y2], di
+	mov word [.x1], cx
+	mov word [.y1], dx
+	mov word [.x2], si
+	mov word [.y2], di
 	
-	; ; top line
-	; mov cx, [.x1]
-	; mov dx, [.y1]
-	; mov si, [.x2]
-	; mov di, [.y1]
-	; call os_draw_line
+	; top line
+	mov cx, [.x1]
+	mov dx, [.y1]
+	mov si, [.x2]
+	mov di, [.y1]
+	call os_draw_line
 	
-	; ; left line
-	; mov cx, [.x1]
-	; mov dx, [.y1]
-	; mov si, [.x1]
-	; mov di, [.y2]
-	; call os_draw_line
+	; left line
+	mov cx, [.x1]
+	mov dx, [.y1]
+	mov si, [.x1]
+	mov di, [.y2]
+	call os_draw_line
 	
-	; ; right line
-	; mov cx, [.x2]
-	; mov dx, [.y1]
-	; mov si, [.x2]
-	; mov di, [.y2]
-	; call os_draw_line
+	; right line
+	mov cx, [.x2]
+	mov dx, [.y1]
+	mov si, [.x2]
+	mov di, [.y2]
+	call os_draw_line
 
-	; ; bottom line
-	; mov cx, [.x1]
-	; mov dx, [.y2]
-	; mov si, [.x2]
-	; mov di, [.y2]
-	; call os_draw_line
+	; bottom line
+	mov cx, [.x1]
+	mov dx, [.y2]
+	mov si, [.x2]
+	mov di, [.y2]
+	call os_draw_line
 	
-	; popf
-	; jnc .finished_fill
+	popf
+	jnc .finished_fill
 	
-; .fill_shape:
-	; inc word [.y1]
+.fill_shape:
+	inc word [.y1]
 	
-	; mov ax, [.y1]
-	; cmp ax, [.y2]
-	; jge .finished_fill
+	mov ax, [.y1]
+	cmp ax, [.y2]
+	jge .finished_fill
 	
-	; mov cx, [.x1]
-	; mov dx, [.y1]
-	; mov si, [.x2]
-	; mov di, [.y1]
-	; call os_draw_line
+	mov cx, [.x1]
+	mov dx, [.y1]
+	mov si, [.x2]
+	mov di, [.y1]
+	call os_draw_line
 	
-	; jmp .fill_shape
+	jmp .fill_shape
 	
-; .finished_fill:
-	; popa
-	; ;dec byte [internal_call]
-	; ret
+.finished_fill:
+	popa
+	;dec byte [internal_call]
+	ret
 	
-	; .x1				dw 0
-	; .x2				dw 0
-	; .y1				dw 0
-	; .y2				dw 0
+	.x1				dw 0
+	.x2				dw 0
+	.y1				dw 0
+	.y2				dw 0
 
 ; Draw freeform shape
 ; IN: BH = number of points, BL = colour, SI = location of shape points data
@@ -10229,6 +10266,15 @@ jmp .next_point
 
 ; .character_set				db 218, 191, 192, 217, 196, 179
 
+os_run_basic:
+mov di,found
+mov si,ImageName
+mov cx,0x000B
+mov al,0
+stosb
+mov byte [getarg.end],0
+pop ax
+jmp command_received
 
 ; ==================================================================
 
@@ -10240,7 +10286,6 @@ mov bx,c_clock
 ret
 
 os_string_chomp:
-os_run_basic:
 os_bcd_to_int:
 
 os_dump_registers:
@@ -10251,7 +10296,7 @@ os_long_int_negate:
 
 os_get_file_list:
 
-os_draw_rectangle:
+;os_draw_rectangle:
 os_draw_border:
 
 os_square_root:
@@ -14790,8 +14835,8 @@ c_echo:
 db 'echo',0
 c_fhlt:
 db 'fhlt',0
-c_jmp:
-db 'jmp',0
+; c_jmp:
+; db 'jmp',0
 
 c_end:
 
@@ -14858,27 +14903,23 @@ db 'View/Editors: text,code,doc,edit,type,sound,paint',0
 setting_list:
 db 'Settings: loc,prompt,color,drive,autosize',0
 setting2_list:
-db 'Extra: echo,page,size,install,help,exit,calc,clock',0
+db 'Extra: echo,page,help,exit,calc,clock',0
 showsetting_list:
 db 'Settings: driveinfo,debug,alias,border,setting',0
 setting_switch_list:
 db 'Switches/RE: micro,wall,restart,reboot,reset,cls',0
 advanced_cmd:
-db 'Adv/pro: jmp,fhlt,step,addpathc,dataseg,runa',0
+db 'Adv/pro: fhlt,step,addpathc,dataseg,runa',0
 ; common_control:
 ; db 'Common Keys : Arrow,wasd,F1 series,Tab-Change,(Esc or ~)-Close',0
 loc_command:
-db 'Locations: loc(files and programs),loc2(Folder),loc3(FAT)',0
+db 'Locations: loc(apps/files),loc2(Folder),loc3(FAT)',0
 ; experimental:
 ; db 'Experimental: ',0
 file_command:
 db 'File: q-quick,a-cmp,z,{fname,nm},fnew,del,fsave',0
 dir_command:
-db 'Dir: dir,setdir,newdir,cd,cd..,rename,copy,roam',0
-interrupt_api:
-db 'Int/API: 01=step 05=prnscr 21,22,2B,61,64=api 2C=msg 4A=alarm',0
-interrupt2_api:
-db 'Int: 1C=timer 20=quit 03,60=debug 1b=ctrl+brk 33=mouse',0
+db 'Dir: dir,newdir,cd,cd..,rename,copy,roam',0
 mint_list:
 db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-exit',0
 
@@ -14914,7 +14955,7 @@ db 'GmPort',0
 messagestr:
 db 'message',0
 freespacestr:
-db 'free space',0
+db 'free space : ',0
 kernel_free_time_str:
 db 'kernel-free waiting time',0
 kernel_free_command_str:
