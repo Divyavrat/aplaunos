@@ -14737,9 +14737,9 @@ db 'advanced',0
 c_completeload:
 db 'completeload',0
 c_wait_time:
-db 'waittime',0
+db 'idletime',0
 c_wait_command:
-db 'waitcmd',0
+db 'idlecmd',0
 
 c_q:
 db 'q',0
