@@ -235,29 +235,29 @@ command_line:
 call chkkey	;If input is found
 jnz .continue_command
 
-;Else execute free kernel module
+;Else execute idle kernel module
 
 mov ah,0x02 ;Get current time
 int 0x1a
-cmp dh,[.free_time_current] ; Check if a second has passed
+cmp dh,[.idle_time_current] ; Check if a second has passed
 je command_line ; Else return to input loop
-mov [.free_time_current],dh	;Update current counter
-inc byte [.free_time_elapsed] ;Increment time counter
-mov al,[.free_time_elapsed]
-cmp al,[free_kernel_waittime]
+mov [.idle_time_current],dh	;Update current counter
+inc byte [.idle_time_elapsed] ;Increment time counter
+mov al,[.idle_time_elapsed]
+cmp al,[idle_kernel_waittime]
 jl command_line
 
-mov byte [.free_time_elapsed],0 ;Reset Counter
-; What to execute if kernel is free
-mov si,free_kenel_commandstr
+mov byte [.idle_time_elapsed],0 ;Reset Counter
+; What to execute if kernel is idle
+mov si,idle_kenel_commandstr
 call pipespace2enter
-mov si,free_kenel_commandstr
+mov si,idle_kenel_commandstr
 call pipestore
 jmp command_line
 
 ;If a special key is found
 .continue_command:
-mov byte [.free_time_elapsed],0 ;Reset Counter
+mov byte [.idle_time_elapsed],0 ;Reset Counter
 cmp ah,0x48
 je previous_comm
 cmp ah,0x0f
@@ -267,9 +267,9 @@ je help_key
 cmp ah,0x3c
 je setting_key
 jmp command_start
-.free_time_current:
+.idle_time_current:
 db 0
-.free_time_elapsed:
+.idle_time_elapsed:
 db 0
 
 help_key:
@@ -854,18 +854,18 @@ not byte [completeload_flag]
 jmp kernel
 
 c_wait_time_f:
-mov si,kernel_free_time_str
+mov si,kernel_idle_time_str
 call prnstr
 call colon
 call getno
-mov [free_kernel_waittime],al
+mov [idle_kernel_waittime],al
 jmp kernel
 
 c_wait_command_f:
-mov si,kernel_free_command_str
+mov si,kernel_idle_command_str
 call prnstr
 call colon
-mov di,free_kenel_commandstr
+mov di,idle_kenel_commandstr
 call getstr
 mov byte [di-1],0x20
 jmp kernel
@@ -1307,7 +1307,7 @@ mov cx,ax
 call cmpstr_s
 jc kernel
 
-mov di,tempstr
+mov di,found
 cmp byte [.batch_command],'#'
 je .shell_command
 cmp byte [.batch_command],'*'
@@ -1321,47 +1321,85 @@ inc si
 .batchloop:
 lodsb
 inc word [var_e]
-cmp al,0x00
+cmp al,0x00 ;End of string
 je .end
-cmp al,0x0D
+cmp al,0x0D ;Newline
 je .end
-cmp al,0x0A
+cmp al,0x0A ;Newline
 je .skip
+cmp al,0x20 ;Space
+je .get_argument
 stosb
-;inc word [var_e]
 jmp .batchloop
 .end:
 cmp byte [si],0x0A
 jne .skip
 inc word [var_e]
-;add word [var_e],0x0002
 .skip:
-cmp byte [.batch_command],'*'
-je .skip_end_character
-mov al,0x0D
-stosb
-.skip_end_character:
 xor al,al
 stosb
 ;add word [var_e],2
-;mov si,tempstr
-;call prnstr
+jmp .batch_stored
 
+.get_argument:
+mov al,0
+stosb
+mov di,tempstr
+.get_argument_loop:
+lodsb
+inc word [var_e]
+cmp al,0x00 ;End of string
+je .get_argument_done
+cmp al,0x0D ;Newline
+je .get_argument_done
+cmp al,0x0A ;Newline
+je .get_argument_done
+stosb
+jmp .get_argument_loop
+
+.get_argument_done:
+;cmp byte [.batch_command],'*'
+;je .skip_end_character
+mov al,0x0D
+stosb
+;.skip_end_character:
+mov al,0
+stosb
 ;Stores interpreted string in input buffer
-cmp byte [.batch_command],'@'
+cmp byte [.batch_command],'*'
 je .store_as_it_is
 mov si,tempstr
 call pipespace2enter
 .store_as_it_is:
 mov si,tempstr
 call pipestore
+mov byte [getarg.end],0x20
+jmp .end
 
+.batch_stored:
 ;Sets kernel return point to create loop
 mov byte [kernelreturnflag],0xf0
 mov word [kernelreturnaddr],batchset
 
+cmp byte [.batch_command],'@'
+je .echo_off
+cmp byte [echo_flag],0x0F
+je .echo_off
+pusha
+mov si,found
+call prnstr
+; mov si,tempstr
+; call prnstr
+; call getkey
+; call keybsto
+; call slow
+popa
+.echo_off:
+
 ;Execute
-jmp command_start
+;jmp command_start
+jmp command_received
+
 .batch_command: db 0
 .batch_end: db 'end',0
 .batch_high: db 'high',0
@@ -5500,33 +5538,9 @@ call print_HTS_details
           ;call calculate_next_cluster
 		  ; compute next cluster
 
-          mov     ax, WORD [cluster]                  ; identify current cluster
-		  mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-		  ; pusha
-		  ; ;mov ax,dx
-		  ; call printwordh
-		  ; mov ax,dx
-		  ; call printwordh
-		  ; mov ax,bx
-		  ; call printwordh
-		  ; popa
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-          
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-         jmp     .DONE
-         
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
+          mov si,.DONE
+		  mov di,.DONE
+		  jmp get_cluster_data
           
      .DONE:
 		  mov     WORD [cluster], dx
@@ -5982,24 +5996,10 @@ mov es,dx
 		  ;mov ax, WORD [xmouse]
 		  ;.skip:
 		  ;mov [var_b]
-          mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-          mov 	  bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, [es:bx]                       ; read two bytes from FAT
-		  test    ax, 0x0001
-          jnz     .ODD_CLUSTER
           
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-         jmp     .DONE
-         
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
+		  mov si,.DONE
+		  mov di,.DONE
+		  jmp get_cluster_data
           
      .DONE:
 mov bx,[kernel_seg]
@@ -6269,36 +6269,17 @@ mov dx,[dir_seg]
 mov es,dx
 .loop:
 mov ax,[cluster]
-          mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-          
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-;pusha
-	 ;mov ax,dx
-	 ;call printwordh
-	 ;call colon
-	 ;popa
-	 ;mov dx,[bx]
-	 ;or dx,0x0fff
+          mov si,.check_even
+		  mov di,.check_odd
+		  jmp get_cluster_data
+	 .check_even:
 	 cmp dx,0
 	 je .sete
 	 inc word [cluster]
 	 jmp .loop
-         ;jmp .DONE
-         
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
-     cmp dx,0
+        
+     .check_odd:
+	 cmp dx,0
 	 je .seto
 	 inc word [cluster]
 	 jmp .loop
@@ -6329,21 +6310,9 @@ mov dx,[dir_seg]
 mov es,dx
 .loop:
 mov ax,[cluster]
-          mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-     .EVEN_CLUSTER:
-          and     dx, 0000111111111111b               ; take low twelve bits
-		  jmp .compare
-		  .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
+          mov si,.compare
+		  mov di,.compare
+		  jmp get_cluster_data
 	 .compare:
 	 cmp dx,0
 	 jne .not_free
@@ -6364,27 +6333,9 @@ delete_cluster:
 mov dx,[dir_seg]
 mov es,dx
 mov ax,[filenew.cluster]
-          mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-          
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-
-	 jmp .setze
-
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
-     jmp .setzo
+          mov si,.setze
+		  mov di,.setzo
+		  jmp get_cluster_data
 .setze:
 mov [filenew.cluster],dx
 mov dx,[es:bx]
@@ -6410,6 +6361,29 @@ cmp dx,0x0ff0
 jb delete_cluster
 .done:
 ret
+
+get_cluster_data:
+mov     cx, ax                              ; copy current cluster
+          mov     dx, ax                              ; copy current cluster
+          shr     dx, 0x0001                          ; divide by two
+          add     cx, dx                              ; sum for (3/2)
+
+          mov word bx, [loc3]                          ; location of FAT in memory
+          add     bx, cx                              ; index into FAT
+          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
+          test    ax, 0x0001
+          jnz     .ODD_CLUSTER
+          
+     .EVEN_CLUSTER:
+     
+          and     dx, 0000111111111111b               ; take low twelve bits
+
+	 jmp si
+
+     .ODD_CLUSTER:
+     
+          shr     dx, 0x0004                          ; take high twelve bits
+     jmp di
 
 calculate_fat:
 
@@ -13102,9 +13076,9 @@ call memcpyza
 ; call memcpyza
 mov si,c_prompt
 call memcpyza
-mov si,kernel_free_time_str
+mov si,kernel_idle_time_str
 call memcpyza
-mov si,kernel_free_command_str
+mov si,kernel_idle_command_str
 call memcpyza
 ; mov si,c_alarmtext
 ; call memcpyza
@@ -13126,10 +13100,10 @@ cmp ax,3;advanced
 je .advanced
 cmp ax,4;prompt
 je .prompt
-cmp ax,5;free-time
-je .free_time
-cmp ax,6;free-command
-je .free_command
+cmp ax,5;idle-time
+je .idle_time
+cmp ax,6;idle-command
+je .idle_command
 cmp ax,7;exit
 je .exit_l
 ; cmp ax,3
@@ -13153,14 +13127,14 @@ mov ax,prompt
 mov bx,c_prompt
 call os_input_dialog
 jmp c_setting_f
-.free_time:
-mov ax,kernel_free_time_str
-mov bx,free_kernel_waittime
+.idle_time:
+mov ax,kernel_idle_time_str
+mov bx,idle_kernel_waittime
 call os_get_int_dialog
 jmp c_setting_f
-.free_command:
-mov ax,free_kenel_commandstr
-mov bx,kernel_free_command_str
+.idle_command:
+mov ax,idle_kenel_commandstr
+mov bx,kernel_idle_command_str
 call os_input_dialog
 jmp c_setting_f
 .quick:
@@ -14893,9 +14867,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1017
+dw 1018
 verstring:
-db ' Aplaun OS (version 1.01.7) ',0
+db ' Aplaun OS (version 1.01.8) ',0
 main_list:
 db 'Basic cmnds : load,save,run,execute,batch',0
 editor_list:
@@ -14956,10 +14930,10 @@ messagestr:
 db 'message',0
 freespacestr:
 db 'free space : ',0
-kernel_free_time_str:
-db 'kernel-free waiting time',0
-kernel_free_command_str:
-db 'kernel-free command',0
+kernel_idle_time_str:
+db 'idle-kernel waiting time',0
+kernel_idle_command_str:
+db 'idle-kernel command',0
 imsge:
 db 'Failed',0
 successstr:
@@ -15044,9 +15018,9 @@ autorunstr:
 db 'pwd confg lvlh ',0
 ;db 'confg pwd lvlh ',0
 ;db 'auto ',0
-free_kernel_waittime:
+idle_kernel_waittime:
 db 10
-free_kenel_commandstr:
+idle_kenel_commandstr:
 ;db 'clock screen p ',0
 db 'roam wwwwwwwwwww',0
 ImageName:

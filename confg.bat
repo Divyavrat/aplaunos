@@ -1,5 +1,5 @@
 #high
-echo
+@echo
 micro
 sssiOiSi-vsss
 lIColors
@@ -18,15 +18,15 @@ nm common.txt
 lISize
 size 1
 lIPrompt
-@prompt Apl@n >
+*prompt Apl@n >
 waittime 3
-*waitcmd roam w
+*waitcmd roam
 cls
 lIWelcome
 iUisieir
 micro
 echo
-IStartups
-logo.pcx
-roam
+@IStartups
+@logo.pcx
+@roam
 end
