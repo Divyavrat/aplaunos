@@ -891,6 +891,7 @@ call command
 jmp kernel
 
 dirnew_link:
+mov word [size],1
 mov byte [command_tempchar],'d'
 call filenew
 jmp kernel
@@ -926,12 +927,13 @@ call os_input_dialog
 	; For Multi Drive Copy
 cmp byte [advanced_flag],0x0f
 je .skip_drive
+push bx
 	mov ax,c_drive
 	mov bx,drive
 	call os_get_int_dialog
+pop bx
 .skip_drive:
-	
-	;mov cx, bx				; Otherwise write out the copy
+	mov cx, bx				; Otherwise write out the copy
 	mov bx, 36864
 	mov ax, tempstr2
 	call os_write_file
@@ -2901,7 +2903,7 @@ ret
 storeline:
 pusha
 mov cx,80 ;0x0050
-mov di,tempstr
+mov di,[temploc]
 .loop:
 push cx
 call readchar
@@ -2911,14 +2913,14 @@ call update_pos
 pop cx
 dec cx
 cmp cx,0
-jg .loop
+ja .loop
 popa
 ret
 
 restoreline:
 pusha
 mov cx,80;0x0050
-mov si,tempstr
+mov si,[temploc]
 ;sub si,0x0500
 .loop:
 lodsw
@@ -2927,7 +2929,7 @@ mov al,ah
 call printf
 dec cx
 cmp cx,0
-jg .loop
+ja .loop
 popa
 ret
 
@@ -3284,11 +3286,11 @@ call newline
 mov si,showsetting_list
 call prnstr
 call newline
-mov si,setting_switch_list
+mov si,misc_list
 call prnstr
-call newline
-mov si,advanced_cmd
-call prnstr
+; call newline
+; mov si,advanced_cmd
+; call prnstr
 ; call newline
 ; mov si,common_control
 ; call prnstr
@@ -3571,7 +3573,9 @@ jmp kernel
 
 c_size_f:
 call getno
-mov [size],ax
+;mov [size],ax
+mov [filesize],ax
+mov word [filesize+2],0
 jmp kernel
 
 debug_int:
@@ -5540,10 +5544,11 @@ call print_HTS_details
 
           mov si,.DONE
 		  mov di,.DONE
+		  mov     ax, WORD [cluster]                  ; cluster to read
 		  jmp get_cluster_data
           
      .DONE:
-		  mov     WORD [cluster], dx
+	  mov     WORD [cluster], dx
 		  ;cmp word [xmouse],4
 		  ;jg .close
 		  cmp     dx, 0x0FF0                          ; test for end of file
@@ -5980,6 +5985,7 @@ mov [LOAD_IMAGE.temp_dataseg],dx
 		  ; popa
 		  ;mov cx,[size]
 mov dx,[.temp_dataseg]
+;mov dx,0
 mov es,dx
 call    ReadSectors
 push    bx
@@ -6039,8 +6045,10 @@ mov ax,0
 mov es,ax
 	 pop bx
 	 mov sp,[var_n]
-mov ax,[var_y]
+;mov ax,[var_y]
+call calculate_size
 mov [size],ax
+
 
 ;pop sp
 mov bx,[loc]
@@ -6262,44 +6270,97 @@ jge .loop
 .quit:
 ret
 
+; Allocate a empty cluster to used
+;IN/OUT: Nothing
 find_next_free_cluster:
-mov ax,2
+mov word [.starting_cluster],0
+call calculate_size
+mov cx,ax
+;mov cx,[size]
+push cx
+mov ax,2 ;FAT allocation starts after second cluster
 mov [cluster],ax
-mov dx,[dir_seg]
+mov dx,[dir_seg] ;Set correct segment
 mov es,dx
 .loop:
 mov ax,[cluster]
           mov si,.check_even
 		  mov di,.check_odd
-		  jmp get_cluster_data
+		  jmp get_cluster_data ;Get cluster value
 	 .check_even:
+	 ;mov dx,ax
+	 ;and dx,0x0FFF
 	 cmp dx,0
-	 je .sete
-	 inc word [cluster]
-	 jmp .loop
+	 je .sete ;if empty then allocate
+	 jmp .check_next
         
      .check_odd:
+	 ;mov dx,ax
+	 ;shr dx,4
 	 cmp dx,0
-	 je .seto
+	 je .seto ;if empty then allocate
+	 
+	 .check_next: ;Else check next cluster
 	 inc word [cluster]
 	 jmp .loop
 .sete:
 mov dx,[es:bx]
-or dx,0x0fff
+or dx,0x0fff ; Set as used
 jmp .done
-;mov dx,0xFFFF
-;mov word [es:bx],dx
-;cmp     dx, 0x0FF0
-;jb      LOAD_IMAGE
-
 .seto:
 mov dx,[es:bx]
-or dx,0xfff0
+or dx,0xfff0 ; Set as used
 .done:
-mov word [es:bx],dx
-mov dx,0
+pop cx
+; pusha
+; mov ax,cx
+; call printwordh
+; call getkey
+; popa
+cmp cx,1
+jbe .ending_cluster
+
+push bx
+push cx
+mov ax,[.previous_cluster]
+mov si,.set_previous_even_cluster
+mov di,.set_previous_odd_cluster
+jmp get_cluster_data ;Get cluster value
+.set_previous_even_cluster:
+mov dx,[cluster]
+and dx,0x0FFF
+jmp .set_previous_cluster
+.set_previous_odd_cluster:
+mov dx,[cluster]
+shr dx,4
+.set_previous_cluster:
+mov [es:bx],dx ;Set previous cluster for current value
+mov [.previous_cluster],dx ;Set current as the next to be set
+pop cx
+pop bx
+
+.ending_cluster:
+mov word [es:bx],dx ;Set value to current cluster
+cmp word [.starting_cluster],0
+jne .starting_set
+mov dx,[cluster]
+mov [.starting_cluster],dx
+.starting_set:
+dec cx
+cmp cx,0
+push cx
+ja .loop
+pop cx
+
+mov dx,[kernel_seg] ;Reset the segment
 mov es,dx
+mov dx,[.starting_cluster]
+mov [cluster],dx
 ret
+.starting_cluster:
+dw 0
+.previous_cluster:
+dw 0
 
 calculate_free_space:
 mov ax,2
@@ -6362,28 +6423,24 @@ jb delete_cluster
 .done:
 ret
 
+;IN: ax-Cluster to check
+;OUT: dx-Data in cluster
 get_cluster_data:
-mov     cx, ax                              ; copy current cluster
-          mov     dx, ax                              ; copy current cluster
-          shr     dx, 0x0001                          ; divide by two
-          add     cx, dx                              ; sum for (3/2)
-
-          mov word bx, [loc3]                          ; location of FAT in memory
-          add     bx, cx                              ; index into FAT
-          mov     dx, WORD [es:bx]                       ; read two bytes from FAT
-          test    ax, 0x0001
-          jnz     .ODD_CLUSTER
-          
-     .EVEN_CLUSTER:
-     
-          and     dx, 0000111111111111b               ; take low twelve bits
-
-	 jmp si
-
-     .ODD_CLUSTER:
-     
-          shr     dx, 0x0004                          ; take high twelve bits
-     jmp di
+mov cx, ax ; copy current cluster
+mov     dx, ax ; copy current cluster
+shr     dx, 0x0001 ; divide by two
+add     cx, dx ; sum for (3/2)
+mov word bx, [loc3] ; location of FAT in memory
+add     bx, cx ; index into FAT
+mov     dx, WORD [es:bx] ; read two bytes from FAT
+test    ax, 0x0001
+jnz     .ODD_CLUSTER
+.EVEN_CLUSTER:
+and dx, 0000111111111111b ; take low twelve bits
+jmp si
+.ODD_CLUSTER:
+shr dx, 0x0004 ; take high twelve bits
+jmp di
 
 calculate_fat:
 
@@ -6703,9 +6760,16 @@ stosw
 ;; Storing Size
 cmp byte [command_tempchar],'d'
 je .dir_made
-inc di
-mov al,0x02
-stosb
+;inc di
+;mov al,0x02
+;stosb
+mov ax,[var_x]
+cmp ax,0
+ja .size_ok
+mov ax,1
+.size_ok:
+imul ax,0x200
+stosw
 call SAVE_ROOT
 
 .exitl:
@@ -8830,6 +8894,8 @@ ret
 ; OUT: Carry clear if OK, set if failure
 
 os_write_file:
+mov [filesize],cx
+mov word [filesize+2],0
 pusha
 .save_file:
 call os_file_exists
@@ -8877,7 +8943,7 @@ mov bx,[filesize]
 ret
 
 ; --------------------------------------------------------------------------
-; os_create_file -- Creates a new 0-byte file on the floppy disk
+; os_create_file -- Creates a new 0 byte file on the floppy disk
 ; IN: AX = location of filename; OUT: Nothing
 
 os_create_file:
@@ -14867,23 +14933,23 @@ gdt_end:
 db 0
 
 ver:
-dw 1018
+dw 1019
 verstring:
-db ' Aplaun OS (version 1.01.8) ',0
+db ' Aplaun OS (version 1.01.9) ',0
 main_list:
-db 'Basic cmnds : load,save,run,execute,batch',0
+db 'Main : load,save,run,execute,batch',0
 editor_list:
 db 'View/Editors: text,code,doc,edit,type,sound,paint',0
 setting_list:
 db 'Settings: loc,prompt,color,drive,autosize',0
 setting2_list:
-db 'Extra: echo,page,help,exit,calc,clock',0
+db 'echo,page,help,exit,calc,clock',0
 showsetting_list:
-db 'Settings: driveinfo,debug,alias,border,setting',0
-setting_switch_list:
-db 'Switches/RE: micro,wall,restart,reboot,reset,cls',0
-advanced_cmd:
-db 'Adv/pro: fhlt,step,addpathc,dataseg,runa',0
+db 'driveinfo,debug,alias,border,setting',0
+misc_list:
+db 'micro,wall,restart,reboot,reset,cls',0
+; advanced_cmd:
+; db 'Adv/pro: fhlt,step,addpathc,dataseg,runa',0
 ; common_control:
 ; db 'Common Keys : Arrow,wasd,F1 series,Tab-Change,(Esc or ~)-Close',0
 loc_command:
@@ -14898,7 +14964,7 @@ mint_list:
 db 'Mint:d-date,t-time,c-clock,{i,I}print,h-help,v-ver,s-space,p-pause,l-line,e-exit',0
 
 doc_helpstr:
-db 0x1B,0x18,0x19,0x1A,'-Move,(Esc,~)-Close, F1-Help,F3-Copy,{F4,Insert-Paste},F5-Details,F6-Fill0',0
+db 0x1B,0x18,0x19,0x1A,' (Esc,~)-Close, F1-Help,F3-Copy,{F4,Insert-Paste},F5-Details,F6-Fill0',0
 ; read_helpstr:
 ; db '(Enter,PgDwn)-Next Page, (Home,PgUp)-GoBack, (F2,F3)-jmp to loc',0
 step_helpstr:
@@ -15034,7 +15100,7 @@ db 'Bigger Picture:',0
 command_tempchar:
 db 0
 tempstr:
-times 40 db 0
+times 20 db 0
 tempstr2:
 times 40 db 0
 

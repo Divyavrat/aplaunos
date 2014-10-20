@@ -29,7 +29,7 @@ bsExtBootSignature: 	DB 0x29
 bsSerialNumber:	        DD 0xa0a1a2a3
 bsVolumeLabel: 	        DB "MOS FLOPPY "
 bsFileSystem: 	        DB "FAT12   "
-Fd2Ww7KW4Sa3
+
 Value marks free cluster : 0x00
 Value marks Reserved cluster : 0x01
 This cluster is in use--the value represents next cluster : 0x002 through 0xFEF

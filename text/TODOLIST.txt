@@ -12,7 +12,6 @@ stack instability in fdir must be solved
 os_rename_file fix two filename input
 multitasking for programs
 
-optimise ChainLoops in FAT16
 mint can be registered by apps by lists
 previous commands list
 EXE

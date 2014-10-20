@@ -16,7 +16,7 @@ addpathc
 cd..
 nm common.txt
 lISize
-size 1
+size 512
 lIPrompt
 *prompt Apl@n >
 waittime 3

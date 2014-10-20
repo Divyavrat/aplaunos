@@ -10,7 +10,7 @@ start:	jmp main					; jump to start of bootloader
 ; Note: some of these values are hard-coded in the source!
 ; Values are those used by IBM for 1.44 MB, 3.5" diskette
 
-bpbOEM			db "MY USBOS" ; Disk label
+bpbOEM			db " BOOT OS" ; Disk label
 bpbBytesPerSector:  	DW 512 ; Bytes per sector
 bpbSectorsPerCluster: 	DB 1 ; Sectors per cluster
 bpbReservedSectors: 	DW 1 ; Reserved sectors for boot record
@@ -27,8 +27,8 @@ bpbTotalSectorsBig:     DD 0 ; Number of LBA sectors
 bsDriveNumber: 	        DB 0 ; Drive No: 0
 bsUnused: 		DB 0
 bsExtBootSignature: 	DB 0x41;0x29 ; Drive signature: 41 for floppy
-bsSerialNumber:	        DD 0xa0a1a2a3 ; Volume ID: any number
-bsVolumeLabel: 	        DB " OS FLOPPY " ; Volume Label: any 11 chars
+bsSerialNumber:	        DD 0x1234abcd ; Volume ID: any number
+bsVolumeLabel: 	        DB " OS USB SYS " ; Volume Label: any 11 chars
 bsFileSystem: 	        DB "FAT12   " ; File system type: don't change!
 
 absoluteSector db 0x00

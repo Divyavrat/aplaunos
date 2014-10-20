@@ -26,6 +26,8 @@ do all these things and *explore* the new.
 ###### Recommended: Copy all files from
 **copythis folder** to the drive too.
 
+[See How-To Install Video](http://youtu.be/JYMeiAToqoE)
+
 Use any of the following methods to install it.
 You can even check out videos or blogs.
 
