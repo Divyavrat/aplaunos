@@ -10,7 +10,7 @@ start:	jmp main					; jump to start of bootloader
 ; Note: some of these values are hard-coded in the source!
 ; Values are those used by IBM for 1.44 MB, 3.5" diskette
 
-bpbOEM			db " BOOT OS" ; Disk label
+bpbOEM			db "My OS   " ; Disk label
 bpbBytesPerSector:  	DW 512 ; Bytes per sector
 bpbSectorsPerCluster: 	DB 1 ; Sectors per cluster
 bpbReservedSectors: 	DW 1 ; Reserved sectors for boot record
@@ -26,10 +26,24 @@ bpbHiddenSectors: 	DD 0 ; Number of hidden sectors
 bpbTotalSectorsBig:     DD 0 ; Number of LBA sectors
 bsDriveNumber: 	        DB 0 ; Drive No: 0
 bsUnused: 		DB 0
-bsExtBootSignature: 	DB 0x41;0x29 ; Drive signature: 41 for floppy
-bsSerialNumber:	        DD 0x1234abcd ; Volume ID: any number
-bsVolumeLabel: 	        DB " OS USB SYS " ; Volume Label: any 11 chars
+bsExtBootSignature: 	DB 0x29;0x41 ; Drive signature: 41 for floppy
+bsSerialNumber:	        DD 0xa0a1a2a3 ; Volume ID: any number
+bsVolumeLabel: 	        DB "MOS FLOPPY " ; Volume Label: any 11 chars
 bsFileSystem: 	        DB "FAT12   " ; File system type: don't change!
+
+;************************************************;
+;	Prints a string
+;	DS=>SI: 0 terminated string
+;************************************************;
+Print:
+	lodsb						; load next byte from string from SI to AL
+	or	al, al					; Does AL=0?
+	jz	PrintDone				; Yep, null terminator found-bail out
+	mov	ah, 0eh					; Nope-Print the character
+	int	10h
+	jmp	Print					; Repeat until null terminator found
+PrintDone:
+	ret						; we are done, so return
 
 absoluteSector db 0x00
 absoluteHead   db 0x00
@@ -103,7 +117,7 @@ ReadSectors:
           int     0x18
      .SUCCESS:
           mov     si, msgProgress
-          call    prnstr
+          call    Print
           pop     cx
           pop     bx
           pop     ax
@@ -344,22 +358,22 @@ no_change:
 ; sbb al,0x2f
 ; ret
 
-printf:
-mov ah,0x0e
-int 0x10
-ret
+; printf:
+; mov ah,0x0e
+; int 0x10
+; ret
 
-prnstr:
-pusha
-.loop:
-lodsb
-or al,al
-jz .prnend
-call printf
-jmp .loop
-.prnend:
-popa
-ret
+; prnstr:
+; pusha
+; .loop:
+; lodsb
+; or al,al
+; jz .prnend
+; call printf
+; jmp .loop
+; .prnend:
+; popa
+; ret
 
 getkey:
 xor ah,ah

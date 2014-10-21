@@ -10,29 +10,29 @@ os_main			equ	0500h	; Where the OS code starts
 
 ; ------------------------------------------------------------------
 ; COLOURS (eg for os_draw_background and os_draw_block)
-DEFINE DIALOG_BOX_OUTER_COLOUR		01001111b
-DEFINE DIALOG_BOX_INNER_COLOUR		11110000b
-DEFINE DIALOG_BOX_SELECT_COLOUR	00001111b
-DEFINE TITLEBAR_COLOUR			01110000b
+%DEFINE DIALOG_BOX_OUTER_COLOUR		01001111b
+%DEFINE DIALOG_BOX_INNER_COLOUR		11110000b
+%DEFINE DIALOG_BOX_SELECT_COLOUR	00001111b
+%DEFINE TITLEBAR_COLOUR			01110000b
 
-DEFINE BLACK_ON_WHITE		11110000b
-DEFINE WHITE_ON_BLACK		00001111b
-DEFINE WHITE_ON_LIGHT_RED	11001111b
-DEFINE WHITE_ON_GREEN		00101111b
-DEFINE RED_ON_LIGHT_GREEN	10100100b
-DEFINE WHITE_ON_RED		01001111b
+%DEFINE BLACK_ON_WHITE		11110000b
+%DEFINE WHITE_ON_BLACK		00001111b
+%DEFINE WHITE_ON_LIGHT_RED	11001111b
+%DEFINE WHITE_ON_GREEN		00101111b
+%DEFINE RED_ON_LIGHT_GREEN	10100100b
+%DEFINE WHITE_ON_RED		01001111b
 
 
 ; ------------------------------------------------------------------
 ; KEYS
 
-DEFINE KEY_UP		72
-DEFINE KEY_DOWN	80
-DEFINE KEY_LEFT	75
-DEFINE KEY_RIGHT	77
+%DEFINE KEY_UP		72
+%DEFINE KEY_DOWN	80
+%DEFINE KEY_LEFT	75
+%DEFINE KEY_RIGHT	77
 
-DEFINE KEY_ESC		27
-DEFINE KEY_ENTER	13
+%DEFINE KEY_ESC		27
+%DEFINE KEY_ENTER	13
 
 
 ; ------------------------------------------------------------------
@@ -72,7 +72,7 @@ os_dump_registers	equ	os_main+0090h	; Shows contents of AX, BX, CX, DX
 
 os_wait_for_key		equ	os_main+0012h	; Returns AL = key pressed
 os_check_for_key	equ	os_main+0015h	; Returns AL = key pressed
-
+os_check_for_extkey equ os_main+013Bh ; Returns AX = key pressed
 
 ; File handling
 

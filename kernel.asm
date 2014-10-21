@@ -1012,7 +1012,8 @@ mov byte [1], 0x20
 mov byte [2], 0xA0		; Always 0xA000 for COM executables
 mov byte [3], 0x00
 
-	xor ax, ax			; Clear registers to be DOS compatible
+	; Clear registers to be DOS compatible
+	;xor ax, ax
 	xor bx, bx
 	xor cx, cx
 	xor dx, dx
@@ -1023,6 +1024,7 @@ mov byte [3], 0x00
 mov ax,[data_seg]
 mov ds,ax
 mov es,ax
+mov ax,[loc]
 call word [loc]	;;Jump to execution
 
 mov ax,0 ;[kernel_seg]
@@ -3049,6 +3051,7 @@ stc
 ret
 .mode: db 0
 
+os_print_newline:
 newline:
 pusha
 call getpos
@@ -8837,13 +8840,6 @@ int 0x61
 mov	ax,1003h
 xor	bx,bx
 int	10h
-popa
-ret
-
-os_print_newline:
-pusha
-mov ah,0x0B
-int 0x61
 popa
 ret
 

@@ -11,6 +11,7 @@ segmentation fault, integer cmp - to solve file system error
 stack instability in fdir must be solved
 os_rename_file fix two filename input
 multitasking for programs
+file not found skipped for file as command
 
 mint can be registered by apps by lists
 previous commands list

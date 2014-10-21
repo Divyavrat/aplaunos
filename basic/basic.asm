@@ -1,9 +1,12 @@
 ; ==================================================================
-; CompOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2011 CompOS Developers -- see doc/LICENSE.TXT
+; TachyonOS -- The TachyonOS Operating System kernel
+; Based on the MikeOS Kernel
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/MikeOS/LICENSE.TXT
+; Copyright (C) 2013 TachyonOS Developers -- see doc/LICENCE.TXT
 ;
-; BASIC CODE INTERPRETER
+; BASIC CODE INTERPRETER (4.4b3)
 ; ==================================================================
+
 use16
 org 0x6000
 ; ------------------------------------------------------------------
@@ -21,7 +24,9 @@ org 0x6000
 %INCLUDE "progapi.inc"
 basic_main:
 ; ------------------------------------------------------------------
-; The BASIC interpreter execution starts here...
+; The BASIC interpreter execution starts here -- a parameter string
+; is passed in SI and copied into the first string, unless SI = 0
+
 mov word [orig_stack],sp		; Save stack pointer -- we might jump to the
 						; error printing code and quit in the middle
 						; some nested loops, and we want to preserve
@@ -92,16 +97,17 @@ call os_string_copy
 mov ax,token
 call os_get_file_size
 push bx
-mov ax,[loc]
 call os_print_newline
 mov si,progstart_keyword
 call os_print_string
 call os_print_newline
 ;os_run_basic:
+pop bx
+mov ax,[loc]
 	mov word [load_point], ax		; AX was passed as starting location of code
 
 	mov word [prog], ax			; prog = pointer to current execution point in code
-pop bx
+
 	add bx, ax				; We were passed the .BAS byte size in BX
 	dec bx
 	dec bx
@@ -273,6 +279,10 @@ ret
 	mov di, inputbox_cmd
 	call os_string_compare
 	jc near do_inputbox
+
+	mov di, left_cmd
+	call os_string_compare
+	jc near do_left
 	
 	mov di, len_cmd
 	call os_string_compare
@@ -289,14 +299,34 @@ ret
 	mov di, load_cmd
 	call os_string_compare
 	jc near do_load
+	
+	mov di, locatemouse_cmd
+	call os_string_compare
+	jc near do_locatemouse
+	
+	mov di, lockmouse_cmd
+	call os_string_compare
+	jc near do_lockmouse
 
 	mov di, loop_cmd
 	call os_string_compare
 	jc near do_loop
 
+	mov di, memory_cmd
+	call os_string_compare
+	jc near do_memory
+	
+	mov di, mid_cmd
+	call os_string_compare
+	jc near do_mid
+	
 	mov di, move_cmd
 	call os_string_compare
 	jc near do_move
+	
+	mov di, movemouse_cmd
+	call os_string_compare
+	jc near do_movemouse
 
 	mov di, next_cmd
 	call os_string_compare
@@ -361,6 +391,10 @@ ret
 	mov di, read_cmd
 	call os_string_compare
 	jc near do_read
+	
+	mov di, releasemouse_cmd
+	call os_string_compare
+	jc near do_releasemouse
 
 	mov di, rem_cmd
 	call os_string_compare
@@ -374,6 +408,14 @@ ret
 	call os_string_compare
 	jc near do_return
 	
+	mov di, reverse_cmd
+	call os_string_compare
+	jc near do_reverse
+	
+	mov di, right_cmd
+	call os_string_compare
+	jc near do_right
+
 	mov di, save_cmd
 	call os_string_compare
 	jc near do_save
@@ -393,7 +435,11 @@ ret
 	mov di, sound_cmd
 	call os_string_compare
 	jc near do_sound
-		
+	
+	mov di, split_cmd
+	call os_string_compare
+	jc near do_split
+	
 	mov di, string_cmd
 	call os_string_compare
 	jc near do_string
@@ -401,10 +447,30 @@ ret
 	mov di, textmode_cmd
 	call os_string_compare
 	jc near do_textmode
+	
+	mov di, trim_cmd
+	call os_string_compare
+	jc near do_trim
+	
+	mov di, usemouse_cmd
+	call os_string_compare
+	jc near do_usemouse
+	
+	mov di, vline_cmd
+	call os_string_compare
+	jc near do_vline
 
+	mov di, waitany_cmd
+	call os_string_compare
+	jc near do_waitany
+	
 	mov di, waitkey_cmd
 	call os_string_compare
 	jc near do_waitkey
+	
+	mov di, waitmouse_cmd
+	call os_string_compare
+	jc near do_waitmouse
 
 	mov si, err_cmd_unknown			; Command not found?
 	jmp error
@@ -414,6 +480,7 @@ ret
 ; CLEAR RAM
 
 clear_ram:
+pusha
 	mov al, 0
 
 	mov di, variables
@@ -448,7 +515,7 @@ clear_ram:
 	mov [temp_color],dl
 	mov byte [ink_colour], 7		; White ink
 	call os_set_color
-
+popa
 	ret
 
 
@@ -712,8 +779,7 @@ jmp .do_num_var
 	jmp .finish
 
 .not_divide:
-	;mov dx, 0
-	xor dx,dx
+	mov dx, 0
 	div bx
 	mov ax, dx				; Get remainder
 
@@ -727,7 +793,6 @@ jmp .do_num_var
 
 .handle_variable:
 	mov ax, 0
-	;xor ax,ax
 	mov byte al, [token]
 
 	call get_var
@@ -735,7 +800,6 @@ jmp .do_num_var
 	mov bx, ax
 
 	mov ax, 0
-	;xor ax,ax
 	mov byte al, [.tmp]
 
 	call get_var
@@ -784,9 +848,21 @@ jmp .do_num_var
 .second_is_string:				; These are "X = word" functions
 	mov di, token
 	
+	mov si, freemem_keyword
+	call os_string_compare
+	je .is_freemem
+	
 	mov si, ink_keyword
 	call os_string_compare
 	je .is_ink
+	
+	mov si, leftclick_keyword
+	call os_string_compare
+	je .is_leftclick
+	
+	mov si, middleclick_keyword
+	call os_string_compare
+	je .is_middleclick
 	
 	mov si, progstart_keyword
 	call os_string_compare
@@ -795,6 +871,10 @@ jmp .do_num_var
 	mov si, ramstart_keyword
 	call os_string_compare
 	je .is_ramstart
+	
+	mov si, rightclick_keyword
+	call os_string_compare
+	je .is_rightclick
 
 	mov si, timer_keyword
 	call os_string_compare
@@ -810,7 +890,15 @@ jmp .do_num_var
 
 	jmp .error
 
-
+.is_freemem:
+	mov ax, 0
+	mov byte al, [.tmp]
+	
+	call os_memory_free
+	call set_var
+	
+	jmp mainloop
+	
 .is_ink:
 	mov ax, 0
 	mov byte al, [.tmp]
@@ -820,7 +908,44 @@ jmp .do_num_var
 	call set_var
 	
 	jmp mainloop
+	
+	
+.is_leftclick:
+	mov ax, 0
+	mov al, [.tmp]
+	
+	call os_mouse_leftclick
+	jc .left_down
+	
+	mov bx, 0
+	call set_var
+	
+	jmp mainloop
 
+.left_down:
+	mov bx, 1
+	call set_var
+	
+	jmp mainloop
+	
+	
+.is_middleclick:
+	mov ax, 0
+	mov al, [.tmp]
+	
+	call os_mouse_middleclick
+	jc .middle_down
+	
+	mov bx, 0
+	call set_var
+	
+	jmp mainloop
+	
+.middle_down:
+	mov bx, 1
+	call set_var
+	
+	jmp mainloop
 
 .is_progstart:
 	mov ax, 0
@@ -843,6 +968,25 @@ jmp .do_num_var
 	inc bx
 	call set_var
 
+	jmp mainloop
+	
+	
+.is_rightclick:
+	mov ax, 0
+	mov al, [.tmp]
+	
+	call os_mouse_rightclick
+	jc .right_down
+	
+	mov bx, 0
+	call set_var
+	
+	jmp mainloop
+	
+.right_down:
+	mov bx, 1
+	call set_var
+	
 	jmp mainloop
 
 
@@ -1465,12 +1609,12 @@ do_curschar:
 	call get_token
 
 	cmp ax, VARIABLE
-	je .is_ok
+	je .is_variable
 
 	mov si, err_syntax
 	jmp error
 
-.is_ok:
+.is_variable:
 	mov ax, 0
 	mov byte al, [token]
 
@@ -1921,18 +2065,45 @@ do_getkey:
 
 	push ax
 
-	call os_check_for_key
+	call os_check_for_extkey
 
-	;.skip:
-;.store:
+	cmp ax, 48E0h
+	je .up_pressed
+
+	cmp ax, 50E0h
+	je .down_pressed
+
+	cmp ax, 4BE0h
+	je .left_pressed
+
+	cmp ax, 4DE0h
+	je .right_pressed
+
+.store:	
 	mov bx, 0
 	mov bl, al
-
+	
 	pop ax
 
 	call set_var
 
 	jmp mainloop
+
+.up_pressed:
+	mov ax, 1
+	jmp .store
+
+.down_pressed:
+	mov ax, 2
+	jmp .store
+
+.left_pressed:
+	mov ax, 3
+	jmp .store
+
+.right_pressed:
+	mov ax, 4
+	jmp .store
 
 ; ------------------------------------------------------------------
 ; GOSUB
@@ -2102,15 +2273,15 @@ do_graphicsmode:
 	
 	mov byte [graphicsmode], 1
 	
-	; mov ax, 0
-	; mov bx, 0
-	; mov cx, 319
-	; mov dx, 239
-	; call os_mouse_range
+	mov ax, 0
+	mov bx, 0
+	mov cx, 319
+	mov dx, 239
+	call os_mouse_range
 	
-	; mov dl, 1
-	; mov dh, 1
-	; call os_mouse_scale
+	mov dl, 1
+	mov dh, 1
+	call os_mouse_scale
 	
 	jmp mainloop
 
@@ -2505,6 +2676,35 @@ do_inputbox:
 
 	.tmpstring	times 128 db 0
 
+; -----------------------------------------------------------
+; LEFT
+
+do_left:
+	call get_string_pointer
+	mov di, string_buffer
+	call os_string_copy
+	
+	mov di, .length
+	mov cx, 1
+	call autofetch_variables
+	
+	call get_string_pointer
+	jc .error
+	mov di, si
+	
+	mov si, string_buffer
+	mov cx, [.length]
+	rep movsb
+	mov al, 0
+ 	stosb
+ 	
+ 	jmp mainloop
+ 	
+ .error:
+	mov si, err_syntax
+	jmp error
+
+.length					dw 0	
 
 ; -----------------------------------------------------------
 ; LEN
@@ -2751,6 +2951,50 @@ do_load:
 
 
 ; ------------------------------------------------------------------
+; LOCATEMOUSE
+
+do_locatemouse:
+	call os_mouse_locate
+	
+	mov [.mouse_x], cx
+	mov [.mouse_y], dx
+	
+	mov si, .mouse_x
+	mov cx, 2
+	call autostore_variables
+	
+	jmp mainloop
+	
+.mouse_x					dw 0
+.mouse_y					dw 0
+
+	
+
+; ------------------------------------------------------------------
+; LOCKMOUSE
+
+do_lockmouse:
+	mov cx, 4
+	mov di, .min_x
+	call autofetch_variables
+	
+	mov ax, [.min_x]
+	mov bx, [.min_y]
+	mov cx, [.max_x]
+	mov dx, [.max_y]
+	call os_mouse_range
+	
+	jmp mainloop
+	
+	
+.min_x						dw 0
+.min_y						dw 0
+.max_x						dw 0
+.max_y						dw 0
+
+
+	
+; ------------------------------------------------------------------
 ; LOOP
 
 do_loop:
@@ -2902,7 +3146,144 @@ do_loop:
 	.endless_word			db "ENDLESS", 0
 	.sign				db 0
 	
+;-------------------------------------------------------------------
+; MEMORY
+do_memory:
+	call get_token
+	mov si, token
 	
+	mov di, .allocate_cmd
+	call os_string_compare
+	jc .allocate
+	
+	mov di, .release_cmd
+	call os_string_compare
+	jc .release
+	
+	mov di, .read_cmd
+	call os_string_compare
+	jc .read
+	
+	mov di, .write_cmd
+	call os_string_compare
+	jc .write
+	
+	jmp .error
+	
+.allocate:
+	mov di, .blocks
+	mov cx, 1
+	call autofetch_variables
+	
+	mov dx, [.blocks]
+	call os_memory_allocate
+	
+	cmp bh, 0
+	je .out_of_memory
+	
+	call get_token
+	cmp ax, VARIABLE
+	jne .error
+
+	mov ax, 0
+	mov byte al, [token]
+	
+	mov bl, bh
+	mov bh, 0
+	call set_var
+	
+	jmp mainloop
+	
+.release:
+	mov di, .handle
+	mov cx, 1
+	call autofetch_variables
+	
+	mov bh, [.handle]
+	call os_memory_release
+	
+	jmp mainloop
+	
+.read:
+	mov di, .handle
+	mov cx, 2
+	call autofetch_variables
+	
+	mov bh, [.handle]
+	mov di, [.address]
+	mov ax, 0x2000
+	mov es, ax
+	call os_memory_read
+	
+	jmp mainloop
+	
+.write:
+	mov di, .handle
+	mov cx, 2
+	call autofetch_variables
+	
+	mov bh, [.handle]
+	mov si, [.address]
+	mov ax, 0x2000
+	mov ds, ax
+	call os_memory_write
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+	
+.out_of_memory:
+	mov si, memory_cmd
+	jmp error
+	
+.blocks					dw 0
+.handle					dw 0
+.address				dw 0
+
+.allocate_cmd				db 'ALLOCATE', 0
+.release_cmd				db 'RELEASE', 0
+.read_cmd				db 'READ', 0
+.write_cmd				db 'WRITE', 0
+
+
+
+; ------------------------------------------------------------------
+; MID
+
+do_mid:
+	call get_string_pointer
+	mov di, string_buffer
+	call os_string_copy
+	
+	mov di, .start
+	mov cx, 2
+	call autofetch_variables
+	
+	call get_string_pointer
+	jc .error
+	mov di, si
+	
+	mov si, string_buffer
+	add si, [.start]
+	dec si
+	mov cx, [.length]
+	rep movsb
+	mov al, 0
+	stosb
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+
+.start					dw 0
+.length					dw 0
+
+
+
 ; ------------------------------------------------------------------
 ; MOVE
 
@@ -2947,6 +3328,24 @@ do_move:
 
 	jmp mainloop
 
+	
+; ------------------------------------------------------------------
+; MOVEMOUSE
+
+do_movemouse:
+	mov cx, 2
+	mov di, .mousex
+	call autofetch_variables
+	
+	mov cx, [.mousex]
+	mov dx, [.mousey]
+	call os_mouse_move
+	
+	jmp mainloop
+	
+.mousex						dw 0
+.mousey						dw 0
+	
 
 ; ------------------------------------------------------------------
 ; NEXT
@@ -3947,6 +4346,32 @@ do_read:
 	.tmp_token 	times 30 db 0
 
 
+	
+; ------------------------------------------------------------------
+; RELEASEMOUSE
+
+do_releasemouse:
+	cmp byte [graphicsmode], 1
+	je .graphics_mode
+	
+	mov ax, 0
+	mov bx, 0
+	mov cx, 79
+	mov dx, 24
+	call os_mouse_range
+	
+	jmp mainloop
+	
+.graphics_mode:
+	mov ax, 0
+	mov bx, 0
+	mov cx, 319
+	mov dx, 239
+	call os_mouse_range
+	
+	jmp mainloop
+	
+	
 ; ------------------------------------------------------------------
 ; REM
 
@@ -4093,8 +4518,58 @@ do_return:
 	dec byte [gosub_depth]
 
 	jmp mainloop	
+	
 
+; ------------------------------------------------------------------
+; REVERSE
 
+do_reverse:
+	call get_string_pointer
+	jc .error
+	
+	call os_string_reverse
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+
+	
+; ------------------------------------------------------------------
+; RIGHT
+
+do_right:
+	call get_string_pointer
+	mov di, string_buffer
+	call os_string_copy
+	
+	mov si, string_buffer
+	call os_string_reverse
+	
+	mov di, .length
+	mov cx, 1
+	call autofetch_variables
+	
+	call get_string_pointer
+	mov di, si
+	push di
+	
+	mov si, string_buffer
+	mov cx, [.length]
+	rep movsb
+	mov al, 0
+	stosb
+	
+	pop di
+	mov si, di
+	call os_string_reverse
+	
+	jmp mainloop
+	
+	
+.length					dw 0
+	
 ; ------------------------------------------------------------------
 ; SAVE
 
@@ -4411,6 +4886,78 @@ do_sound:
 	jmp mainloop
 
 
+	
+; ------------------------------------------------------------------
+; SPLIT
+
+do_split:
+	call get_string_pointer
+	
+	call os_string_parse
+	
+	call get_string_pointer
+	jc .error
+	cmp ax, 0
+	je .string_one_null
+	
+	mov di, si
+	mov si, ax
+	call os_string_copy
+	
+	call get_string_pointer
+	jc .error
+	cmp bx, 0
+	je .string_two_null
+	
+	mov di, si
+	mov si, bx
+	call os_string_copy
+	
+	call get_string_pointer
+	jc .error
+	cmp cx, 0
+	je .string_three_null
+	
+	mov di, si
+	mov si, cx
+	call os_string_copy
+
+	call get_string_pointer
+	jc .error
+	cmp dx, 0
+	je .string_four_null
+	
+	mov di, si
+	mov si, dx
+	call os_string_copy
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+	
+.string_one_null:
+	mov byte [si], 0
+	
+	call get_string_pointer
+	
+.string_two_null:
+	mov byte [si], 0
+	
+	call get_string_pointer
+	
+.string_three_null:
+	mov byte [si], 0
+	
+	call get_string_pointer
+	
+.string_four_null:
+	mov byte [si], 0
+	
+	jmp mainloop
+	
+	
 ;-------------------------------------------------------------------
 ; STRING
 do_string:
@@ -4425,6 +4972,14 @@ do_string:
 	call os_string_compare
 	jc .get_str
 	
+	mov di, .load_cmd
+	call os_string_compare
+	jc .load_str
+	
+	mov di, .save_cmd
+	call os_string_compare
+	jc .save_str
+
 	jmp .error
 	
 	.set_str:
@@ -4432,6 +4987,15 @@ do_string:
 	jmp .check_second
 	.get_str:
 	mov cx, 2
+	jmp .check_second
+	
+	.load_str:
+	mov cx, 3
+	jmp .check_second
+	
+	.save_str:
+	mov cx, 4
+	jmp .check_second
 
 .check_second:
 	call get_token			; The next should be a string variable, locate it
@@ -4475,6 +5039,12 @@ do_string:
 	sub ax, 1
 	mov dx, ax
 	
+	cmp cx, 3			; load/save only need two variables
+	je .load_var
+	
+	cmp cx, 4
+	je .save_var
+	
 .check_forth:
 	call get_token			; Next a numerical variable
 	
@@ -4505,17 +5075,42 @@ do_string:
 	stosb				; Store data
 	jmp mainloop
 	
+.load_var:
+	inc dx
+	mov si, dx
+	mov di, [.string_loc]
+	call os_string_copy
+	jmp mainloop
+	
+.save_var:
+	inc dx
+	mov si, [.string_loc]
+	mov di, dx
+	call os_string_copy
+	jmp mainloop
+	
 .error:
 	mov si, err_syntax
 	jmp error
 	
 .outrange:
+	mov dx, ax
+	dec dx
+
+	cmp cx, 3
+	je .load_var
+	
+	cmp cx, 4
+	je .save_var
+
 	mov si, err_string_range
 	jmp error
 
 .data:
 	.get_cmd		db "GET", 0
 	.set_cmd		db "SET", 0
+	.load_cmd		db "LOAD", 0
+	.save_cmd		db "STORE", 0
 	.string_loc		dw 0
 	.tmp			db 0
 
@@ -4528,17 +5123,148 @@ do_textmode:
 	
 	mov byte [graphicsmode], 0
 	
-	; mov ax, 0
-	; mov bx, 0
-	; mov cx, 79
-	; mov dx, 24
-	; call os_mouse_range
+	mov ax, 0
+	mov bx, 0
+	mov cx, 79
+	mov dx, 24
+	call os_mouse_range
 	
-	; mov dl, 2
-	; mov dh, 3
-	; call os_mouse_scale
+	mov dl, 2
+	mov dh, 3
+	call os_mouse_scale
 	
 	jmp mainloop
+
+	
+; ------------------------------------------------------------------
+; TRIM
+
+do_trim:
+	call get_string_pointer
+	jc .error
+	mov ax, si
+	call os_string_chomp
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+	
+	
+;------------------------------------------------------------------
+; USEMOUSE
+
+do_usemouse:
+	call os_mouse_show
+	call os_input_wait
+	jc .keypress
+	
+	call os_mouse_anyclick
+	jc .click
+	
+	call os_mouse_hide
+	jmp do_usemouse
+
+.keypress:
+	call os_check_for_extkey
+
+	cmp ax, 48E0h
+	je .up_pressed
+
+	cmp ax, 50E0h
+	je .down_pressed
+
+	cmp ax, 4BE0h
+	je .left_pressed
+
+	cmp ax, 4DE0h
+	je .right_pressed
+	
+	mov ah, 0
+	mov [.key], ax
+	jmp .finish
+	
+.up_pressed:
+	mov byte [.key], 1
+	jmp .finish
+	
+.down_pressed:
+	mov word [.key], 2
+	jmp .finish
+	
+.left_pressed:
+	mov word [.key], 3
+	jmp .finish
+	
+.right_pressed:
+	mov word [.key], 4
+	jmp .finish
+	
+.click:
+	mov word [.key], 0
+	
+.finish:
+	call os_mouse_hide
+	call os_mouse_locate
+	mov [.mouse_x], cx
+	mov [.mouse_y], dx
+	
+	mov si, .key
+	mov cx, 3
+	call autostore_variables
+	
+	jmp mainloop
+	
+
+.key					dw 0
+.mouse_x				dw 0
+.mouse_y				dw 0
+
+	
+;------------------------------------------------------------------
+; VLINE
+
+do_vline:
+	mov di, .start_x
+	mov cx, 4
+	call autofetch_variables
+	
+	cmp byte [graphicsmode], 1
+	jne .textmode
+	
+	mov cx, [.start_x]
+	mov dx, [.start_y]
+	mov si, [.start_x]
+	mov di, dx
+	add di, [.length]
+	mov bh, [.colour]
+	call os_draw_line
+	
+	jmp mainloop
+	
+.textmode:
+	mov bh, [.length]
+	mov bl, [.colour]
+	mov dh, [.start_x]
+	mov dl, [.start_y]
+	call os_draw_vertical_line
+	
+	jmp mainloop
+
+.start_x					dw 0
+.start_y					dw 0
+.length						dw 0
+.colour						dw 0
+
+
+; ------------------------------------------------------------------
+; WAITANY
+
+do_waitany:
+	call os_input_wait
+	jmp mainloop
+
 
 ; ------------------------------------------------------------------
 ; WAITKEY
@@ -4621,6 +5347,11 @@ jmp .store
 
 	jmp mainloop
 
+; ------------------------------------------------------------------
+; WAITMOUSE
+do_waitmouse:
+	call os_mouse_wait
+	jmp mainloop
 ; ==================================================================
 ; INTERNAL ROUTINES FOR INTERPRETER
 
@@ -4900,7 +5631,8 @@ int 0x61
 ret
 
 loc:	;dw 0x9000
-dw 0x6000+(512*FILESIZE)
+;dw 0x6000+(512*FILESIZE)
+dw basic_interpreter_end
 temp_color: db 0x00
 
 ; ------------------------------------------------------------------
@@ -5038,6 +5770,12 @@ error:
 	mov byte [ink_colour],dl
 	call os_set_color
 	
+	cmp byte [graphicsmode], 0
+	je textmode_finish
+	mov byte [graphicsmode], 0
+	call os_text_mode
+	textmode_finish:
+	
 	call os_print_newline
 	call os_print_string		; Print error message
 
@@ -5072,20 +5810,28 @@ error:
 
 	call os_print_newline
 	
+	mov si,[prog]
+	mov cx,40h
+	.print_error_line_loop:
+	lodsb
+	cmp al,10
+	je .print_error_line_newline
+	cmp al,13
+	je .print_error_line_newline
+	mov ah,0Eh
+	int 10h
+	loop .print_error_line_loop
+	jmp .print_error_line_end
+	.print_error_line_newline:
+	call os_print_newline
+	loop .print_error_line_loop
+	.print_error_line_end:
+	
 	call os_wait_for_key
-
-	cmp byte [graphicsmode], 1
-	je textmode_finish
 	
 	mov word sp, [orig_stack]	; Restore the stack to as it was when BASIC started
 
 	ret				; And finish
-	
-textmode_finish:
-	call os_text_mode
-	mov byte [graphicsmode], 0
-	mov word sp, [orig_stack]
-	ret
 
 	alert_cmd		db "ALERT", 0
 	askfile_cmd		db "ASKFILE", 0
@@ -5121,12 +5867,18 @@ textmode_finish:
 	interface_cmd		db "INTERFACE", 0
 	input_cmd 		db "INPUT", 0
 	inputbox_cmd		db "INPUTBOX", 0
+	left_cmd		db "LEFT", 0
 	len_cmd			db "LEN", 0
 	line_cmd		db "LINE", 0
 	listbox_cmd		db "LISTBOX", 0
 	load_cmd		db "LOAD", 0
+	locatemouse_cmd		db "LOCATEMOUSE", 0
+	lockmouse_cmd		db "LOCKMOUSE", 0
 	loop_cmd		db "LOOP", 0
+	memory_cmd		db "MEMORY", 0
+	mid_cmd			db "MID", 0
 	move_cmd 		db "MOVE", 0
+	movemouse_cmd		db "MOVEMOUSE", 0
 	next_cmd 		db "NEXT", 0
 	number_cmd		db "NUMBER", 0
 	page_cmd		db "PAGE", 0
@@ -5143,17 +5895,25 @@ textmode_finish:
 	question_cmd		db "QUESTION", 0
 	rand_cmd		db "RAND", 0
 	read_cmd		db "READ", 0
+	releasemouse_cmd	db "RELEASEMOUSE", 0
 	rem_cmd			db "REM", 0
 	rename_cmd		db "RENAME", 0
 	return_cmd		db "RETURN", 0
+	reverse_cmd		db "REVERSE", 0
+	right_cmd		db "RIGHT", 0
 	save_cmd		db "SAVE", 0
 	serial_cmd		db "SERIAL", 0
 	size_cmd		db "SIZE", 0
 	sound_cmd 		db "SOUND", 0
+	split_cmd		db "SPLIT", 0
 	string_cmd		db "STRING", 0
 	textmode_cmd		db "TEXTMODE", 0
+	trim_cmd		db "TRIM", 0
+	usemouse_cmd		db "USEMOUSE", 0
 	vline_cmd		db "VLINE", 0
+	waitany_cmd		db "WAITANY", 0
 	waitkey_cmd		db "WAITKEY", 0
+	waitmouse_cmd		db "WAITMOUSE", 0
 
 	and_keyword		db "AND", 0
 	then_keyword		db "THEN", 0
@@ -5163,9 +5923,13 @@ textmode_finish:
 	lower_keyword		db "LOWER", 0
 	upper_keyword		db "UPPER", 0
 
+	freemem_keyword		db "FREEMEM", 0
 	ink_keyword		db "INK", 0
+	leftclick_keyword	db "LEFTCLICK", 0
+	middleclick_keyword	db "MIDDLECLICK", 0
 	progstart_keyword	db "PROGSTART", 0
 	ramstart_keyword	db "RAMSTART", 0
+	rightclick_keyword	db "RIGHTCLICK", 0
 	timer_keyword		db "TIMER", 0
 	variables_keyword	db "VARIABLES", 0
 	version_keyword		db "VERSION", 0
@@ -5181,17 +5945,17 @@ textmode_finish:
 	err_doloop_maximum	db "Error: DO/LOOP nesting limit", 0
 	err_file_notfound	db "Error: file not found", 0
 	err_goto_notlabel	db "Error: GOTO or GOSUB label", 0
-	err_graphics		db "Error: Command requires graphic mode", 0
+	err_graphics		db "Error: graphic mode needed", 0
 	err_label_notfound	db "Error: label not found", 0
 	err_nest_limit		db "Error: FOR or GOSUB nest limit", 0
-	err_next		db "Error: NEXT without FOR", 0
+	err_next		db "Error: NEXT w/o FOR", 0
 	err_no_endif		db "Error: BLOCKIF without ENDIF", 0
 	err_loop		db "Error: LOOP without DO", 0
 	err_print_type		db "Error: PRINT text/variable", 0
-	err_polygon_no		db "Error: polygon: points", 0
-	err_quote_term		db "Error: improper quotes", 0
-	err_return		db "Error: RETURN without GOSUB", 0
-	err_string_range	db "Error: string location out of range", 0
+	err_polygon_no		db "Error: polygon points", 0
+	err_quote_term		db "Error: quotes", 0
+	err_return		db "Error: RETURN ", 0
+	err_string_range	db "Error: string location", 0
 	err_syntax		db "Error: syntax error", 0
 	err_break		db "BREAK CALLED", 0
 
@@ -5236,7 +6000,9 @@ vars_loc:
 	disp_page		db 0		; Page to display
 	graphicsmode		db 0		; Keeps track of whether the system is in graphics mode
 
-	FILESIZE equ 22
+	;FILESIZE equ 22
+	;FILESIZE equ basic_interpreter_end/512
 	
-times (512*FILESIZE)-($-$$) db 0
+;times (512*FILESIZE)-($-$$) db 0
 ;times (512*25)-($-$$) db 0
+basic_interpreter_end:

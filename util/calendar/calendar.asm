@@ -42,13 +42,13 @@ page1message1 db "Thank you for opening this application",010,013
 	db "Be aware that the range of years is 2000 - 2099",010,013,010,013
 	db "For the purpose of the assignment, entering 2012 as the year", 010,013
 	db "And 08 for the month will be more than enough!", 010, 013
-	db "Press any key to move on to the next page","$"
+	db "Use right key to move to next month and left key to restart the calendar.","$"
 
 page2prompt1 db "Please enter year: 20"
 page2prompt1Spot:
 page2prompt2 db "Enter month number(01-12): "
 page2prompt2Spot:	
-page2prompt3 db "Press enter, then the right arrow key to move onto the next page$"	
+page2prompt3 db "Press right key to start.$"	
 
 ;; PRESET VALUES ;;     
 
@@ -102,17 +102,17 @@ start:
     mov ah, 9
     int 21h
 
-    xor ax,ax  	; Clear the ax register to accept a key entry     
-    int 16h
+    ;xor ax,ax  	; Clear the ax register to accept a key entry     
+    ;int 16h
    
-    inc [currentPage]
+    ;inc [currentPage]
     
     
     
     ;; Next Page! 
-    mov al, [currentPage]
-    mov ah, 05h
-    int 10h  
+    ;mov al, [currentPage]
+    ;mov ah, 05h
+    ;int 10h  
     
     mov al, 1 
     mov ah, 13h 
@@ -120,7 +120,7 @@ start:
     mov bh, [currentPage]
     mov cx, page2prompt1Spot - page2prompt1
     mov dl, 10
-    mov dh, 7 
+    mov dh, 10 
     mov bp, page2prompt1
     int 10h 
     
@@ -148,7 +148,7 @@ start:
     mov bh, [currentPage]
     mov cx, page2prompt2Spot - page2prompt2
     mov dl, 10
-    mov dh, 8 
+    mov dh, 11
     mov bp, page2prompt2
     int 10h    
     
@@ -165,7 +165,7 @@ start:
     mov [leMont], cx 
     
     ;; To print this last message, we need to reset the cursor somewhere else!
-    mov dh, 10
+    mov dh, 13
     mov dl, 9
     mov ah, 2
     int 10h
@@ -175,12 +175,12 @@ start:
     mov ah,9
     int 21h
     
-    wait_on_enter:
+    ;wait_on_enter:
         
-        xor ax,ax
-        int 16h
-        cmp al, 0Dh
-        jnz wait_on_enter
+        ;xor ax,ax
+        ;int 16h
+        ;cmp al, 0Dh
+        ;jnz wait_on_enter
     
     mov bx, [leYear]
     mov cx, [leMont]
@@ -247,8 +247,12 @@ start:
 		jmp keyControl
 		
 quit:
+mov al,0
+mov ah, 05h
+int 10h  
 mov ax,0x4C07
 int 0x21
+jmp $
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  Control Lables

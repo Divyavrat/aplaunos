@@ -72,7 +72,7 @@ os_dump_registers	equ	os_main+0090h	; Shows contents of AX, BX, CX, DX
 
 os_wait_for_key		equ	os_main+0012h	; Returns AL = key pressed
 os_check_for_key	equ	os_main+0015h	; Returns AL = key pressed
-
+os_check_for_extkey equ os_main+013Bh ; Returns AX = key pressed
 
 ; File handling
 

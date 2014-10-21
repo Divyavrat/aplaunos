@@ -19,8 +19,8 @@ lISize
 size 512
 lIPrompt
 *prompt Apl@n >
-waittime 3
-*waitcmd roam
+idletime 3
+*idlecmd roam
 cls
 lIWelcome
 iUisieir

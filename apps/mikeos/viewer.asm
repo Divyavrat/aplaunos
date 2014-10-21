@@ -5,16 +5,20 @@
 
 	BITS 16
 	ORG 0x6000
-	jmp main_start
+	
 	%INCLUDE "progapi.inc"
 	
-
+cmp si,0
+je main_start
+mov ax,si
+call os_string_uppercase
+jmp load_file_by_argument
 main_start:
 	call draw_background
 	call os_file_selector		; Get filename
 
 	jc near close			; Quit if Esc pressed in dialog box
-	
+	load_file_by_argument:
 	mov bx, ax			; Save filename for now
 
 	mov di, ax

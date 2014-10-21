@@ -1,4 +1,4 @@
-alert_cmd		db "ALERT", 0
+	alert_cmd		db "ALERT", 0
 	askfile_cmd		db "ASKFILE", 0
 	blockif_cmd		db "BLOCKIF", 0
 	box_cmd			db "BOX", 0
@@ -32,12 +32,18 @@ alert_cmd		db "ALERT", 0
 	interface_cmd		db "INTERFACE", 0
 	input_cmd 		db "INPUT", 0
 	inputbox_cmd		db "INPUTBOX", 0
+	left_cmd		db "LEFT", 0
 	len_cmd			db "LEN", 0
 	line_cmd		db "LINE", 0
 	listbox_cmd		db "LISTBOX", 0
 	load_cmd		db "LOAD", 0
+	locatemouse_cmd		db "LOCATEMOUSE", 0
+	lockmouse_cmd		db "LOCKMOUSE", 0
 	loop_cmd		db "LOOP", 0
+	memory_cmd		db "MEMORY", 0
+	mid_cmd			db "MID", 0
 	move_cmd 		db "MOVE", 0
+	movemouse_cmd		db "MOVEMOUSE", 0
 	next_cmd 		db "NEXT", 0
 	number_cmd		db "NUMBER", 0
 	page_cmd		db "PAGE", 0
@@ -54,17 +60,25 @@ alert_cmd		db "ALERT", 0
 	question_cmd		db "QUESTION", 0
 	rand_cmd		db "RAND", 0
 	read_cmd		db "READ", 0
+	releasemouse_cmd	db "RELEASEMOUSE", 0
 	rem_cmd			db "REM", 0
 	rename_cmd		db "RENAME", 0
 	return_cmd		db "RETURN", 0
+	reverse_cmd		db "REVERSE", 0
+	right_cmd		db "RIGHT", 0
 	save_cmd		db "SAVE", 0
 	serial_cmd		db "SERIAL", 0
 	size_cmd		db "SIZE", 0
 	sound_cmd 		db "SOUND", 0
+	split_cmd		db "SPLIT", 0
 	string_cmd		db "STRING", 0
 	textmode_cmd		db "TEXTMODE", 0
+	trim_cmd		db "TRIM", 0
+	usemouse_cmd		db "USEMOUSE", 0
 	vline_cmd		db "VLINE", 0
+	waitany_cmd		db "WAITANY", 0
 	waitkey_cmd		db "WAITKEY", 0
+	waitmouse_cmd		db "WAITMOUSE", 0
 
 	and_keyword		db "AND", 0
 	then_keyword		db "THEN", 0
@@ -74,9 +88,13 @@ alert_cmd		db "ALERT", 0
 	lower_keyword		db "LOWER", 0
 	upper_keyword		db "UPPER", 0
 
+	freemem_keyword		db "FREEMEM", 0
 	ink_keyword		db "INK", 0
+	leftclick_keyword	db "LEFTCLICK", 0
+	middleclick_keyword	db "MIDDLECLICK", 0
 	progstart_keyword	db "PROGSTART", 0
 	ramstart_keyword	db "RAMSTART", 0
+	rightclick_keyword	db "RIGHTCLICK", 0
 	timer_keyword		db "TIMER", 0
 	variables_keyword	db "VARIABLES", 0
 	version_keyword		db "VERSION", 0
