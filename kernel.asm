@@ -867,7 +867,9 @@ call prnstr
 call colon
 mov di,idle_kenel_commandstr
 call getstr
-mov byte [di-1],0x20
+;mov byte [di-1],0x20
+mov byte [di-1],0x0D
+mov byte [di],0
 jmp kernel
 
 c_wall_f:
@@ -892,6 +894,7 @@ jmp kernel
 
 dirnew_link:
 mov word [size],1
+mov word [filesize],512
 mov byte [command_tempchar],'d'
 call filenew
 jmp kernel
@@ -3071,11 +3074,11 @@ mov es,bx
 mov ch,[track]
 mov dh,[head]
 mov byte dl,[drive]
-;xchg bx,ax
-;call calculate_size
-;mov ah,bh
+xchg bx,ax
+call calculate_size
+mov ah,bh
 mov word bx,[loc]
-mov al,[size]
+;mov al,[size]
 int 13h
 jnc .success
 call print_error
@@ -3343,8 +3346,9 @@ int 0x13
 jnc .c_install_hwri
 jmp .c_installend_f
 .c_install_hwri:
-mov si,imsgh
-call prnstr
+;mov si,imsgh
+; mov si,c_install
+; call prnstr
 .c_install_wri:
 xor ax,ax
 mov es,ax
@@ -3476,7 +3480,7 @@ out 0x61,al
 ;jmp kernel
 ;call PlayWAV
 ;call calculate_size
-mov ax,0x80
+mov ah,0x80
 mov al,[size]
 int 0x1a
 mov cx,0xffff
@@ -3845,6 +3849,8 @@ border_max_y:
 dw 24
 
 c_driveinfo_f:
+
+;Find out drive CHS details
 push es
 mov dl,[drive]
 mov di,ax
@@ -3859,33 +3865,35 @@ movzx dx, dh                  ; maximum head number
 add dx, 1
 mov [NUMBER_OF_HEADS], dx
 
-mov si,c_drive
-call prnstr
-call colon
-mov al,[drive]
-cmp al,0x00
-je di_imsgf
-cmp al,0x80
-je di_imsgh
-mov si,notfoundstr
-call prnstr
-jmp di_imsg_e
-di_imsgf:
-mov si,imsgf
-call prnstr
-jmp di_imsg_e
-di_imsgh:
-mov si,imsgh
-call prnstr
-;jmp di_imsg_e
-di_imsg_e:
-mov al,[drive]
-call printh
-call colon
-mov al,[drive]
-call printnb
-call newline
+;Print drive type
+; mov si,c_drive
+; call prnstr
+; call colon
+; mov al,[drive]
+; cmp al,0x00
+; je di_imsgf
+; cmp al,0x80
+; je di_imsgh
+; mov si,notfoundstr
+; call prnstr
+; jmp di_imsg_e
+; di_imsgf:
+; mov si,imsgf
+; call prnstr
+; jmp di_imsg_e
+; di_imsgh:
+; mov si,imsgh
+; call prnstr
+; ;jmp di_imsg_e
+; di_imsg_e:
+; mov al,[drive]
+; call printh
+; call colon
+; mov al,[drive]
+; call printnb
+; call newline
 
+;Print drive details
 mov si,c_drive
 call prnstr
 call space
@@ -3916,6 +3924,7 @@ call colon
 mov al,[NUMBER_OF_HEADS]
 call printwordh
 
+;Print free memory
 call newline
 xor ax,ax
 int 0x12
@@ -3924,6 +3933,8 @@ call space
 mov ah,0x88
 int 15h
 call printn
+
+;Calculate and print free space
 call newline
 mov si,freespacestr
 call prnstr
@@ -3952,6 +3963,8 @@ call printn
 mov al,'%'
 call printf
 
+;Print found device hardwares
+
 call newline
 mov si,foundstr
 call prnstr
@@ -3960,25 +3973,26 @@ call space
 int 0x11
 bt ax,1
 jnc .nomath
-mov si,mathprocstr
+mov si,mathprocstr ;If math CPU is present
 call os_print_string
 call space
 .nomath:
 
 bt ax,2
 jnc .nomouse
-mov si,mousestr
+mov si,mousestr ;If mouse is present
 call os_print_string
 call space
 .nomouse:
 
 bt ax,12
 jnc .nogame
-mov si,gameportstr
+mov si,gameportstr ; If gameport is present
 call os_print_string
 call space
 .nogame:
 
+;Print out BIOS Date
 ;call newline
 ;mov eax,0xe820
 ;int 15h
@@ -4002,7 +4016,9 @@ call space
 ; call prnstr
 ; mov si,found
 ; call prnstr
+
 jmp kernel
+
 ; .bios_date:
 ; db "Bios Date:",0
 
@@ -5428,8 +5444,9 @@ mov ax,[loc]
 mov [var_a],ax
 mov [loc],di
 .fdir_not_interrupt:
-mov word ax,[size]
-mov word [var_y],ax
+; mov word ax,[size]
+mov ax,[filesize]
+mov [var_y],ax
 .fdir_next:
 call LOAD_ROOT
 jmp fileload
@@ -6163,7 +6180,8 @@ mov ax,[data_seg]
 mov es,ax
 mov sp,[var_n]
 mov ax,[var_y]
-mov [size],ax
+;mov [size],ax
+mov [filesize],ax
 stc
 mov word [comm],0x0f0f
 cmp byte [command_tempchar],'l'
@@ -6277,6 +6295,7 @@ ret
 ;IN/OUT: Nothing
 find_next_free_cluster:
 mov word [.starting_cluster],0
+mov word [.previous_cluster],0
 call calculate_size
 mov cx,ax
 ;mov cx,[size]
@@ -6315,17 +6334,15 @@ mov dx,[es:bx]
 or dx,0xfff0 ; Set as used
 .done:
 pop cx
-; pusha
-; mov ax,cx
-; call printwordh
-; call getkey
-; popa
+
 cmp cx,1
-jbe .ending_cluster
+jb .ending_cluster
 
 push bx
 push cx
 mov ax,[.previous_cluster]
+cmp ax,0
+je .skip_previous_cluster_allocation
 mov si,.set_previous_even_cluster
 mov di,.set_previous_odd_cluster
 jmp get_cluster_data ;Get cluster value
@@ -6337,12 +6354,29 @@ jmp .set_previous_cluster
 mov dx,[cluster]
 shr dx,4
 .set_previous_cluster:
+;debug
+; pusha
+; call colon
+; popa
+; pusha
+; mov ax,dx
+; call printwordh
+; call getkey
+; popa
 mov [es:bx],dx ;Set previous cluster for current value
+.skip_previous_cluster_allocation:
 mov [.previous_cluster],dx ;Set current as the next to be set
 pop cx
 pop bx
 
 .ending_cluster:
+;debug
+; pusha
+; call space
+; mov ax,dx
+; call printwordh
+; call getkey
+; popa
 mov word [es:bx],dx ;Set value to current cluster
 cmp word [.starting_cluster],0
 jne .starting_set
@@ -6562,7 +6596,7 @@ ret
 ;x=delete file
 ;
 filenew:
-mov ax,[size]
+mov ax,[filesize]
 mov [var_x],ax
 ;mov word [size],0x09 ;size of fat
 
@@ -6602,7 +6636,7 @@ jmp .loop
 .filenew_exit:
 call print_error
 mov ax,[var_x]
-mov [size],ax
+mov [filesize],ax
 jmp .exitl
 .loop:
 mov ax,[dir_seg]
@@ -6767,17 +6801,18 @@ je .dir_made
 ;mov al,0x02
 ;stosb
 mov ax,[var_x]
+;mov ax,[filesize]
 cmp ax,0
 ja .size_ok
-mov ax,1
+mov ax,512
 .size_ok:
-imul ax,0x200
+;imul ax,0x200
 stosw
 call SAVE_ROOT
 
 .exitl:
 mov ax,[var_x]
-mov [size],ax
+mov [filesize],ax
 mov dx,[kernel_seg]
 mov es,dx
 ret
@@ -13205,7 +13240,8 @@ int 0x61
 mov si,c_size
 call prnstr
 call colon
-mov ax,[size]
+;mov ax,[size]
+mov ax,[filesize]
 call printn
 call space
 mov si,c_head
@@ -14929,9 +14965,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1019
+dw 1020
 verstring:
-db ' Aplaun OS (version 1.01.9) ',0
+db ' Aplaun OS (version 1.02.0) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
@@ -14980,10 +15016,10 @@ process_returnstr:
 db 'Return Value',0
 ;drive_f:
 ;db 'Drive :',0
-imsgf:
-db 'Floppy:',0
-imsgh:
-db 'Hard disk:',0
+; imsgf:
+; db 'Floppy:',0
+; imsgh:
+; db 'Hard disk:',0
 mousestr:
 db 'Mouse',0
 gameportstr:
