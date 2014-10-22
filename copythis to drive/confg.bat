@@ -15,8 +15,6 @@ cd apps
 addpathc
 cd..
 nm common.txt
-lISize
-size 512
 lIPrompt
 *prompt Apl@n >
 idletime 3
@@ -28,5 +26,8 @@ micro
 echo
 @IStartups
 @logo.pcx
+@lISize
+@size 1
+@fsize 512
 @roam
 end

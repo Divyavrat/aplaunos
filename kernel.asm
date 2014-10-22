@@ -562,6 +562,9 @@ mov di,c_size
 call cmpstr
 jc c_size_f
 
+mov di,c_fsize
+call cmpstr
+jc c_fsize_f
 
 mov di,c_scrollmode
 call cmpstr
@@ -683,14 +686,14 @@ call cmpstr
 jc c_completeload_f
 
 
-mov di,c_wait_time
+mov di,c_idle_time
 call cmpstr
-jc c_wait_time_f
+jc c_idle_time_f
 
 
-mov di,c_wait_command
+mov di,c_idle_command
 call cmpstr
-jc c_wait_command_f
+jc c_idle_command_f
 
 
 mov di,c_fnew
@@ -853,7 +856,7 @@ c_completeload_f:
 not byte [completeload_flag]
 jmp kernel
 
-c_wait_time_f:
+c_idle_time_f:
 mov si,kernel_idle_time_str
 call prnstr
 call colon
@@ -861,7 +864,7 @@ call getno
 mov [idle_kernel_waittime],al
 jmp kernel
 
-c_wait_command_f:
+c_idle_command_f:
 mov si,kernel_idle_command_str
 call prnstr
 call colon
@@ -3074,11 +3077,11 @@ mov es,bx
 mov ch,[track]
 mov dh,[head]
 mov byte dl,[drive]
-xchg bx,ax
-call calculate_size
-mov ah,bh
+;xchg bx,ax
+;call calculate_size
+;mov ah,bh
 mov word bx,[loc]
-;mov al,[size]
+mov al,[size]
 int 13h
 jnc .success
 call print_error
@@ -3580,7 +3583,11 @@ jmp kernel
 
 c_size_f:
 call getno
-;mov [size],ax
+mov [size],ax
+jmp kernel
+
+c_fsize_f:
+call getno
 mov [filesize],ax
 mov word [filesize+2],0
 jmp kernel
@@ -5208,7 +5215,6 @@ mov byte [.failflag],0x0f
      .Read_Sectors_MAIN:
           mov     di, 0x0005                          ; five retres for error
 	.Read_Sectors_SECTORLOOP:
-		
 		  mov dx,0xFFFF
 		  sub dx,[bpbBytesPerSector]
 		  
@@ -5466,15 +5472,15 @@ add     ax, WORD [bpbReservedSectors]         ; adjust for bootsector
 ;mov ax,[currentdir]
 mov     WORD [datasector], ax                 ; base of root directory
 add     WORD [datasector], cx
+
+cmp byte [advanced_flag],0x0f
+je .skip_details
 pusha
-push cx
 push ax
 ; cmp byte [command_tempchar],'i'
 ; je .callnodata
 ; cmp byte [command_tempchar],'c'
 ; je .callnodata
-cmp byte [advanced_flag],0x0f
-je .skip_details
 
 mov si,c_dir
 call prnstr
@@ -5482,19 +5488,14 @@ call colon
 pop ax
 call printwordh
 call space
-mov si,c_size
-call prnstr
-call colon
-pop ax
-call printwordh
+; mov si,c_size
+; call prnstr
+; call colon
+; pop ax
+; call printwordh
 ;call space
 popa
-mov ax,[currentdir]
-ret
 .skip_details:
-pop ax
-pop cx
-popa
 mov ax,[currentdir]
 ret
 
@@ -5990,7 +5991,7 @@ mov dx,[data_seg]
 mov [LOAD_IMAGE.temp_dataseg],dx
      LOAD_IMAGE:
           mov     ax, WORD [cluster]                  ; cluster to read
-          pop     bx                                  ; buffer to read into
+		  pop     bx                                  ; buffer to read into
           call    ClusterLBA                          ; convert cluster to LBA
           xor     cx, cx
           mov     cl, BYTE [bpbSectorsPerCluster]     ; sectors to read
@@ -6030,6 +6031,21 @@ mov es,dx
      .DONE:
 mov bx,[kernel_seg]
 mov es,bx
+
+		;debug
+		cmp byte [advanced_flag],0xF0
+		jne .skip_details
+		  pusha
+		  mov ax,[cluster]
+		  call printwordh
+		  popa
+		  pusha
+		  mov ax,dx
+		  call printwordh
+		  call space
+		  popa
+		  .skip_details:
+
 cmp byte [completeload_flag],0xf0
 je .complete_load_on
 cmp byte [command_tempchar],'a'
@@ -6068,7 +6084,7 @@ mov es,ax
 ;mov ax,[var_y]
 call calculate_size
 mov [size],ax
-
+;mov [filesize],ax
 
 ;pop sp
 mov bx,[loc]
@@ -6294,52 +6310,56 @@ ret
 ; Allocate a empty cluster to used
 ;IN/OUT: Nothing
 find_next_free_cluster:
+
+;Initialization
 mov word [.starting_cluster],0
 mov word [.previous_cluster],0
 call calculate_size
-mov cx,ax
-;mov cx,[size]
-push cx
-mov ax,2 ;FAT allocation starts after second cluster
+mov [.cluster_loop],ax
+
+mov ax,3 ;FAT allocation starts after second cluster
 mov [cluster],ax
 mov dx,[dir_seg] ;Set correct segment
 mov es,dx
+
+;Mainloop for finding free clusters
 .loop:
 mov ax,[cluster]
-          mov si,.check_even
-		  mov di,.check_odd
-		  jmp get_cluster_data ;Get cluster value
-	 .check_even:
-	 ;mov dx,ax
-	 ;and dx,0x0FFF
-	 cmp dx,0
-	 je .sete ;if empty then allocate
-	 jmp .check_next
-        
-     .check_odd:
-	 ;mov dx,ax
-	 ;shr dx,4
-	 cmp dx,0
-	 je .seto ;if empty then allocate
-	 
-	 .check_next: ;Else check next cluster
-	 inc word [cluster]
-	 jmp .loop
-.sete:
-mov dx,[es:bx]
-or dx,0x0fff ; Set as used
-jmp .done
-.seto:
-mov dx,[es:bx]
-or dx,0xfff0 ; Set as used
-.done:
-pop cx
+mov si,.check_even
+mov di,.check_odd
+jmp get_cluster_data ;Get cluster value
+	.check_even:
+	;mov dx,ax
+	;and dx,0x0FFF
+	cmp dx,0
+	je .set_even ;if empty then allocate
+	jmp .check_next
 
-cmp cx,1
-jb .ending_cluster
+	.check_odd:
+	;mov dx,ax
+	;shr dx,4
+	cmp dx,0
+	je .set_odd ;if empty then allocate
 
-push bx
-push cx
+	.check_next: ;Else check next cluster
+	inc word [cluster]
+	jmp .loop
+
+;Set empty cluster
+.set_even:
+or dx,0x0FFF
+jmp .cluster_set_done
+.set_odd:
+or dx,0xFFF0
+.cluster_set_done:
+cmp word [.cluster_loop],1
+ja .set_previous_cluster_start
+;If on the last cluster set to complete
+mov word [es:bx],dx ;Set value to current cluster
+;cmp cx,1
+;jmp .ending_cluster
+
+.set_previous_cluster_start:
 mov ax,[.previous_cluster]
 cmp ax,0
 je .skip_previous_cluster_allocation
@@ -6352,42 +6372,26 @@ and dx,0x0FFF
 jmp .set_previous_cluster
 .set_previous_odd_cluster:
 mov dx,[cluster]
-shr dx,4
+shl dx,4
 .set_previous_cluster:
-;debug
-; pusha
-; call colon
-; popa
-; pusha
-; mov ax,dx
-; call printwordh
-; call getkey
-; popa
-mov [es:bx],dx ;Set previous cluster for current value
+
+or [es:bx],dx ;Set previous cluster for current value
 .skip_previous_cluster_allocation:
+mov dx,[cluster]
 mov [.previous_cluster],dx ;Set current as the next to be set
-pop cx
-pop bx
 
 .ending_cluster:
-;debug
-; pusha
-; call space
-; mov ax,dx
-; call printwordh
-; call getkey
-; popa
-mov word [es:bx],dx ;Set value to current cluster
+
 cmp word [.starting_cluster],0
 jne .starting_set
 mov dx,[cluster]
 mov [.starting_cluster],dx
 .starting_set:
-dec cx
-cmp cx,0
-push cx
+
+inc word [cluster]
+dec word [.cluster_loop]
+cmp word [.cluster_loop],0
 ja .loop
-pop cx
 
 mov dx,[kernel_seg] ;Reset the segment
 mov es,dx
@@ -6397,6 +6401,8 @@ ret
 .starting_cluster:
 dw 0
 .previous_cluster:
+dw 0
+.cluster_loop:
 dw 0
 
 calculate_free_space:
@@ -13125,7 +13131,8 @@ ret
 ;and stores the result in position pointed by bx
 os_get_switch_dialog:
 push bx
-mov bx,filestr
+;mov bx,filestr
+mov bx,c_setting
 mov cx,.switch_select
 mov dx,1
 call os_dialog_box
@@ -13235,13 +13242,16 @@ mov bx,kernel_idle_command_str
 call os_input_dialog
 jmp c_setting_f
 .quick:
-mov ah,0x06
+;Show current settings quickly
+
+mov ah,0x06 ;Clear Screen
 int 0x61
+
 mov si,c_size
 call prnstr
 call colon
-;mov ax,[size]
-mov ax,[filesize]
+mov ax,[size]
+;mov ax,[filesize]
 call printn
 call space
 mov si,c_head
@@ -13323,7 +13333,7 @@ call printnb
 ; mov al,[length]
 ; call printnb
 
-call newline
+call space
 mov si,c_scrolllen
 call prnstr
 call colon
@@ -13345,84 +13355,23 @@ mov al,[returncode]
 call printh
 
 call newline
-mov si,filestr
-call prnstr
-call colon
-call space
 mov si,c_loc
 call prnstr
-mov al,'0'
-call printf
 call colon
-mov ax,[loc]
-call printwordh
+mov cx,0
+mov si,loc
 
+.quicksettings_loc_loop:
 call space
-mov si,c_loc
-call prnstr
-mov al,'1'
+mov al,cl
+add al,'0'
 call printf
 call colon
-mov ax,[locf1]
+lodsw
 call printwordh
-
-call space
-mov si,c_loc
-call prnstr
-mov al,'2'
-call printf
-call colon
-mov ax,[locf2]
-call printwordh
-
-call space
-mov si,c_loc
-call prnstr
-mov al,'3'
-call printf
-call colon
-mov ax,[locf3]
-call printwordh
-
-call newline
-mov si,filestr
-call prnstr
-call colon
-call space
-mov si,c_loc
-call prnstr
-mov al,'4'
-call printf
-call colon
-mov ax,[locf4]
-call printwordh
-
-call space
-mov si,c_loc
-call prnstr
-mov al,'5'
-call printf
-call colon
-mov ax,[locf5]
-call printwordh
-
-call space
-mov si,c_loc
-call prnstr
-mov al,'6'
-call printf
-call colon
-mov ax,[locf6]
-call printwordh
-
-call space
-mov si,c_loc
-call prnstr
-mov al,'7'
-call printf
-call colon
-mov ax,[locf7]
-call printwordh
+inc cx
+cmp cx,8
+jb .quicksettings_loc_loop
 
 call newline
 mov si,c_loc2
@@ -13478,11 +13427,32 @@ mov ax,[message]
 call printwordh
 
 call newline
+mov si,c_idle_command
+call prnstr
+call colon
+mov si,idle_kenel_commandstr
+call prnstr
+
+call space
+mov si,c_idle_time
+call prnstr
+call colon
+mov al,[idle_kernel_waittime]
+call printnb
+
+call newline
 mov si,c_fname
 call prnstr
 call colon
 mov si,ImageName
 call prnstr
+
+call space
+mov si,c_fsize
+call prnstr
+call colon
+mov ax,[filesize]
+call printn
 
 call newline
 mov si,c_prompt
@@ -14826,6 +14796,8 @@ c_head:
 db 'head',0
 c_size:
 db 'size',0
+c_fsize:
+db 'fsize',0
 c_fname:
 db 'fname',0
 c_autosize:
@@ -14834,9 +14806,9 @@ c_advanced:
 db 'advanced',0
 c_completeload:
 db 'completeload',0
-c_wait_time:
+c_idle_time:
 db 'idletime',0
-c_wait_command:
+c_idle_command:
 db 'idlecmd',0
 
 c_q:
