@@ -296,7 +296,7 @@ call prnstr
 mov di,si
 dec di
 mov si,found
-call getarg.loop
+call getstr.loop
 jmp command_received
 
 page_change_key:
@@ -304,7 +304,7 @@ jmp page_change
 
 command_start:	;Receiving command
 mov di,found
-call getarg
+call getstr
 ; mov ax,found
 ; mov bx,prompt
 ; call os_input_dialog
@@ -312,11 +312,17 @@ command_received:
 cmp byte [found],0	;Checking for empty command
 ;cmp al,0
 je kernel
+; mov si,found
+; call os_print_string
+mov si,found
+mov al,0x20
+call os_string_tokenize
+mov [argument_position],di
 
-cmp byte [echo_flag],0x0f
-je .skip
+; cmp byte [echo_flag],0x0f
+; je .skip
 call newline
-.skip:
+; .skip:
 
 ;; Matching command against all known commands
 
@@ -957,11 +963,21 @@ call filenew
 jmp kernel
 
 cd_link:
+mov si,[argument_position]
+cmp si,0
+je .cd_name_not_given
 mov di,ImageName
-call getstr
+call os_string_copy
+;call getstr
+.cd_name_recieved:
 call checkfname
 mov byte [command_tempchar],'q'
 jmp fdir
+.cd_name_not_given:
+mov di,ImageName
+call getstr
+jmp .cd_name_recieved
+
 
 cddot_link:
 mov di,ImageName
@@ -1383,7 +1399,7 @@ call pipespace2enter
 .store_as_it_is:
 mov si,tempstr
 call pipestore
-mov byte [getarg.end],0x20
+mov byte [getstr.end],0x20
 jmp .end
 
 .batch_stored:
@@ -1453,45 +1469,19 @@ jmp .shell_done ; Continue
 ;Arguments is stored at the standard 0x81 location
 ;In 0x81 the number of characters is stored
 
+; DOS-Compatible arguments
 ; argument:
 ; mov si,0
-; cmp byte [getarg.end],0x20
-; jne .run
-; mov di,tempstr
-; ;mov di,found
-; call getstr
-; ;mov si,found
-; mov si,tempstr
-; cmp byte [si],0
-; ;cmp byte [found],0
-; jne .run
-; mov si,0
+; mov byte [0x80],0
+; mov di,[argument_position]
+; cmp [di],0
+; je .run
+; mov si,di
+; mov di,0x81
+; call os_string_copy
+; mov si,0x81
 ; .run:
 ; ret
-
-argument:
-mov si,0
-mov byte [0x80],0
-cmp byte [getarg.end],0x20
-jne .run
-; mov si,argstr
-; call prnstr
-mov byte [0x80],1
-mov di,0x81
-;mov di,found
-call getstr
-;mov si,found
-mov si,0x81
-sub di,si
-mov bx,di
-mov byte [0x80],bl
-cmp byte [0x81],0
-;cmp byte [found],0
-jne .run
-mov si,0
-mov byte [0x80],0
-.run:
-ret
 
 storename:
 mov si,ImageName
@@ -1578,7 +1568,8 @@ jnc .find_exe
 .run_program:
 call microkernel_restoredata
 pop ax
-call argument
+;call argument
+mov si,[argument_position]
 jmp run
 .extension_bin:
 db 'BIN'
@@ -1626,9 +1617,10 @@ db 'PCX'
 ;Check if given filename exists
 mov ax,found
 call get_name
-; mov ax,ImageName
-; call os_file_exists
-;jc .fail
+
+mov ax,ImageName
+call os_file_exists
+jc .fail
 
 ; when list is loaded,
 ; parse the list to check
@@ -1689,19 +1681,44 @@ call space
 mov si,ImageName
 call prnstr
 
-mov ax,tempstr2
-call os_string_length
+; mov ax,tempstr2
+; call os_string_length
+; mov si,tempstr2
+; mov di,found
+; mov cx,ax
+; rep movsb
+
+mov si,[argument_position]
+cmp si,0
+je .no_arguments
+mov di,tempstr
+call memcpy
+.no_arguments:
+
 mov si,tempstr2
 mov di,found
-mov cx,ax
-rep movsb
-mov al,0
+call memcpy
+dec di
+mov al,0x20
 stosb
-mov byte [getarg.end],0x20
+;mov byte [getstr.end],0x20
 mov si,ImageName
-call pipestore
-mov ax,0x1C0D
-call keybsto
+;call memcpy
+mov cx,0x000C
+rep movsb
+
+mov si,[argument_position]
+cmp si,0
+je .no_arguments2
+dec di
+mov al,0x20
+stosb
+mov si,tempstr
+call memcpy
+.no_arguments2:
+; call pipestore
+; mov ax,0x1C0D
+; call keybsto
 
 jmp command_received
 ; jmp kernel
@@ -2027,7 +2044,7 @@ jmp kernel
 
 c_loc_f:
 mov bx,loc
-cmp byte [getarg.end],0x20
+cmp byte [getstr.end],0x20
 jne .get
 mov al,'F'
 call printf
@@ -2761,18 +2778,25 @@ jmp .getno_loop
 
 getstr:
 mov si,di
+mov byte [.end],0
 .loop:
 call getkey
 call printf
 cmp al,0x0d
-je .strf
+je .string_found
 cmp ah,0x01
-je .strf
+je .string_end
 cmp ah,0x0e
-je .strb
+je .string_backpace
+cmp ah,0x20
+je .strspace
 stosb
 jmp .loop
-.strb:
+.strspace:
+mov byte [.end],0x20
+stosb
+jmp .loop
+.string_backpace:
 cmp si,di
 jge .noback
 dec di
@@ -2785,9 +2809,12 @@ jmp .loop
 mov al,0x20
 call printf_c
 jmp .loop
-.strf:
+.string_found:
 mov ax,0x0000
 stosb
+ret
+.string_end:
+mov byte [si],0
 ret
 .noback:
 cmp byte [teletype],0xf0
@@ -2801,6 +2828,8 @@ call setpos
 mov al,0x20
 call printf_c
 jmp .loop
+.end:
+db 0
 
 getstr_dos:
 call getkey
@@ -2847,58 +2876,58 @@ mov al,0x20
 call printf_c
 jmp getstr_dos
 
-getarg:
-mov si,di
-.loop:
-call getkey
-cmp byte [echo_flag],0x0F
-je .skip
-call printf
-.skip:
-cmp al,0x20
-je .argf
-cmp al,0x0d
-je .argf
-cmp ah,0x01
-je .arge
-cmp ah,0x0e
-je .argb
-stosb
-jmp .loop
-.argb:
-cmp si,di
-jge .noback
-dec di
-cmp byte [teletype],0xf0
-je .teleback
-call eraseback
-call eraseback
-jmp .loop
-.teleback:
-mov al,0x20
-call printf_c
-jmp .loop
-.argf:
-mov [.end],al
-mov ax,0x0000
-stosb
-ret
-.arge:
-mov byte [found],0x00
-ret
-.noback:
-cmp byte [teletype],0xf0
-je .telenoback
-call eraseback
-jmp .loop
-.telenoback:
-call getpos
-inc dl
-call setpos
-mov al,0x20
-call printf_c
-jmp .loop
-.end: db 0
+; getarg:
+; mov si,di
+; .loop:
+; call getkey
+; cmp byte [echo_flag],0x0F
+; je .skip
+; call printf
+; .skip:
+; cmp al,0x20
+; je .argf
+; cmp al,0x0d
+; je .argf
+; cmp ah,0x01
+; je .arge
+; cmp ah,0x0e
+; je .argb
+; stosb
+; jmp .loop
+; .argb:
+; cmp si,di
+; jge .noback
+; dec di
+; cmp byte [teletype],0xf0
+; je .teleback
+; call eraseback
+; call eraseback
+; jmp .loop
+; .teleback:
+; mov al,0x20
+; call printf_c
+; jmp .loop
+; .argf:
+; mov [.end],al
+; mov ax,0x0000
+; stosb
+; ret
+; .arge:
+; mov byte [found],0x00
+; ret
+; .noback:
+; cmp byte [teletype],0xf0
+; je .telenoback
+; call eraseback
+; jmp .loop
+; .telenoback:
+; call getpos
+; inc dl
+; call setpos
+; mov al,0x20
+; call printf_c
+; jmp .loop
+; .end: db 0
 
 eraseback:
 call getpos
@@ -5320,11 +5349,15 @@ lodsb
 
 cmp al,0x00
 je .zero
-cmp al,0x7A
+;cmp al,0x7A
+cmp al,'z'
 jg .done
-cmp al,0x60
-jg .small
-cmp al,0x2E
+;cmp al,0x60
+;jg .small
+cmp al,'a'
+jge .small
+;cmp al,0x2E
+cmp al,'.'
 je .dot
 ;dec cx
 .done:
@@ -5334,7 +5367,8 @@ loop .loop
 ret
 .small:
 ;inc cx
-sub al,0x20
+;sub al,0x20
+sub al,'a'-'A'
 dec si
 mov [si],al
 ;inc si
@@ -5351,8 +5385,7 @@ cmp cx,0
 jg .zeroloop
 ret
 .dot:
-mov al,[si]
-cmp al,'.'
+cmp byte [si],'.'
 je .doubledot
 ;add si,3
 ;mov [si],0
@@ -5394,7 +5427,9 @@ jmp .dotloop
 .dotdone:
 jmp checkfname
 .doubledot:
-dec di
+mov di,si
+;dec di
+inc di
 mov si,ImageName
 add si,0x000B
 mov al,0x20
@@ -5753,57 +5788,14 @@ jmp FAILURE
 call clear_screen
 .makelist:
 ;mov word [.list_pos],found+20
-mov ax,[dir_seg]
-mov ds,ax;Directory Segment
+
 ;push ds
-mov ax,[kernel_seg]
-mov es,ax
 ;mov di,[.list_pos]
-mov si,[loc2]
-mov di,0xF000;[temploc]
 
-.makelistloop:
-push si
+;Recieve the file list
+mov ax,0xF000;[temploc]
+call os_get_file_list
 
-;Store name of the file
-mov cx,0x000B
-.store_loop:
-; repnz movsb
-lodsb
-cmp al,0
-je .store_loop
-stosb
-loop .store_loop
-;stosb
-;mov [.list_pos],di
-
-;Store file type
-mov byte [es:di],' '
-inc di
-lodsb
-mov [es:var_x],al
-push ds
-mov ax,0
-mov ds,ax
-call filetype
-mov cx,0x05
-rep movsb
-pop ds
-
-;Add comma
-mov byte [es:di],','
-inc di
-pop si
-add si,0x0020 ;Update counter to next file
-cmp word [ds:si],0 ;If end is reached then stop
-je .exitmakelistloop
-jmp .makelistloop
-.exitmakelistloop:
-;dec di
-mov word [es:di-1],0 ;Truncate the list
-
-mov ax,[kernel_seg]
-mov ds,ax
 ;mov cx,0x200
 ;mov bx,found+20
 ;call reload_words
@@ -6081,9 +6073,10 @@ mov ax,0
 mov es,ax
 	 pop bx
 	 mov sp,[var_n]
+
 ;mov ax,[var_y]
-call calculate_size
-mov [size],ax
+;call calculate_size
+;mov [size],ax
 ;mov [filesize],ax
 
 ;pop sp
@@ -7560,6 +7553,13 @@ pop si
 pop di
 rep movsb
 mov byte [di-1],','
+ret
+
+memcpy:
+lodsb
+stosb
+cmp al,0
+jne memcpy
 ret
 
 memcpyr:
@@ -9130,12 +9130,7 @@ ret
 
 os_string_copy:
 pusha
-.loop:
-lodsb
-stosb
-cmp al,0
-jne .loop
-;.done:
+call memcpy
 popa
 ret
 
@@ -9149,6 +9144,63 @@ mov cx,11
 rep stosb
 mov byte [command_tempchar],'l'
 call fdir
+ret
+
+; ------------------------------------------------------------------
+; os_get_file_list -- Generate comma-separated string of files on floppy
+; IN/OUT: AX = location to store zero-terminated filename string
+os_get_file_list:
+push es
+push ds
+pusha
+mov si,[loc2]
+mov di,ax
+mov ax,[dir_seg]
+mov ds,ax;Directory Segment
+mov ax,[kernel_seg]
+mov es,ax
+.makelistloop:
+push si
+
+;Store name of the file
+mov cx,0x000B
+.store_loop:
+; repnz movsb
+lodsb
+cmp al,0
+je .store_loop
+stosb
+loop .store_loop
+;stosb
+;mov [.list_pos],di
+
+;Store file type
+mov byte [es:di],' '
+inc di
+lodsb
+mov [es:var_x],al
+push ds
+mov ax,0
+mov ds,ax
+call filetype
+mov cx,0x05
+rep movsb
+pop ds
+
+;Add comma
+mov byte [es:di],','
+inc di
+pop si
+add si,0x0020 ;Update counter to next file
+cmp word [ds:si],0 ;If end is reached then stop
+je .exitmakelistloop
+jmp .makelistloop
+.exitmakelistloop:
+;dec di
+mov word [es:di-1],0 ;Truncate the list
+popa
+pop ds
+pop es
 ret
 
 os_get_api_ver_string:
@@ -9572,12 +9624,12 @@ os_string_reverse:
 ; OUT: String modified, registers preserved
 
 os_string_truncate:
-	pusha
-
+	;pusha
+push si
 	add si, ax
 	mov byte [si], 0
-
-	popa
+pop si
+	;popa
 	ret
 
 ; ------------------------------------------------------------------
@@ -10349,7 +10401,7 @@ mov si,ImageName
 mov cx,0x000B
 mov al,0
 stosb
-mov byte [getarg.end],0
+mov byte [getstr.end],0
 pop ax
 jmp command_received
 
@@ -10370,8 +10422,6 @@ os_dump_registers:
 os_dump_string:
 os_print_digit:
 os_long_int_negate:
-
-os_get_file_list:
 
 ;os_draw_rectangle:
 os_draw_border:
@@ -10891,7 +10941,7 @@ call os_get_cursor_pos
 	stc				; Set carry for Esc
 	ret
 .option_selected_with_arg:
-mov byte [getarg.end],0x20
+mov byte [getstr.end],0x20
 .option_selected:
 	call os_show_cursor
 	call os_get_cursor_pos
@@ -13741,7 +13791,8 @@ mov word [rowpos],0
 mov byte [row],0
 mov byte [col],0
 
-call argument
+;call argument
+mov si,[argument_position]
 cmp si,0
 je mainloop
 cmp byte [si],0
@@ -14675,6 +14726,9 @@ db 0x0F
 kernelreturnaddr:
 dw 0
 
+argument_position:
+dw 0
+
 c_start:
 
 c_load:
@@ -15169,7 +15223,6 @@ times 40 db 0
 ; previous_command:
 ; times previous_command_buffersize db 0
 ; previous_command_buffersize equ 80
-
 found:
 ;times 10 db 0
 
