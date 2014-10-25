@@ -1,6 +1,6 @@
 CODELOC equ 0x6000
 TEMPLOC equ 0x9000
-FILESIZE equ 4
+FILESIZE equ 5
 org CODELOC
 use16
 ;jmp start
@@ -34,16 +34,6 @@ call os_clear_screen
 	mov bx,.welcome_str
 	mov cx,[color]
 	call os_draw_background
-	
-	mov bl,0x12
-	mov dx,0x1032
-	mov si,20
-	mov di,0x15
-	call os_draw_block
-	mov dx,0x1235
-	call os_move_cursor
-	mov si,.command_str
-	call os_print_string
 	
 	;Draw all Buttons
 	mov si,buttons_list
@@ -112,48 +102,128 @@ call os_clear_screen
 	mov ah,0x00
 	int 0x16
 	cmp al, 27 ;Esc
-	je .exit
+	je exit_handler
 	cmp al, 13 ;Enter
-	je .exit
+	je exit_handler
+	mov [.key_pressed_value],ax
 	
 	;Check for button shortcut keys
-	; cmp al,'c'
-	; je .common_link
-	jmp shutdown_handler
+	mov si,buttons_list
+	.button_key_check_loop:
+	lodsw ; Get button data pointer
+	cmp ax,0 ; End If zero found
+	je .button_key_check_loop_end
+	push si ; Save
+	mov si,ax
+	add si,6*2
+	lodsw ; Get Mouse Handler
+	mov bx,ax
+	lodsw ; Get Shortcut key
+	pop si ; Restore
+	mov dx,[.key_pressed_value]
+	cmp al,dl ;Check low value
+	je .key_found ; Found
+	cmp dh,0
+	je .button_key_check_loop
+	cmp ah,dh ;Check higher value
+	je .key_found
+	jmp .button_key_check_loop ;Check more keys
+	.button_key_check_loop_end:
 	
 	jmp .loop
+	.key_found:
+	jmp bx ; If equal execute handler
+	.key_pressed_value:
+	dw 0
 .button:
 call mouselib_hide
 call mouselib_locate
 ;call mouselib_freemove
-cmp dx,6
-jl .exit
-cmp dx,20
-jg .exit
+
+cmp dx,3
+jl exit_handler
+cmp dx,22
+jg exit_handler
+
+;Save Mouse data
+mov [mouse_button],bx
+mov [mouse_x],cx
+mov [mouse_y],dx
 
 ;Check Mouse position over buttons
-jmp shutdown_handler
+mov si,buttons_list
+.mouse_button_check:
+lodsw ; Get button data pointer
+cmp ax,0 ; End If zero found
+je .mouse_button_check_done
+push si ;Store
+mov si,ax
+mov ax,[si+2] ; Get X Start
+cmp [mouse_x],ax
+jl .mouse_button_not_found
+add ax,[si+6] ;Add Width
+cmp [mouse_x],ax
+jge .mouse_button_not_found
 
-.exit:
-	call mouselib_hide
-	call os_clear_screen
-	call os_show_cursor
-	call mouselib_remove_driver
-	ret
+mov ax,[si+4] ; Get Y Start
+cmp [mouse_y],ax
+jl .mouse_button_not_found
+add ax,[si+8] ;Add Height
+cmp [mouse_y],ax
+jge .mouse_button_not_found
+
+;Else mouse is over a button
+
+mov ax,[si+12] ; Get Mouse Handler
+pop si
+
+;Restore Mouse data
+mov bx,[mouse_button]
+mov cx,[mouse_x]
+mov dx,[mouse_y]
+
+jmp ax ; Jump to handler
+
+.mouse_button_not_found:
+pop si ;ReStore
+jmp .mouse_button_check
+.mouse_button_check_done:
+
+jmp main_screen
 
 .osstring:
 db ' Aplaun OS Quick Shell',0
 .welcome_str:
 db ' Use Capital Characters for shortcuts.',0
 
-.command_str:
-db 'Commandline ->>',0
+;Mouse data
+mouse_button:
+dw 0
+mouse_x:
+dw 0
+mouse_y:
+dw 0
+
+;===================
+;Return back to OS
+;after resetting drivers
+;===================
+exit_handler:
+	call mouselib_hide
+	call os_clear_screen
+	call os_show_cursor
+	call mouselib_remove_driver
+	ret
 
 ;List of all button data pointers
 ;Each word to indicate one button. End with zero.
 buttons_list:
+dw file_button_data
 dw shutdown_button_data
 dw restart_button_data
+dw halt_button_data
+
+dw command_line_button_data
 dw 0
 
 ;===================
@@ -171,32 +241,110 @@ dw 0
 ;
 ;===================
 
+file_button_data:
+dw 0x29,2,5,10,3,0,file_handler,'f'
+db '[f] File',0
 shutdown_button_data:
-dw 0x8D,6,13,10,3,0,shutdown_handler,'q'
-db 'Shutdown',0
+dw 0x8D,6,13,20,3,0,shutdown_handler,'q'
+db '[q] Shutdown',0
 restart_button_data:
-dw 0x49,17,13,10,3,0,restart_handler,'r'
-db 'Restart',0
+dw 0x49,27,13,20,3,0,restart_handler,'r'
+db '[r] Restart',0
+halt_button_data:
+dw 0x8D,48,13,10,3,0,halt_handler,0
+db 'Halt',0
 
+command_line_button_data:
+dw 0x12,0x32,0x13,20,3,0,exit_handler,'c'
+db 'Commandline ->>',0
+
+;===================
+;File Manager
+;===================
+file_handler:
+call os_file_selector
+cmp dx,0x0f0f
+je main_screen
+mov bx,0
+mov cx,0
+call os_dialog_box
+jmp main_screen
+
+;===================
+;Try to connect to APM to Shutdown
+;Else Show error and Return
+;===================
 shutdown_handler:
 mov ax,0x4C0D
 call keybsto
-mov ax,.shutting_down_str
+mov ax,.connecting_apm_str
 mov bx,0
 mov cx,0
 call os_dialog_box
 
+mov ax, 5301h				; Connect to the APM
+	xor bx, bx
+	int 15h
+	je near .connection		; Pass if connected
+	cmp ah, 2
+	je near .connection		; Pass if already connected
+	jc .error				; Bail if fail
+
+mov ax,0x4C0D
+call keybsto
+mov ax,0
+mov bx,.checking_apm_version_str
+mov cx,0
+call os_dialog_box
+	
+.connection:
+	mov ax, 530Eh				; Check APM Version
+	xor bx, bx
+	mov cx, 0102h				; v1.2 Required
+ 	int 15h
+	jc .error				; Bail if wrong version
+
+mov ax,0x4C0D
+call keybsto
+mov ax,0
+mov bx,0
+mov cx,.shutting_down_str
+call os_dialog_box
+	
+	mov ax, 5307h				; Shutdown
+	mov bx, 0001h
+	mov cx, 0003h
+	int 15h
+.error:
+
+mov ax,0
+mov bx,0
+mov cx,failed_str
+call os_dialog_box
+
+mov ax,0x5307
+mov bx,0x0001
+mov cx,0x0003
+int 0x15
+
 jmp main_screen
+.connecting_apm_str:
+db "Connecting APM...",0
+.checking_apm_version_str:
+db "Checking APM version...",0
 .shutting_down_str:
 db "Shutting down....",0
 
+;===================
+;Handler to Restart PC
+;===================
 restart_handler:
 mov ax,.restart_str
 mov bx,unsaved_str
 mov cx,confirm_str
 call os_dialog_box2
 cmp ax,0
-je main_screen
+jne main_screen
 .check_loop:
 in al,0x64
 cmp al,0x02
@@ -207,10 +355,31 @@ jmp main_screen
 .restart_str:
 db "Restart >>",0
 
+halt_handler:
+mov bl,0xF0
+mov dx,0x0202
+mov si,40
+mov di,20
+call os_draw_block
+mov dh,(20-2)/2
+;mov dl,(2+40)/2
+mov dl,3
+call os_move_cursor
+mov si,.halt_str
+call os_print_string
+.loop:
+cli
+hlt
+jmp .loop
+.halt_str:
+db 'System Halted. Safe to turn off.',0
+
 unsaved_str:
 db "Unsaved Data will lost.",0
 confirm_str:
 db "Are you sure ?",0
+failed_str:
+db "Failed",0
 
 keybsto:
 pusha
@@ -280,11 +449,9 @@ popa
 ret
 
 os_dialog_box2:
-pusha
 mov dx,ax
 mov ah,0x21
 int 0x2b
-popa
 ret
 
 os_draw_background:
@@ -300,6 +467,12 @@ pusha
 mov ah,0x26
 int 0x2b
 popa
+ret
+
+;ax=selected file name
+os_file_selector:
+mov ah,0x57
+int 0x2b
 ret
 
 initial_stack:

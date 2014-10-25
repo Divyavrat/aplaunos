@@ -12,26 +12,20 @@ stack instability in fdir must be solved
 os_rename_file fix two filename input
 multitasking for programs
 file not found skipped for file as command
+paint editor - fix
 
 mint can be registered by apps by lists
 previous commands list
 EXE
 faults
-GUI
-display limits
-AAP PIC PCX
 memory size and manager
 games - invaders, cards, reversi, pinball, pacman, mario, chess
 font hindi,unicode
-new shell
 font size support
 monokernel
 tiny editor com,bmp 25, 18
 java class - bytecode
-tutor
 ascii attribute cells using int 10h
 mem view in ascii view of all interconnected sectors
 usb or lan for chat
-encryption in files
-paint editor - fix
 swap files, virtual memory

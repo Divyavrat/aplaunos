@@ -51,3 +51,8 @@ cmp ah,0x54
 je os_remove_file_i
 cmp ah,0x55
 je os_rename_file_i
+cmp ah,0x56
+je os_get_file_size_i
+cmp ah,0x57
+je os_file_selector_i
+iret

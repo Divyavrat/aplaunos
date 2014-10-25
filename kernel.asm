@@ -5439,6 +5439,16 @@ cmp di,si
 jl .doubledotloop
 ret
 
+;Sets dx to 0x0f0f if carry
+;Else dx to 0xf0f0
+check_carry:
+jc .failed
+mov dx,0xf0f0
+ret
+.failed:
+mov dx,0x0f0f
+ret
+
 save_filedata:
 pusha
 mov si,di
@@ -8686,6 +8696,10 @@ cmp ah,0x54
 je os_remove_file_i
 cmp ah,0x55
 je os_rename_file_i
+cmp ah,0x56
+je os_get_file_size_i
+cmp ah,0x57
+je os_file_selector_i
 iret
 
 os_print_string_i:
@@ -8745,6 +8759,7 @@ call os_write_file
 iret
 os_file_exists_i:
 call os_file_exists
+call check_carry
 iret
 os_create_file_i:
 call os_create_file
@@ -8754,6 +8769,14 @@ call os_remove_file
 iret
 os_rename_file_i:
 call os_rename_file
+iret
+os_get_file_size_i:
+mov ax,dx
+call os_get_file_size
+iret
+os_file_selector_i:
+call os_file_selector
+call check_carry
 iret
 
 os_serial_port_enable_i:
@@ -14991,9 +15014,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1020
+dw 1021
 verstring:
-db ' Aplaun OS (version 1.02.0) ',0
+db ' Aplaun OS (version 1.02.1) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
