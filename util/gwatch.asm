@@ -302,6 +302,7 @@ mov ch,0
 mov bl,[color]
 call os_draw_line
 ret
+
 ; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
 ; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
 ; OUT: None, registers preserved

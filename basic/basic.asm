@@ -98,9 +98,9 @@ mov ax,token
 call os_get_file_size
 push bx
 call os_print_newline
-mov si,progstart_keyword
-call os_print_string
-call os_print_newline
+; mov si,progstart_keyword
+; call os_print_string
+; call os_print_newline
 ;os_run_basic:
 pop bx
 mov ax,[loc]

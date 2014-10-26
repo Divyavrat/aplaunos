@@ -8741,7 +8741,9 @@ mov ax,dx
 call os_input_dialog
 iret
 os_list_dialog_i:
+mov ax,dx
 call os_list_dialog
+call check_carry
 iret
 os_draw_background_i:
 mov ax,dx
@@ -12488,10 +12490,12 @@ cmp ah,0x27
 je int61_printn_big
 cmp ah,0x28
 je int61_getno
+
 cmp ah,0x2A
 je int61_itoa
 cmp ah,0x2B
 je int61_atoi
+
 cmp ah,0x30
 je int61_getpos
 cmp ah,0x31
@@ -12500,6 +12504,14 @@ cmp ah,0x32
 je int61_get_typemode
 cmp ah,0x33
 je int61_strlen
+
+cmp ah,0x35
+je int61_add_kernel_buffer
+cmp ah,0x36
+je int61_execute_kernel_buffer
+cmp ah,0x37
+je int61_kernel_buffer_address
+
 cmp ah,0x40
 je int61_box_str_top	;	String InputBox
 cmp ah,0x41
@@ -12517,15 +12529,17 @@ cmp ah,0x46
 je int61_msgbox_no	;Word Decimal
 cmp ah,0x47
 je int61_msgbox_no	;DWord Decimal
-
 cmp ah,0x48
 je int61_msgbox_no	;Word Hexadecimal
 cmp ah,0x49
 je int61_msgbox_no	;Word Hexadecimal
+
 cmp ah,0x50
 je int61_wall
+
 cmp ah,0x60
 je int61_start_debug
+
 cmp ah,0x70
 je int61_getcluster
 cmp ah,0x71
@@ -12536,6 +12550,7 @@ cmp ah,0x73
 je int61_savecluster
 cmp ah,0x74
 je int61_LBACHS
+
 cmp ah,0x80
 je int61_roamselect
 cmp ah,0x81
@@ -12546,6 +12561,7 @@ cmp ah,0x85
 je int61_load_filebyname
 cmp ah,0x86
 je int61_file_selector
+
 cmp ah,0xFF
 je int61h_ver
 
@@ -12662,9 +12678,9 @@ iret
 
 int61h_kernelreturn:
 mov byte [kernelreturnflag],0xf0
-mov word [kernelreturnaddr],int61h_kernelreturn_ret
+mov word [kernelreturnaddr],.int61h_kernelreturn_ret
 jmp command_start
-int61h_kernelreturn_ret:
+.int61h_kernelreturn_ret:
 iret
 
 int61h_storescreen:
@@ -12858,6 +12874,23 @@ int61_strlen:
 mov si,dx
 call strlen
 mov dx,ax
+iret
+
+int61_add_kernel_buffer:
+mov si,dx
+mov di,found
+call memcpy
+iret
+
+int61_execute_kernel_buffer:
+mov byte [kernelreturnflag],0xf0
+mov word [kernelreturnaddr],.return_address
+jmp command_received
+.return_address:
+iret
+
+int61_kernel_buffer_address:
+mov dx,found
 iret
 
 int61_box_str_top:

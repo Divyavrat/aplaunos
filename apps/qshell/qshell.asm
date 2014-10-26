@@ -1,14 +1,24 @@
+;======================
+;Quick Shell
+; for Aplaun OS
+;
+; Made by -
+; Divyavrat Jugtawat
+;======================
+
 CODELOC equ 0x6000
 TEMPLOC equ 0x9000
-FILESIZE equ 5
+FILESIZE equ 6
 org CODELOC
 use16
-;jmp start
-;db '  Define your password here (any length just after colon) :'
-;times 200-($-$$) db 0
+
+jmp code_start
+version_string:
+db " Aplaun OS Quick Shell ver 1.5",0
+
 code_start:
 mov [initial_stack],sp
-start:
+;start:
 call buffer_clear
 mov ah,0x02
 int 0x64
@@ -20,17 +30,38 @@ call setcolor1
 mov ah,0x06
 int 61h
 
+mov dx,set_idle_command
+mov ah,0x0D
+int 0x61
+mov ah,0x0F
+int 0x61
+mov dx,set_idle_time
+mov ah,0x0D
+int 0x61
+mov ah,0x0F
+int 0x61
+
+jmp welcome_screen
+set_idle_command:
+db "idlecmd qshell ",0
+set_idle_time:
+db "idletime 0 ",0
+set_extra_idle_time:
+db "idletime 20 ",0
+
 welcome_screen:
 call mouselib_setup
 mov cx, 0
 mov dx, 0
 call mouselib_move
+mov si,buttons_list
+mov [selected_button],si
 main_screen:
 call os_hide_cursor
 call os_clear_screen
 ;call mouselib_hide
 .loop:
-	mov ax,.osstring
+	mov ax,version_string
 	mov bx,.welcome_str
 	mov cx,[color]
 	call os_draw_background
@@ -38,52 +69,15 @@ call os_clear_screen
 	;Draw all Buttons
 	mov si,buttons_list
 	.button_draw_loop:
-	lodsw
+	mov ax,[si]
+	mov [currently_drawing_button],si
 	cmp ax,0
 	je .button_draw_loop_done
-	push si
 	mov si,ax ;Get button data pointer
-	lodsw ;Get colour
-	mov bx,ax
-	lodsw ;Get X Start
-	mov dl,al
-	lodsw ;Get Y Start
-	mov dh,al
-	lodsw ;Get Width
-	mov [.button_width],ax
-	lodsw ;Get Height
-	mov di,ax
-	mov ax,0
-	add al,dh
-	add di,ax
-	lodsw ;Load draw handler
-	cmp ax,0
-	je .default_draw_function
-	call ax
-	pop si
+	call draw_button
+	add word [currently_drawing_button],2
+	mov si,[currently_drawing_button]
 	jmp .button_draw_loop
-	.default_draw_function:
-	;Skip Mouse Handler
-	;Skip Shortcut key
-	add si,4
-	mov [.button_text],si ;Save pointer to text
-	mov si,[.button_width]
-	
-	;Draw Block Function
-	call os_draw_block
-	
-	inc dh
-	inc dl
-	call os_move_cursor
-	mov si,[.button_text] ;Get pointer to text
-	;Print Button Text
-	call os_print_string
-	pop si
-	jmp .button_draw_loop
-	.button_width:
-	dw 0
-	.button_text:
-	dw 0
 	.button_draw_loop_done:
 	
 	.recheck:
@@ -92,19 +86,70 @@ call os_clear_screen
 	call mouselib_show
 	call mouselib_input_wait
 	jc .key_pressed
-	call mouselib_anyclick
-	jc .button
-	call mouselib_hide
-	jmp .recheck
+	; call mouselib_anyclick
+	; jc .button
+	; call mouselib_hide
+	; jmp .recheck
+	jmp .button
 .key_pressed:
 	;call os_check_for_key
 	call mouselib_hide
 	mov ah,0x00
 	int 0x16
-	cmp al, 27 ;Esc
-	je exit_handler
+	; cmp al, 27 ;Esc
+	; je exit_handler
 	cmp al, 13 ;Enter
-	je exit_handler
+	je .enter_selected_button
+	
+cmp ah,0x47
+je .decrease_selected_button;.home
+cmp ah,0x4f
+je .increase_selected_button;.end
+cmp ah,0x51
+je .increase_selected_button;.page_down
+cmp ah,0x49
+je .decrease_selected_button;.page_up
+cmp ah,0x48
+je .decrease_selected_button;.up
+cmp ah,0x4B
+je .decrease_selected_button;.left
+cmp ah,0x4D
+je .increase_selected_button;.right
+cmp ah,0x50
+je .increase_selected_button;.down
+	
+jmp .check_shortcut_buttons
+
+.increase_selected_button:
+mov dx,[selected_button]
+add dx,2 ; Adjustment for the ending zero
+cmp dx,buttons_list_end
+jge .reset_selection
+add word [selected_button],2
+jmp main_screen
+
+.decrease_selected_button:
+mov dx,[selected_button]
+cmp dx,buttons_list
+jle .reset_selection
+sub word [selected_button],2
+jmp main_screen
+
+.reset_selection:
+mov dx,buttons_list
+mov [selected_button],dx
+jmp main_screen
+
+.enter_selected_button:
+mov si,[selected_button]
+lodsw
+mov si,ax
+add si,6*2
+lodsw ; Get Mouse Handler
+call ax
+jmp main_screen
+
+	.check_shortcut_buttons:
 	mov [.key_pressed_value],ax
 	
 	;Check for button shortcut keys
@@ -121,29 +166,33 @@ call os_clear_screen
 	lodsw ; Get Shortcut key
 	pop si ; Restore
 	mov dx,[.key_pressed_value]
+	cmp ax,0
+	je .button_key_check_loop
 	cmp al,dl ;Check low value
 	je .key_found ; Found
-	cmp dh,0
-	je .button_key_check_loop
 	cmp ah,dh ;Check higher value
 	je .key_found
 	jmp .button_key_check_loop ;Check more keys
 	.button_key_check_loop_end:
 	
 	jmp .loop
-	.key_found:
-	jmp bx ; If equal execute handler
+.key_found:
+sub si,2
+mov [selected_button],si
+	call bx ; If equal execute handler
+	jmp main_screen
 	.key_pressed_value:
 	dw 0
 .button:
 call mouselib_hide
+call mouse_get_button_value
 call mouselib_locate
 ;call mouselib_freemove
 
-cmp dx,3
-jl exit_handler
-cmp dx,22
-jg exit_handler
+; cmp dx,3
+; jl exit_handler
+; cmp dx,22
+; jg exit_handler
 
 ;Save Mouse data
 mov [mouse_button],bx
@@ -153,10 +202,11 @@ mov [mouse_y],dx
 ;Check Mouse position over buttons
 mov si,buttons_list
 .mouse_button_check:
+mov [currently_drawing_button],si
 lodsw ; Get button data pointer
 cmp ax,0 ; End If zero found
 je .mouse_button_check_done
-push si ;Store
+;push si ;Store
 mov si,ax
 mov ax,[si+2] ; Get X Start
 cmp [mouse_x],ax
@@ -174,27 +224,67 @@ jge .mouse_button_not_found
 
 ;Else mouse is over a button
 
+mov di,[si+10] ; Get Draw Handler
 mov ax,[si+12] ; Get Mouse Handler
-pop si
+;pop si
 
 ;Restore Mouse data
 mov bx,[mouse_button]
 mov cx,[mouse_x]
 mov dx,[mouse_y]
+mov si,[currently_drawing_button]
+mov [selected_button],si
 
-jmp ax ; Jump to handler
+cmp bx,0 ; Check if mouse was clicked
+je .mouse_over ; If not then just over draw
+
+call ax ; Jump to handler
+jmp .mouse_button_check_done
+;jmp main_screen
+.mouse_over:
+;Redraw button with over graphics
+
+cmp di,0 ; Check if draw handler is present
+je .no_draw_handler
+call di
+jmp .mouse_button_done
+.no_draw_handler:
+;Draw with default function
+mov si,[selected_button]
+lodsw
+mov si,ax
+call draw_button
+.mouse_button_done:
+;jmp .recheck
+jmp .mouse_button_check_done
 
 .mouse_button_not_found:
-pop si ;ReStore
+mov si,[selected_button]
+lodsw
+mov si,ax
+mov word [selected_button],0
+call draw_button
+
+;pop si ;ReStore
+mov si,[currently_drawing_button]
+add si,2
 jmp .mouse_button_check
 .mouse_button_check_done:
-
+cmp word [mouse_button],0
+jne .button_clicked
+jmp .recheck
+.button_clicked:
 jmp main_screen
-
-.osstring:
-db ' Aplaun OS Quick Shell',0
 .welcome_str:
-db ' Use Capital Characters for shortcuts.',0
+db ' Use Capital Characters for shortcuts.'
+db ' You can use mouse or keys to control.'
+db 0
+
+;Button data
+button_width:
+dw 0
+button_text:
+dw 0
 
 ;Mouse data
 mouse_button:
@@ -204,26 +294,115 @@ dw 0
 mouse_y:
 dw 0
 
+collect_button_data:
+lodsw ;Get colour
+mov bx,ax
+lodsw ;Get X Start
+mov dl,al
+lodsw ;Get Y Start
+mov dh,al
+lodsw ;Get Width
+mov [button_width],ax
+lodsw ;Get Height
+mov di,ax
+mov ax,0
+add al,dh
+add di,ax
+ret
+
+; SI-pointing to button data
+draw_button:
+call collect_button_data
+mov ax,[currently_drawing_button]
+clc
+cmp [selected_button],ax
+jne .not_selected
+not bx
+stc
+.not_selected:
+lodsw ;Load draw handler
+cmp ax,0
+je .draw_with_default
+call ax
+ret
+.draw_with_default:
+call default_draw_function
+ret
+
+default_draw_function:
+;Skip Mouse Handler
+;Skip Shortcut key
+add si,4
+mov [button_text],si ;Save pointer to text
+mov si,[button_width]
+
+;Draw Block Function
+call os_draw_block
+
+inc dh
+inc dl
+call os_move_cursor
+mov si,[button_text] ;Get pointer to text
+;Print Button Text
+call os_print_string
+ret
+
+mouse_get_button_value:
+mov bx,0
+call mouselib_anyclick
+jc .click
+jmp .done
+.click:
+call mouselib_leftclick
+jc .left
+jmp .clickright
+.left:
+add bx,1
+.clickright:
+call mouselib_rightclick
+jc .right
+jmp .midclick
+.right:
+add bx,2
+.midclick:
+call mouselib_middleclick
+jc .middle
+jmp .done
+.middle:
+add bx,4
+.done:
+ret
+
 ;===================
 ;Return back to OS
 ;after resetting drivers
 ;===================
 exit_handler:
-	call mouselib_hide
-	call os_clear_screen
-	call os_show_cursor
-	call mouselib_remove_driver
-	ret
+mov dx,set_extra_idle_time
+mov ah,0x0D
+int 0x61
+mov ah,0x0F
+int 0x61
+quick_exit_handler:
+mov sp,[initial_stack]
+call mouselib_hide
+call os_clear_screen
+call os_show_cursor
+call mouselib_remove_driver
+ret
 
 ;List of all button data pointers
 ;Each word to indicate one button. End with zero.
 buttons_list:
 dw file_button_data
+dw command_button_data
 dw shutdown_button_data
 dw restart_button_data
 dw halt_button_data
 
 dw command_line_button_data
+
+buttons_list_end:
 dw 0
 
 ;===================
@@ -244,31 +423,74 @@ dw 0
 file_button_data:
 dw 0x29,2,5,10,3,0,file_handler,'f'
 db '[f] File',0
+command_button_data:
+dw 0x4F,20,5,15,3,0,command_handler,'c'
+db '[c] Command',0
+
 shutdown_button_data:
-dw 0x8D,6,13,20,3,0,shutdown_handler,'q'
+dw 0x74,6,20,20,3,0,shutdown_handler,'q'
 db '[q] Shutdown',0
 restart_button_data:
-dw 0x49,27,13,20,3,0,restart_handler,'r'
+dw 0x74,27,20,20,3,0,restart_handler,'r'
 db '[r] Restart',0
 halt_button_data:
-dw 0x8D,48,13,10,3,0,halt_handler,0
+dw 0x7F,48,20,10,3,0,halt_handler,0
 db 'Halt',0
 
 command_line_button_data:
-dw 0x12,0x32,0x13,20,3,0,exit_handler,'c'
+dw 0x12,0x32,13,20,3,0,exit_handler,0x011B
 db 'Commandline ->>',0
+
+selected_button:
+dw 0
+currently_drawing_button:
+dw 0
 
 ;===================
 ;File Manager
 ;===================
 file_handler:
-call os_file_selector
-cmp dx,0x0f0f
-je main_screen
-mov bx,0
-mov cx,0
-call os_dialog_box
-jmp main_screen
+call os_file_selector ; Get file name
+cmp dx,0x0f0f ; If file not selected
+je .quit
+
+; mov bx,0
+; mov cx,0
+; call os_dialog_box
+
+mov dx,ax ; Store in keyboard buffer
+mov ah,0x0D
+int 0x61
+jmp quick_exit_handler ; Execute
+.quit:
+ret
+
+;===================
+;Command Execution
+;===================
+command_handler:
+mov ah,0x37 ; Get kernel buffer address
+int 0x61
+mov bx,.enter_command_str
+mov ax,dx ; Get command as input
+call os_input_dialog
+
+; Store it in keyboard buffer
+; from where it will
+; be executed
+mov dx,ax
+mov ah,0x0D
+int 0x61
+; Storing Enter key
+mov cx,1C0Dh
+mov ah,05h
+int 16h
+jmp quick_exit_handler ; Execute
+;mov ah,0x36 ;Execute kernel buffer
+;int 0x61
+;ret
+.enter_command_str:
+db "Enter OS command :",0
 
 ;===================
 ;Try to connect to APM to Shutdown
@@ -327,7 +549,7 @@ mov bx,0x0001
 mov cx,0x0003
 int 0x15
 
-jmp main_screen
+ret
 .connecting_apm_str:
 db "Connecting APM...",0
 .checking_apm_version_str:
@@ -344,14 +566,15 @@ mov bx,unsaved_str
 mov cx,confirm_str
 call os_dialog_box2
 cmp ax,0
-jne main_screen
+jne .quit
 .check_loop:
 in al,0x64
 cmp al,0x02
 je .check_loop
 mov al,0xfe
 out 0x64,al
-jmp main_screen
+.quit:
+ret
 .restart_str:
 db "Restart >>",0
 
@@ -451,6 +674,18 @@ ret
 os_dialog_box2:
 mov dx,ax
 mov ah,0x21
+int 0x2b
+ret
+
+os_list_dialog:
+mov dx,ax
+mov ah,0x22
+int 0x2b
+ret
+
+os_input_dialog:
+mov dx,ax
+mov ah,0x23
 int 0x2b
 ret
 

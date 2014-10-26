@@ -250,77 +250,233 @@ mov [y],bl
 ;mov [y1],bl
 mov [x2],dh
 mov [y2],dl
-mov byte [eps],0
-sub dh,bh
-mov [wx],dh
-sub dl,bl
-mov [wy],dl
-.loop:
-mov dl,[x]
-mov dh,[y]
+
+mov ch,0
+mov cl,bh
+mov dh,0
+mov dl,bl
+
+mov ah,0
+mov al,[x2]
+mov si,ax
+mov ah,0
+mov al,[y2]
+mov di,ax
+mov bl,[color]
+call os_draw_line
+;call delay
+ret
+
+; Change the colour of a pixel
+; IN: AX=X, CX=Y, BL=colour
+; OUT: None, registers preserved
+
+os_set_pixel:
+pusha
+mov dl,al
+mov dh,cl
+mov [color],bl
 call setpos
 mov al,0x20
 call printc
-;call delay
-;call getpos
-;dec dl
-;call setpos
-mov dl,[wy]
-add [eps],dl
-mov dl,[eps]
-
-shl dl,1
-mov dh,[wx]
-cmp dl,dh
-jl .skip
-sub dl,dh
-mov [eps],dl
-mov dl,[y2]
-cmp [y],dl
-jg .y_big
-inc byte [y]
-jmp .skip
-.y_big:
-dec byte [y]
-.skip:
-mov dl,[x2]
-cmp [x],dl
-jg .x_big
-inc byte [x]
-jmp .x_done
-.x_big:
-dec byte [x]
-.x_done:
-
-mov dl,[x2]
-cmp [x],dl
-jne .loop
-
-;dec byte [x]
-;dec byte [y]
-mov dl,[y2]
-cmp [y],dl
-jne .y_axis
+popa
 ret
-.y_axis:
 
-mov dl,[y2]
-cmp [y],dl
-jg .y2_big
-inc byte [y]
-jmp .y2_done
-.y2_big:
-dec byte [y]
-.y2_done:
-
-mov dl,[x]
-mov dh,[y]
-call setpos
-call printc
-mov dl,[y2]
-cmp [y],dl
-jne .y_axis
-ret
+; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
+; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
+; OUT: None, registers preserved
+os_draw_line:
+	pusha				; Save parameters
+	
+	;mov ax, 1000h
+	;mov ds, ax
+	;mov es, ax
+	;inc byte [internal_call]
+	
+	xor ax, ax			; Clear variables
+	mov di, .x1
+	mov cx, 11
+	rep stosw
+	
+	popa				; Restore and save parameters
+	pusha
+	
+	mov [.x1], cx			; Save points
+	mov [.x], cx
+	mov [.y1], dx
+	mov [.y], dx
+	mov [.x2], si
+	mov [.y2], di
+	
+	mov [.colour], bl		; Save the colour
+	
+	mov bx, [.x2]
+	mov ax, [.x1]
+	cmp bx, ax
+	jl .x1gtx2
+	
+	sub bx, ax
+	mov [.dx], bx
+	mov ax, 1
+	mov [.incx], ax
+	jmp .test2
+	
+.x1gtx2:
+	sub ax, bx
+	mov [.dx], ax
+	mov ax, -1
+	mov [.incx], ax
+	
+.test2:
+	mov bx, [.y2]
+	mov ax, [.y1]
+	cmp bx, ax
+	jl .y1gty2
+	
+	sub bx, ax
+	mov [.dy], bx
+	mov ax, 1
+	mov [.incy], ax
+	jmp .test3
+	
+.y1gty2:
+	sub ax, bx
+	mov [.dy], ax
+	mov ax, -1
+	mov [.incy], ax
+	
+.test3:
+	mov bx, [.dx]
+	mov ax, [.dy]
+	cmp bx, ax
+	jl .dygtdx
+	
+	mov ax, [.dy]
+	shl ax, 1
+	mov [.dy], ax
+	
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
+	
+	shl bx, 1
+	mov [.dx], bx
+	
+.xloop:
+	mov ax, [.x]
+	mov bx, [.x2]
+	cmp ax, bx
+	je .done
+	
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .xloop1
+	
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
+	
+	mov ax, [.balance]
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
+	
+.xloop1:
+	mov ax, [.balance]
+	mov bx, [.dy]
+	add ax, bx
+	mov [.balance], ax
+	
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
+	
+	jmp .xloop
+	
+.dygtdx:
+	mov ax, [.dx]
+	shl ax, 1
+	mov [.dx], ax
+	
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
+	
+	shl bx, 1
+	mov [.dy], bx
+	
+.yloop:
+	mov ax, [.y]
+	mov bx, [.y2]
+	cmp ax, bx
+	je .done
+	
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .yloop1
+	
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
+	
+	mov ax, [.balance]
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
+	
+.yloop1:
+	mov ax, [.balance]
+	mov bx, [.dx]
+	add ax, bx
+	mov [.balance], ax
+	
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
+	
+	jmp .yloop
+	
+.done:
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	popa
+	;dec byte [internal_call]
+	ret
+	
+	
+	.x1 dw 0
+	.y1 dw 0
+	.x2 dw 0
+	.y2 dw 0
+	
+	.x dw 0
+	.y dw 0
+	.dx dw 0
+	.dy dw 0
+	.incx dw 0
+	.incy dw 0
+	.balance dw 0
+	.colour db 0
+	.pad db 0
 
 convert:
 cmp ch,0x00
@@ -419,4 +575,4 @@ db 0x00
 color:
 db 0x31
 
-times (512*2)-($-$$) db 0x90
+times (512*3)-($-$$) db 0x90
