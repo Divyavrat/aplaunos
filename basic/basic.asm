@@ -33,7 +33,10 @@ mov word [orig_stack],sp		; Save stack pointer -- we might jump to the
 						; the stack
 push si
 mov di, string_vars			; If so, copy it into $1
-	call os_string_copy
+call os_string_copy
+; call os_print_string
+; mov si,progstart_keyword
+; call os_print_string
 
 mov	ax,1003h
 	xor	bx,bx
@@ -46,17 +49,17 @@ cmp si,0
 je .getfilename
 mov di,token
 call os_string_copy
-;jmp .recieved_file
-jmp .name_ok
+jmp .recieved_file
+;jmp .name_ok
 .getfilename:
 mov si,filename_msg
 call os_print_string
 
 mov ax,token
 call os_input_string
-
-; .recieved_file:
+.recieved_file:
 mov si,token
+
 .loop:
 lodsb
 cmp al,0x20
@@ -66,13 +69,11 @@ jne .loop
 mov si,0
 jmp .name_ok
 .space:
-mov [string_buffer],si
-	mov di, string_vars			; If so, copy it into $1
-	call os_string_copy
-mov si,[string_buffer]
-dec si
-mov byte [si],0
+mov byte [si-1],0
+mov di, string_vars			; If so, copy it into $1
+call os_string_copy
 .name_ok:
+
 mov ax,token
 call os_file_exists
 jc .notfound
@@ -91,22 +92,20 @@ mov dx,[loc]
 mov ah,0x80
 int 0x61
 ;pop si
-mov di, string_vars			; If so, copy it into $1
-call os_string_copy
+; mov di, string_vars			; If so, copy it into $1
+; call os_string_copy
 .found:
 mov ax,token
 call os_get_file_size
-push bx
 call os_print_newline
 ; mov si,progstart_keyword
 ; call os_print_string
 ; call os_print_newline
 ;os_run_basic:
-pop bx
 mov ax,[loc]
-	mov word [load_point], ax		; AX was passed as starting location of code
+mov word [load_point], ax		; AX was passed as starting location of code
 
-	mov word [prog], ax			; prog = pointer to current execution point in code
+mov word [prog], ax			; prog = pointer to current execution point in code
 
 	add bx, ax				; We were passed the .BAS byte size in BX
 	dec bx

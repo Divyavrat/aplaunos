@@ -1,3 +1,2 @@
-fasm rndtst.asm rndtst.com
-nasm mem.asm -o mem.com
+nasm vesa.asm -o vesa.com
 pause

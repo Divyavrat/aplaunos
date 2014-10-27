@@ -312,17 +312,17 @@ command_received:
 cmp byte [found],0	;Checking for empty command
 ;cmp al,0
 je kernel
-; mov si,found
-; call os_print_string
+
 mov si,found
 mov al,0x20
 call os_string_tokenize
 mov [argument_position],di
-
-; cmp byte [echo_flag],0x0f
-; je .skip
+;mov si,di
+;call os_print_string
+cmp byte [echo_flag],0x0f
+je .skip
 call newline
-; .skip:
+.skip:
 
 ;; Matching command against all known commands
 
@@ -1675,11 +1675,16 @@ mov es,ax
 
 mov si,tempstr2
 call pipespace2enter
-mov si,tempstr2
-call prnstr
-call space
-mov si,ImageName
-call prnstr
+; mov si,tempstr2
+; call prnstr
+; call space
+
+mov si,found
+mov di,ImageName
+call os_string_copy
+
+; mov si,ImageName
+; call prnstr
 
 ; mov ax,tempstr2
 ; call os_string_length
@@ -1703,9 +1708,9 @@ mov al,0x20
 stosb
 ;mov byte [getstr.end],0x20
 mov si,ImageName
-;call memcpy
-mov cx,0x000C
-rep movsb
+call memcpy
+; mov cx,0x000C
+; rep movsb
 
 mov si,[argument_position]
 cmp si,0
@@ -1719,6 +1724,9 @@ call memcpy
 ; call pipestore
 ; mov ax,0x1C0D
 ; call keybsto
+
+mov si,found
+call prnstr
 
 jmp command_received
 ; jmp kernel
@@ -6179,6 +6187,33 @@ mov di,[FileSystem_DONE.selected_file]
 mov si,found
 mov cx,0x0B
 call memstr_copy
+
+; mov si,found
+; call os_string_parse
+; mov si,ax
+; mov di,tempstr
+; call memcpy
+; mov byte [di-1],'.'
+; mov si,bx
+; call memcpy
+
+mov si,found
+mov al,0x20
+call os_string_tokenize
+push di
+mov di,tempstr
+call memcpy
+mov byte [di-1],'.'
+pop si
+mov al,' '
+call os_string_strip
+call memcpy
+;mov si,tempstr
+;call os_print_string
+
+mov si,tempstr
+mov di,found
+call memcpy
 
 ;mov si,tempstr
 ;call prnstr
@@ -15047,9 +15082,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1021
+dw 1022
 verstring:
-db ' Aplaun OS (version 1.02.1) ',0
+db ' Aplaun OS (version 1.02.2) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:

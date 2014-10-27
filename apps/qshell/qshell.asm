@@ -312,6 +312,13 @@ ret
 
 ; SI-pointing to button data
 draw_button:
+; pusha
+; mov dx,[selected_button]
+; mov ah,0x24
+; int 0x61
+; mov ah,0
+; int 16h
+; popa
 call collect_button_data
 mov ax,[currently_drawing_button]
 clc
@@ -320,13 +327,25 @@ jne .not_selected
 not bx
 stc
 .not_selected:
+
+; cmp si,buttons_list_end
+; jge .do_not_draw
 lodsw ;Load draw handler
 cmp ax,0
 je .draw_with_default
-call ax
+;call ax ;;TODO
+
+; call os_print_string
+; sub si,20
+; cmp word [currently_drawing_button],buttons_list
+; jl .do_not_draw
+; cmp word [currently_drawing_button],buttons_list_end
+; jge .do_not_draw
+; call os_print_string
 ret
 .draw_with_default:
 call default_draw_function
+.do_not_draw:
 ret
 
 default_draw_function:
