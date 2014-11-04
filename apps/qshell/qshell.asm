@@ -8,13 +8,14 @@
 
 CODELOC equ 0x6000
 TEMPLOC equ 0x9000
+TEMPLO2 equ 0xA000
 FILESIZE equ 6
 org CODELOC
 use16
 
 jmp code_start
 version_string:
-db " Aplaun OS Quick Shell ver 1.5",0
+db " Aplaun OS Quick Shell ver 1.6",0
 
 code_start:
 mov [initial_stack],sp
@@ -69,8 +70,8 @@ call os_clear_screen
 	;Draw all Buttons
 	mov si,buttons_list
 	.button_draw_loop:
-	mov ax,[si]
 	mov [currently_drawing_button],si
+	lodsw ; Get data pointer in register
 	cmp ax,0
 	je .button_draw_loop_done
 	mov si,ax ;Get button data pointer
@@ -81,15 +82,15 @@ call os_clear_screen
 	.button_draw_loop_done:
 	
 	.recheck:
-	call mouselib_locate
+	call mouselib_locate ; Get Mouse position
 	;call mouselib_freemove
-	call mouselib_show
-	call mouselib_input_wait
-	jc .key_pressed
+	call mouselib_show ; Show mouse
+	call mouselib_input_wait ; Wait for an event
+	jc .key_pressed ; If keyboard input is recieved
 	; call mouselib_anyclick
 	; jc .button
 	; call mouselib_hide
-	; jmp .recheck
+	; jmp .recheck ; Else check mouse
 	jmp .button
 .key_pressed:
 	;call os_check_for_key
@@ -183,6 +184,9 @@ mov [selected_button],si
 	jmp main_screen
 	.key_pressed_value:
 	dw 0
+	
+; Check mouse position
+; if its over a button or not
 .button:
 call mouselib_hide
 call mouse_get_button_value
@@ -241,6 +245,7 @@ je .mouse_over ; If not then just over draw
 call ax ; Jump to handler
 jmp .mouse_button_check_done
 ;jmp main_screen
+
 .mouse_over:
 ;Redraw button with over graphics
 
@@ -262,7 +267,13 @@ jmp .mouse_button_check_done
 mov si,[selected_button]
 lodsw
 mov si,ax
-mov word [selected_button],0
+mov ax,buttons_list
+mov [selected_button],ax
+call draw_button
+
+mov si,[currently_drawing_button]
+lodsw
+mov si,ax
 call draw_button
 
 ;pop si ;ReStore
@@ -333,10 +344,8 @@ stc
 lodsw ;Load draw handler
 cmp ax,0
 je .draw_with_default
-;call ax ;;TODO
+call ax ;;TODO
 
-; call os_print_string
-; sub si,20
 ; cmp word [currently_drawing_button],buttons_list
 ; jl .do_not_draw
 ; cmp word [currently_drawing_button],buttons_list_end
@@ -477,7 +486,24 @@ je .quit
 ; mov cx,0
 ; call os_dialog_box
 
-mov dx,ax ; Store in keyboard buffer
+;Change file name to
+; name.extension
+;format
+mov si,ax
+mov al,0x20
+call os_string_tokenize
+push di
+mov di,TEMPLOC ; Copy file name
+call memcpy
+mov byte [di-1],'.' ; Add dot in the end
+pop si
+mov al,' ' ; Remove extra spaces
+call os_string_strip
+call memcpy ; Add extension
+mov byte [di-1],0x0D ; Store Enter key
+mov byte [di-0],0
+
+mov dx,TEMPLOC ; Store in keyboard buffer
 mov ah,0x0D
 int 0x61
 jmp quick_exit_handler ; Execute
@@ -647,6 +673,13 @@ mov ah,0x01
 int 0x61
 ret
 
+memcpy:
+lodsb
+stosb
+cmp al,0
+jne memcpy
+ret
+
 os_print_string:
 pusha
 mov ah,0x01
@@ -728,6 +761,60 @@ os_file_selector:
 mov ah,0x57
 int 0x2b
 ret
+
+; ------------------------------------------------------------------
+; os_string_tokenize -- Reads tokens separated by specified char from
+; a string. Returns pointer to next token, or 0 if none left
+; IN: AL = separator char, SI = beginning; OUT: DI = next token or 0 if none
+
+os_string_tokenize:
+	push si
+
+.next_char:
+	cmp byte [si], al
+	je .return_token
+	cmp byte [si], 0
+	jz .no_more
+	inc si
+	jmp .next_char
+
+.return_token:
+	mov byte [si], 0
+	inc si
+	mov di, si
+	pop si
+	ret
+
+.no_more:
+	mov di, 0
+	pop si
+	ret
+
+; ------------------------------------------------------------------
+; os_string_strip -- Removes specified character from a string (max 255 chars)
+; IN: SI = string location, AL = character to remove
+
+os_string_strip:
+	pusha
+
+	mov di, si
+
+	mov bl, al			; Copy the char into BL since LODSB and STOSB use AL
+.nextchar:
+	lodsb
+	stosb
+	cmp al, 0			; Check if we reached the end of the string
+	je .finish			; If so, bail out
+	cmp al, bl			; Check to see if the character we read is the interesting char
+	jne .nextchar			; If not, skip to the next character
+
+.skip:					; If so, the fall through to here
+	dec di				; Decrement DI so we overwrite on the next pass
+	jmp .nextchar
+
+.finish:
+	popa
+	ret
 
 initial_stack:
 dw 0x9000

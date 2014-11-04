@@ -10,3 +10,6 @@ cmp ah,0x05
 je int64_getpage
 cmp ah,0x06
 je int64_getbytesize
+
+cmp ah,0xff
+je int64_getverstring

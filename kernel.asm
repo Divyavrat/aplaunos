@@ -6197,17 +6197,21 @@ call memstr_copy
 ; mov si,bx
 ; call memcpy
 
+;Change file name to
+; name.extension
+;format
 mov si,found
 mov al,0x20
 call os_string_tokenize
 push di
 mov di,tempstr
-call memcpy
-mov byte [di-1],'.'
+call memcpy ; Copy file name
+mov byte [di-1],'.' ; Add dot in the end
 pop si
-mov al,' '
+mov al,' ' ; Remove extra spaces
 call os_string_strip
-call memcpy
+call memcpy ; Add extension
+
 ;mov si,tempstr
 ;call os_print_string
 
@@ -13138,6 +13142,9 @@ cmp ah,0x05
 je int64_getpage
 cmp ah,0x06
 je int64_getbytesize
+
+cmp ah,0xff
+je int64_getverstring
 iret
 
 int64_getsize:
@@ -13149,10 +13156,6 @@ mov dx,[size]
 ;mov dx,ax
 ;.ok:
 ;pop ax
-iret
-
-int64_getbytesize:
-mov dx,[filesize]
 iret
 
 int64_getcolor:
@@ -13170,6 +13173,14 @@ iret
 int64_getpage:
 mov dx,[page]
 xchg dh,dl
+iret
+
+int64_getbytesize:
+mov dx,[filesize]
+iret
+
+int64_getverstring:
+mov dx,verstring
 iret
 
 newprompt:
@@ -15082,9 +15093,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1022
+dw 1023
 verstring:
-db ' Aplaun OS (version 1.02.2) ',0
+db ' Aplaun OS (version 1.02.3) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
@@ -15309,11 +15320,12 @@ times 40 db 0
 ; dw 0
 
 ;TODO implementation
+; previous_command_buffersize equ 80
 ; previous_command_index:
 ; dw 0
 ; previous_command:
 ; times previous_command_buffersize db 0
-; previous_command_buffersize equ 80
+
 found:
 ;times 10 db 0
 
