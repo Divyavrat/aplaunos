@@ -2163,6 +2163,7 @@ call restorename
 ret
 
 c_reset_f:
+
 cli
 	xor	ax, ax
 	mov	ds, ax
@@ -2171,6 +2172,7 @@ cli
 	mov	ss, ax
 	mov	sp, 0xFFFF
 sti
+
 push ds
 lgdt [gdtinfo]
 mov eax,cr0
@@ -3701,7 +3703,7 @@ mov si,sps
 call prnstr
 call colon
 pop ax
-add ax,0x08
+;add ax,0x08
 call printwordh
 call space
 
@@ -5275,7 +5277,7 @@ mov byte [.failflag],0x0f
           push    bx
           push    cx
           call    LBACHS                              ; convert starting sector to CHS
-cmp byte [SAVE_ROOT.status],0xf0
+cmp byte [.status],0xf0
 jne .read
 mov     ah, 0x03
 jmp .set
@@ -5342,6 +5344,8 @@ mov byte dl,[drive]
 		  pop es
           ret
 .failflag: db 0x0f
+.status:
+db 0x0f
 
 fname:
 mov di,ImageName
@@ -5488,7 +5492,7 @@ ret
 ;
 fdir:
 call store_HTS
-mov [var_n],sp
+;mov [var_n],sp
 cmp byte [command_tempchar],'i'
 je .fdir_interrupt
 cmp byte [command_tempchar],'t'
@@ -5553,12 +5557,10 @@ mov ax,[currentdir]
 ret
 
 SAVE_ROOT:
-mov byte [.status],0xf0
+mov byte [ReadSectors.status],0xf0
 call LOAD_ROOT
-mov byte [.status],0x0f
+mov byte [ReadSectors.status],0x0f
 ret
-.status:
-db 0x0f
 
 LOAD_ROOT:
 call calculate_root
@@ -5567,14 +5569,9 @@ mov es,dx
 mov word bx,[loc2]
 ;call calculate_size
 ;mov dx,ax
-mov dx,[size]
-push dx
 cmp word [currentdir],0x0013
 jne .infolder
-		  mov [size],cx
-		  call    ReadSectors
-		  pop dx
-		  mov [size],dx
+call    ReadSectors
 mov dx,0
 mov es,dx
 ret
@@ -5632,8 +5629,6 @@ pop bx
 mov word [es:bx],0
 mov word ax,[var_i]
 mov word [cluster],ax
-pop dx
-mov [size],dx
 mov dx,[kernel_seg]
 mov es,dx
 ret
@@ -5641,6 +5636,7 @@ ret
 print_HTS_details:
 cmp byte [advanced_flag],0x0f
 je .done
+.direct:
 pusha
 
 call newline
@@ -5871,11 +5867,11 @@ sub ax,0x0C
 .dir_child:
 mov [currentdir],ax
 popa
-mov sp,[var_n]
+;mov sp,[var_n]
 jmp fdir.fdir_next
 .done:
 popa
-mov sp,[var_n]
+;mov sp,[var_n]
 mov dx,[dir_seg]
 mov es,dx
 mov di,[FileSystem_DONE.selected_file]
@@ -5919,13 +5915,15 @@ call LBACHS
 ret
 
 file_exists:
-mov sp,[var_n]
+;mov sp,[var_n]
 call restore_fdirdata
 popa
 clc
 ret
 no_file_exists:
-mov sp,[var_n]
+;mov sp,[var_n]
+mov dx,[os_file_exists.temp_filesize]
+mov [filesize],dx
 call restore_fdirdata
 popa
 stc
@@ -5956,8 +5954,6 @@ mov bx,[loc3]
 call ReadSectors
 		  ; xor ax,ax
           ; mov es, ax                              ; destination for image
-          mov bx,[loc]                          ; destination for image
-          push bx
 mov al,[var_y]
 mov [var_i],al
 ; cmp byte [autosize_flag],0xf0
@@ -5979,11 +5975,11 @@ mov [var_i],al
 ; mov byte [size],al
 ;.done:
 ; popa
+
 cmp byte [command_tempchar],'l'
 je fileselected
 cmp byte [command_tempchar],'e'
 je file_exists
-.skip:
      ;----------------------------------------------------
      ; Load Stage 2
      ;----------------------------------------------------
@@ -5993,15 +5989,25 @@ cmp byte [command_tempchar],'a'
 jne .complete_load_off
 		  mov word [size],1
 		  .complete_load_off:
-mov word ax,[cluster]
-mov word [var_i],ax
 mov dx,[kernel_seg]
 mov es,dx
+mov ax,[cluster]
+mov [var_i],ax
+mov bx,[loc]                          ; destination for image
+call LoadImage
+jmp FileSystem_DONE
+
+;IN:AX=cluster BX=location
+LoadImage:
+mov [cluster],ax
+mov [.buffer_location],bx
 mov dx,[data_seg]
-mov [LOAD_IMAGE.temp_dataseg],dx
-     LOAD_IMAGE:
+mov [.temp_dataseg],dx
+
+.LOAD_IMAGE_loop:
           mov     ax, WORD [cluster]                  ; cluster to read
-		  pop     bx                                  ; buffer to read into
+		  ; pop     bx                                  ; buffer to read into
+		  mov bx,[.buffer_location]
           call    ClusterLBA                          ; convert cluster to LBA
           xor     cx, cx
           mov     cl, BYTE [bpbSectorsPerCluster]     ; sectors to read
@@ -6019,7 +6025,7 @@ mov dx,[.temp_dataseg]
 ;mov dx,0
 mov es,dx
 call    ReadSectors
-push    bx
+mov [.buffer_location],bx
 mov [.temp_dataseg],es
 mov dx,[dir_seg]
 ; mov dx,0
@@ -6078,19 +6084,21 @@ jne .complete_load_off
 ; je complete_load_off
 		  mov     WORD [cluster], dx
           cmp     dx, 0x0FF0                          ; test for end of file
-		  jb LOAD_IMAGE
+		  jb .LOAD_IMAGE_loop
 		  .complete_load_off:
 		  ;mov word [xmouse],0
 mov word ax,[var_i]
 mov word [cluster],ax
-jmp FileSystem_DONE
-.temp_dataseg: dw 0x0000
 
-FileSystem_DONE:
 mov ax,0
 mov es,ax
-	 pop bx
-	 mov sp,[var_n]
+
+ret
+.temp_dataseg: dw 0x0000
+.buffer_location: dw 0x6000
+
+FileSystem_DONE:
+;mov sp,[var_n]
 
 ;mov ax,[var_y]
 ;call calculate_size
@@ -6236,7 +6244,7 @@ FAILURE:
 call restore_HTS
 mov ax,[data_seg]
 mov es,ax
-mov sp,[var_n]
+;mov sp,[var_n]
 mov ax,[var_y]
 ;mov [size],ax
 mov [filesize],ax
@@ -6583,28 +6591,40 @@ mov es,dx
 call save_c
 ret
 
+; Direct save method
+; filesave_c:
+; pusha
+; ;mov dx,ds
+; ;xor bx,bx
+; ;mov es,dx
+; call calculate_size
+; ;mov al,[size]
+; mov byte ah,0x03
+; mov byte ch,[absoluteTrack]
+; mov byte cl,[absoluteSector]
+; mov byte dh,[absoluteHead]
+; mov byte dl,[drive]
+; int 0x13
+; jc .error
+; jmp .done
+; .error:
+; call print_error
+; ; pusha
+; ; db 0xcc
+; ; call getkey
+; ; popa
+; .done:
+; popa
+; ret
+
+; One sectors save method
+;IN: bx = location of save file
 filesave_c:
 pusha
-;mov dx,ds
-;xor bx,bx
-;mov es,dx
-call calculate_size
-;mov al,[size]
-mov byte ah,0x03
-mov byte ch,[absoluteTrack]
-mov byte cl,[absoluteSector]
-mov byte dh,[absoluteHead]
-mov byte dl,[drive]
-int 0x13
-jc .error
-jmp .done
-.error:
-call print_error
-; pusha
-; db 0xcc
-; call getkey
-; popa
-.done:
+mov ax,[cluster]
+mov byte [ReadSectors.status],0xf0
+call LoadImage
+mov byte [ReadSectors.status],0x0f
 popa
 ret
 
@@ -9016,8 +9036,12 @@ jmp .save_file
 os_file_exists:
 pusha
 call get_name
+mov dx,[filesize]
+mov [.temp_filesize],dx
 mov byte [command_tempchar],'e'
 jmp fdir
+.temp_filesize:
+dw 512
 
 get_name:
 pusha
@@ -13418,24 +13442,25 @@ call colon
 mov al,[track]
 call printnb
 
-call newline
-mov al,'H'
-call printf
-call colon
-mov al,[absoluteHead]
-call printh
-call space
-mov al,'T'
-call printf
-call colon
-mov al,[absoluteTrack]
-call printh
-call space
-mov al,'S'
-call printf
-call colon
-mov al,[absoluteSector]
-call printh
+; call newline
+; mov al,'H'
+; call printf
+; call colon
+; mov al,[absoluteHead]
+; call printh
+; call space
+; mov al,'T'
+; call printf
+; call colon
+; mov al,[absoluteTrack]
+; call printh
+; call space
+; mov al,'S'
+; call printf
+; call colon
+; mov al,[absoluteSector]
+; call printh
+call print_HTS_details.direct
 
 call newline
 mov si,c_color
@@ -14055,6 +14080,7 @@ je .del
 push ax
 call getcurrentpos
 call strshiftr
+inc word [filesize]
 pop ax
 mov [si],al
 cmp al,13
@@ -14079,9 +14105,11 @@ jmp mainloop
 .page_up:
 sub word [firstrow],6
 jmp mainloop
+
 .enter:
 inc si
 call strshiftr
+inc word [filesize]
 mov byte [si],10
 inc byte [row]
 mov byte [col],0
@@ -14099,48 +14127,78 @@ mov cx,signature
 mov dx,0
 call os_dialog_box
 jmp mainloop
+
 .save:
-mov ah,0x81
-mov dx,[loc]
-int 0x61
-jmp control
+mov ax,ImageName ; Delete the file if it already exists
+call os_remove_file
+
+mov ax,ImageName
+mov cx,[filesize]
+mov bx,[loc]
+call os_write_file
+;jmp control
+jmp edit
+
 .copy:
 call getcurrentpos
 mov [var_i],si
 jmp control
+
 .paste:
 mov si,[var_i]
-inc word [var_i]
 lodsb
 push ax
 call getcurrentpos
 call strshiftr
+inc word [filesize]
 pop ax
 mov [si],al
+
+push ax
+call getcurrentpos
+cmp si,[var_i]
+jnl .paste_ahead
+inc word [var_i]
+.paste_ahead:
+inc word [var_i]
+pop ax
+
 cmp al,13
 je .penter
 inc byte [col]
 jmp mainloop
 .penter:
 inc word [var_i]
+inc word [filesize]
 jmp .enter
+
 .newfile:
+
+;Clear text buffer
+mov di,[loc]
+mov cx,1024
+mov al,0
+rep stosb
+
+;Get new file name
 mov bx,new_file_str
 mov ax,tempstr2
 call os_input_dialog
+
+; Delete the file if it already exists
+mov ax,tempstr2
+call os_remove_file
+
+;Saving new empty file
 mov ax,tempstr2
 mov bx,[loc]
+mov byte [bx],10 ; One newline character
+mov cx,1
 ;call os_create_file
 call os_write_file
-mov di,[loc]
-mov cx,0x0400
-mov ax,0
-rep stosw
-mov ax,tempstr2
-mov bx,[loc]
-;call os_create_file
-call os_write_file
+
 jmp edit
+
 .loadfile:
 ; mov bx,file_name_str
 ; mov ax,found
@@ -14150,6 +14208,7 @@ call os_file_selector
 mov cx,[loc]
 call os_load_file
 jmp edit
+
 .deleteline:
 ;Delete whole one line
 call loadlineend
@@ -14160,6 +14219,7 @@ mov cx,di
 .deleteline_loop:
 pusha
 call strshift
+dec word [filesize]
 popa
 loop .deleteline_loop
 
@@ -14171,6 +14231,7 @@ je .del_eol
 jmp mainloop
 .del_eol:
 call strshift
+dec word [filesize]
 jmp .check_eol
 
 .details:
@@ -14187,6 +14248,7 @@ mov ah,0x45
 mov cx,0x0005
 int 0x61
 jmp mainloop
+
 .option:
 mov di,found
 mov si,.free_roam_str
@@ -14242,6 +14304,7 @@ cmp byte [di],0x0A
 je .enterdel
 inc di
 call strshift
+dec word [filesize]
 jmp mainloop
 .enterdel:
 dec di
@@ -14249,6 +14312,7 @@ cmp byte [di],0x0D
 jne .enterdel2
 dec si
 call strshift
+dec word [filesize]
 ;.adel:
 ;call getcurrentpos
 ;call strshift
@@ -14256,6 +14320,7 @@ call strshift
 .enterdel2:
 call getcurrentpos
 call strshift
+dec word [filesize]
 jmp mainloop
 .del:
 call getcurrentpos
@@ -14697,8 +14762,8 @@ dw 0x0000
 
 var_m: ;Temp uses
 dw 0x0000
-var_n: ;Temp fdir sp storage
-dw 0x0000
+;var_n: ;Temp fdir sp storage
+;dw 0x0000
 
 filesize:
 dw 0x0000,0x0200
@@ -15093,9 +15158,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1023
+dw 1025
 verstring:
-db ' Aplaun OS (version 1.02.3) ',0
+db ' Aplaun OS (version 1.02.5) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:

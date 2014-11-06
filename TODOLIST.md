@@ -16,6 +16,7 @@ New
 * multitasking for programs
 * file not found skipped for file as command
 * paint editor - fix
+* file commands searched through path list
 
 Old
 ===

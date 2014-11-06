@@ -344,7 +344,7 @@ stc
 lodsw ;Load draw handler
 cmp ax,0
 je .draw_with_default
-call ax ;;TODO
+call ax
 
 ; cmp word [currently_drawing_button],buttons_list
 ; jl .do_not_draw
