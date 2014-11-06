@@ -31,6 +31,7 @@ call setcolor1
 mov ah,0x06
 int 61h
 
+;Set shell as default to run
 mov dx,set_idle_command
 mov ah,0x0D
 int 0x61

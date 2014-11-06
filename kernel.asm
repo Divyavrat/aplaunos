@@ -333,241 +333,194 @@ mov di,c_load
 call cmpstr
 jc load_f
 
-
 mov di,c_save
 call cmpstr
 jc save_f
-
 
 mov di,c_execute
 call cmpstr
 jc execute
 
-
 mov di,c_batch
 call cmpstr
 jc batch
-
 
 mov di,c_text
 call cmpstr
 jc text
 
-
 mov di,c_code
 call cmpstr
 jc text
-
 
 mov di,c_print
 call cmpstr
 jc text
 
-;
+
 ;mov di,c_video
 ;call cmpstr
 ;jc video
-
 ;
 ;mov di,c_vedit
 ;call cmpstr
 ;jc vedit
-
 ; 
 ; mov di,c_frame
 ; call cmpstr
 ; jc c_frame_f
-
-
 mov di,c_wall
 call cmpstr
 jc c_wall_f
-
 
 mov di,c_clock
 call cmpstr
 jc clock
 
-
 mov di,c_run
 call cmpstr
 jc run
-
 
 mov di,c_runa
 call cmpstr
 jc runa
 
-
 mov di,c_drive
 call cmpstr
 jc c_drive_f
-
 
 mov di,c_drive2
 call cmpstr
 jc c_drive2_f
 
-
 mov di,c_loc
 call cmpstr
 jc c_loc_f
-
 
 mov di,c_loc2
 call cmpstr
 jc c_loc2_f
 
-
 mov di,c_loc3
 call cmpstr
 jc c_loc3_f
-
 
 mov di,c_dataseg
 call cmpstr
 jc c_dataseg_f
 
-
 mov di,c_setdir
 call cmpstr
 jc c_setdir_f
-
 
 mov di,c_addpath
 call cmpstr
 jc c_addpath_f
 
-
 mov di,c_addpathc
 call cmpstr
 jc c_addpathc_f
-
 
 mov di,c_dir
 call cmpstr
 jc c_dir_f
 
-
 mov di,c_htod
 call cmpstr
 jc c_htod_f
-
 
 mov di,c_dtoh
 call cmpstr
 jc c_dtoh_f
 
-
 mov di,c_reset
 call cmpstr
 jc c_reset_f
-
 
 mov di,c_cls
 call cmpstr
 jc c_cls_f
 
-
 mov di,c_prompt
 call cmpstr
 jc c_prompt_f
-
 
 mov di,c_alias
 call cmpstr
 jc c_alias_f
 
-
 mov di,c_border
 call cmpstr
 jc c_border_f
-
 
 mov di,c_color
 call cmpstr
 jc c_color_f
 
-
 mov di,c_color2
 call cmpstr
 jc c_color2_f
-
 
 mov di,c_typemode
 call cmpstr
 jc c_typemode_f
 
-
 mov di,c_videomode
 call cmpstr
 jc c_videomode_f
 
-; 
 ; mov di,c_memsize
 ; call cmpstr
 ; jc c_memsize_f
-
 
 mov di,c_reboot
 call cmpstr
 jc c_reboot_f
 
-
 mov di,c_restart
 call cmpstr
 jc c_restart_f
-
 
 mov di,c_page
 call cmpstr
 jc c_page_f
 
-; 
 ; mov di,c_star
 ; call cmpstr
 ; jc c_star_f_link
-
 
 mov di,c_sound
 call cmpstr
 jc c_sound_f
 
-
 mov di,c_fhlt
 call cmpstr
 jc c_fhlt_f
-
 
 ; mov di,c_jmp
 ; call cmpstr
 ; jc c_jmp_f
 
-
 mov di,c_paint
 call cmpstr
 jc c_paint_f
 
-; 
+ 
 ; mov di,c_score
 ; call cmpstr
 ; jc c_score_f
-
 ; 
 ; mov di,c_play
 ; call cmpstr
 ; jc c_play_f_link
 
-
 mov di,c_calc
 call cmpstr
 jc c_calc_f
 
-
 mov di,c_size
 call cmpstr
 jc c_size_f
-
 mov di,c_fsize
 call cmpstr
 jc c_fsize_f
@@ -576,246 +529,198 @@ mov di,c_scrollmode
 call cmpstr
 jc c_scrollmode_f
 
-
 mov di,c_slowmode
 call cmpstr
 jc c_slowmode_f
-
 
 mov di,c_debug
 call cmpstr
 jc debug
 
-
 mov di,c_driveinfo
 call cmpstr
 jc c_driveinfo_f
-
 
 mov di,c_settime
 call cmpstr
 jc c_settime_f
 
-
 mov di,c_setdate
 call cmpstr
 jc c_setdate_f
-
 
 mov di,c_install
 call cmpstr
 jc c_install_f
 
-
 mov di,c_head
 call cmpstr
 jc c_head_f
-
 
 mov di,c_track
 call cmpstr
 jc c_track_f
 
-; 
+ 
 ; mov di,c_point
 ; call cmpstr
 ; jc c_point_f
-
 ; 
 ; mov di,c_icon
 ; call cmpstr
 ; jc c_icon_f
-
 ; 
 ; mov di,c_length
 ; call cmpstr
 ; jc c_length_f
 
-
 mov di,c_rollcolor
 call cmpstr
 jc c_rollcolor_f
 
-
 mov di,c_scrolllen
 call cmpstr
 jc c_scrolllen_f
-
 ; 
 ; mov di,c_difficulty
 ; call cmpstr
 ; jc c_difficulty_f
 
-
 mov di,c_doc
 call cmpstr
 jc doc
-
 
 ; mov di,c_read
 ; call cmpstr
 ; jc read
 
-
 mov di,c_edit
 call cmpstr
 jc edit
-
 
 mov di,c_type
 call cmpstr
 jc c_type_f
 
-
 mov di,c_fname
 call cmpstr
 jc fname
-
 
 mov di,c_nm
 call cmpstr
 jc fname
 
-
 mov di,c_autosize
 call cmpstr
 jc c_autosize_f
-
 
 mov di,c_advanced
 call cmpstr
 jc c_advanced_f
 
-
 mov di,c_completeload
 call cmpstr
 jc c_completeload_f
-
 
 mov di,c_idle_time
 call cmpstr
 jc c_idle_time_f
 
-
 mov di,c_idle_command
 call cmpstr
 jc c_idle_command_f
-
 
 mov di,c_fnew
 call cmpstr
 jc filenew_link
 
-
 mov di,c_fsave
 call cmpstr
 jc filesave_link
-
 
 mov di,c_rename
 call cmpstr
 jc rename_link
 
-
 mov di,c_copy
 call cmpstr
 jc copy_link
-
 
 mov di,c_del
 call cmpstr
 jc del_link
 
-
 mov di,c_cd
 call cmpstr
 jc cd_link
-
 
 mov di,c_cddot
 call cmpstr
 jc cddot_link
 
-
 mov di,c_roam
 call cmpstr
 jc roam_link
-
 
 mov di,c_alarm
 call cmpstr
 jc alarm
 
-
 mov di,c_alarmtext
 call cmpstr
 jc alarmtext
-
 
 mov di,c_autostart
 call cmpstr
 jc autostart
 
-
 mov di,c_setting
 call cmpstr
 jc c_setting_f
-
 
 mov di,c_pipe
 call cmpstr
 jc pipe
 
-
 mov di,c_micro
 call cmpstr
 jc c_micro_f
-
 ; 
 ; mov di,c_multi
 ; call cmpstr
 ; jc c_multi_f
 
-
 mov di,c_cursor
 call cmpstr
 jc c_cursor_f
-
 
 mov di,c_echo
 call cmpstr
 jc c_echo_f
 
-
 mov di,c_help
 call cmpstr
 jc c_help_f
-
 
 mov di,c_exit
 call cmpstr
 jc c_exit_f2
 
-
 mov di,c_step
 call cmpstr
 jc step_f
-
 
 mov di,c_newdir
 call cmpstr
 jc dirnew_link
 
-
 mov di,c_q
 call cmpstr
 jc fdir_link
 
-
 mov di,c_a
 call cmpstr
 jc fdir_link
-
 
 mov di,c_z
 call cmpstr
@@ -13167,6 +13072,9 @@ je int64_getpage
 cmp ah,0x06
 je int64_getbytesize
 
+cmp ah,0x30
+je int64_setidlecmd
+
 cmp ah,0xff
 je int64_getverstring
 iret
@@ -13201,6 +13109,13 @@ iret
 
 int64_getbytesize:
 mov dx,[filesize]
+iret
+
+int64_setidlecmd:
+mov si,dx
+mov di,idle_kenel_commandstr
+mov cx,idle_kenel_commandstr_end-idle_kenel_commandstr
+rep movsb
 iret
 
 int64_getverstring:
@@ -15314,6 +15229,8 @@ db 10
 idle_kenel_commandstr:
 ;db 'clock screen p ',0
 db 'roam wwwwwwwwwww',0
+idle_kenel_commandstr_end:
+
 ImageName:
 db 'COMMON  TXT'
 dw 0
