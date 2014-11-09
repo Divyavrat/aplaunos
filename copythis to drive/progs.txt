@@ -1,10 +1,14 @@
 BAS basic
 AAP display
+AAP draw.bas
 TXT edit
+TXT medit
+TXT viewer
 RTF edit
 PIC vedit
 VID vedit
 BFI bfc
 ASM asm
+ASM edit
 HLP help
 SND mplay

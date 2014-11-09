@@ -1,7 +1,10 @@
-;---------------------------
-;---------------------------
+;===============================
 ;
 ;	Aplaun OS
+;
+; Portable Operating System
+; with lots of Applications
+; Games, Compilers, Editors
 ;
 ; Best Assembled with FASM
 ; fasm kernel.asm kernel.com
@@ -10,7 +13,7 @@
 ; nasm kernel.ASM -O1 -o kernel.COM
 ; Do not use MASM
 ;
-;----------------------------
+;===============================
 
 org 0x0500
 use16
@@ -882,7 +885,6 @@ jmp fdir
 mov di,ImageName
 call getstr
 jmp .cd_name_recieved
-
 
 cddot_link:
 mov di,ImageName
@@ -5398,8 +5400,6 @@ ret
 fdir:
 call store_HTS
 ;mov [var_n],sp
-cmp byte [command_tempchar],'i'
-je .fdir_interrupt
 cmp byte [command_tempchar],'t'
 je .fdir_interrupt
 ;cmp byte [command_tempchar],'c'
@@ -5629,8 +5629,8 @@ je .makelist_clear
 ; mov [ds:eax],bx
 ; popa
 
-cmp byte [command_tempchar],'i'
-je .intnonameload
+; cmp byte [command_tempchar],'i'
+; je .intnonameload
 cmp byte [command_tempchar],'c'
 je .intnonameload
 cmp byte [command_tempchar],'e'
@@ -5667,8 +5667,8 @@ je LOAD_FAT
 ;je DONE
 cmp byte [command_tempchar],'q';Quick
 je .intload
-cmp byte [command_tempchar],'i';Interrupt
-je .intload
+; cmp byte [command_tempchar],'i';Interrupt
+; je .intload
 cmp byte [command_tempchar],'c';Call
 je .intload
 cmp byte [command_tempchar],'e';Exists
@@ -6023,8 +6023,8 @@ mov word [comm],0xf0f0
 ;mov dx,[comm]
 cmp byte [command_tempchar],'c'
 je callloaddone
-cmp byte [command_tempchar],'i'
-je intloaddone
+; cmp byte [command_tempchar],'i'
+; je intloaddone
 mov si,successstr
 call prnstr
 call print_HTS_details
@@ -6159,8 +6159,8 @@ cmp byte [command_tempchar],'l'
 je fileselected_fail
 ; cmp byte [command_tempchar],'e'
 ; je no_file_exists
-cmp byte [command_tempchar],'i'
-je intloaddone
+; cmp byte [command_tempchar],'i'
+; je intloaddone
 cmp byte [command_tempchar],'c'
 je callloaddone
 call newline
@@ -6176,14 +6176,14 @@ mov dx,[var_a]
 mov [loc],dx
 jmp bx
 
-intloaddone:
-;call newline
-mov ax,[loc]
-mov dx,[var_a]
-mov [loc],dx
-mov dx,[comm]
-clc
-iret
+; intloaddone:
+; mov ax,[loc]
+; mov dx,[var_a]
+; mov [loc],dx
+; mov dx,[comm]
+; clc
+; iret
+
 callloaddone:
 ;call newline
 ;mov ax,[loc]
@@ -8556,22 +8556,9 @@ iret
 
 int21h_open_file:
 mov word [int21h_read_file.loc],0
-;pop ax
-;mov [extra],ax
-;inc [var_b]
-;pop ax
-;pop ax
-mov si,dx
-mov di,ImageName
-mov cx,0x000C
-rep movsb
-call checkfname
-
-mov di,[locf4]
-mov byte [command_tempchar],'i'
-
-;call clrport64
-jmp fdir
+mov ax,dx
+mov cx,[locf4]
+call os_load_file
 iret
 
 int21h_save_file:
@@ -13029,21 +13016,39 @@ mov [currentdirtemp],dx
 call c_addpath_f_call
 iret
 
+;IN: dx=file_name bx=memory_location
 int61_load_filebyname:
-push bx
+; mov ax,dx
+; mov cx,bx
+; call os_load_file
+; iret
+;push bx
+mov ax,[loc]
+mov [.temploc],ax
+mov [loc],bx
 mov ax,dx
 call get_name
-pop di
-;pop bx
-;mov di,bx
-mov byte [command_tempchar],'i'
-;call clrport64
+mov word [comm],0x0f0f
+mov byte [command_tempchar],'c'
+mov bx,.return_address
+mov [extra],bx
 jmp fdir
-;iret
+.return_address:
+mov ax,[.temploc]
+mov [loc],ax
+;pop di
+; mov byte [command_tempchar],'i'
+; jmp fdir
+iret
+.temploc:
+dw 0
 
+;IN: nothing OUT:ax,dx=filename
 int61_file_selector:
-mov byte [command_tempchar],'l'
-call fdir
+; mov byte [command_tempchar],'l'
+; call fdir
+call os_file_selector
+mov dx,ax
 iret
 
 int61h_ver:
@@ -15073,9 +15078,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1025
+dw 1026
 verstring:
-db ' Aplaun OS (version 1.02.5) ',0
+db ' Aplaun OS (version 1.02.6) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:

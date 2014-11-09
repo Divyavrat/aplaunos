@@ -1,3 +1,10 @@
+;==============================
+;  Visual Editor
+; -To Edit and Create
+; ASCII pictures and videos
+; Author - Divyavrat Jugtawat
+;==============================
+
 org 0x6000
 use16
 
@@ -9,8 +16,13 @@ jne .load_file_arg
 mov ah,0x86
 int 0x61
 mov si,ax
-jmp .file_loaded
+;jmp .file_loaded
 .load_file_arg:
+pusha
+mov cx,8+3
+mov di,filename
+rep movsb
+popa
 mov bx,[loc]
 mov dx,si
 mov ah,0x85
@@ -471,5 +483,9 @@ frame: dw 4
 cur_frame: dw 4
 loc: dw 0xA000
 slowmode: db 0x0f
+
+filename:
+times 8+3 db 0
+dw 0
 
 times (512*3)-($-$$) db 0

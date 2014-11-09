@@ -1,3 +1,11 @@
+;==============================
+;
+;  Password Utility
+;
+; Author - Divyavrat Jugtawat
+;
+;==============================
+
 CODELOC equ 0x6000
 TEMPLOC equ 0x9000
 FILESIZE equ 9
