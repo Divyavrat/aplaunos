@@ -1,8 +1,16 @@
+;========
+; Font
+;========
+
 org 0x6000
 use16
+
+; Set cursor
 mov cx,0x0407
 mov ah,0x01
 int 10h
+
+; Set font for TM character
 mov ax,0x1100
 mov bh,0x0C
 mov bl,0
@@ -12,6 +20,9 @@ xor bp,bp
 mov es,bp
 mov bp,font_93
 int 10h
+
+; Set the new font
+;as described by bytes
 mov ax,0x1100
 mov bh,0x0C
 mov bl,0
@@ -21,10 +32,15 @@ xor bp,bp
 mov es,bp
 mov bp,font_small
 int 10h
+
+; Set new prompt
 mov dx,prompt
 mov ah,0x0c
 int 61h
+
+;Return to OS
 ret
+
 prompt:
 db 'Font1 by Hurd',0x93,'>',0
 font_small:
@@ -41,4 +57,5 @@ db 0xfb
 db 0x55
 db 0x51,0x51
 times 5 db 0
+
 times 512-($-$$) db 0x90

@@ -936,10 +936,10 @@ run:
 ;push es
 
 ;Fix compatibility with DOS programs
-mov byte [0], 0xCD		; int 20h
-mov byte [1], 0x20
-mov byte [2], 0xA0		; Always 0xA000 for COM executables
-mov byte [3], 0x00
+; mov byte [0], 0xCD		; int 20h
+; mov byte [1], 0x20
+; mov byte [2], 0xA0		; Always 0xA000 for COM executables
+; mov byte [3], 0x00
 
 	; Clear registers to be DOS compatible
 	;xor ax, ax
@@ -1189,7 +1189,7 @@ mov si,.notmzstr
 call prnstr
 jmp kernel
 .notmzstr:
-db "NotEXE",0
+db "!EXE",0
 .exereloc:
 dw 0
 .exehead:
@@ -3144,10 +3144,24 @@ jmp command
 c_date_f:
 call printf
 call colon
+mov ax,6
+out 0x70,ax ; CMOS weekday register
+in ax,0x71
+cmp ax,8
+jge .weekday_skip
+imul ax,3
+add ax,weekdays_list
+mov bx,ax
+mov cx,3
+call reload_words
+call space
+.weekday_skip:
 call date
 mov si,found
 call strshift
 jmp command
+weekdays_list:
+db "SunMonTueWedThrFriSat"
 
 c_timer_f:
 call printf
@@ -3295,12 +3309,8 @@ int 0x13
 jnc .c_install_hwri
 jmp .c_installend_f
 .c_install_hwri:
-;mov si,imsgh
-; mov si,c_install
-; call prnstr
-.c_install_wri:
-xor ax,ax
-mov es,ax
+; xor ax,ax
+; mov es,ax
 mov cx,0x0001
 mov dh,00h
 mov byte dl,[drive2]
@@ -3320,15 +3330,16 @@ jc .c_installend_f
 ;jc c_installend_f
 mov si,successstr
 call prnstr
-jmp .c_installsuccess_f
+jmp kernel
 .c_installend_f:
 call print_error
-.c_installsuccess_f:
+jmp kernel
 ;mov si,found
 ;call strshift
 ;jmp command
-jmp kernel
+; jmp kernel
 .os_size:
+;db 0x01
 db 0x46
 
 time:
@@ -4877,8 +4888,10 @@ ret
 .temp: db 0
 
 colon:
+pusha
 mov al,':'
 call printf
+popa
 ret
 
 comma:
@@ -5393,7 +5406,6 @@ ret
 ;l=file selector
 ;r=roam selector
 ;e=file exists
-;i=interrupt
 ;c=call
 ;t=roam selector interrupt
 ;
@@ -8703,7 +8715,11 @@ iret
 os_draw_block_i:
 call os_draw_block
 iret
+
+;IN:DX=filename CX=location
+;OUT:BX=filesize carry set if error
 os_load_file_i:
+mov ax,dx
 call os_load_file
 iret
 os_write_file_i:
@@ -8718,6 +8734,7 @@ os_create_file_i:
 call os_create_file
 iret
 os_remove_file_i:
+mov ax,dx
 call os_remove_file
 iret
 os_rename_file_i:
@@ -11162,11 +11179,12 @@ os_dialog_box:
 
 .no_third_string:
 	mov dx, [.tmp]
-	cmp dx, 0
-	je .one_button
+	; cmp dx, 0
+	; je .one_button
 	cmp dx, 1
 	je .two_button
-
+	cmp dx, 2
+	je .two_button
 
 .one_button:
 	mov bl, 11110000b		; Black on white
@@ -11196,13 +11214,13 @@ os_dialog_box:
 	mov dl, 30			; OK button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .ok_button_string
+	call .get_button_string_one
 	call os_print_string
 
 	mov dl, 44			; Cancel button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .cancel_button_string
+	call .get_button_string_two
 	call os_print_string
 
 	mov cx, 0			; Default button = 0
@@ -11240,7 +11258,7 @@ os_dialog_box:
 	mov dl, 30			; OK button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .ok_button_string
+	call .get_button_string_one
 	call os_print_string
 
 	mov bl, 01001111b		; White on red for cancel button
@@ -11253,7 +11271,7 @@ os_dialog_box:
 	mov dl, 44			; Cancel button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .cancel_button_string
+	call .get_button_string_two
 	call os_print_string
 
 	mov cx, 0			; And update result we'll return
@@ -11275,7 +11293,7 @@ os_dialog_box:
 	mov dl, 30			; OK button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .ok_button_string
+	call .get_button_string_one
 	call os_print_string
 
 	mov bl, 11110000b		; White on red for cancel button
@@ -11288,7 +11306,7 @@ os_dialog_box:
 	mov dl, 44			; Cancel button
 	mov dh, 14
 	call os_move_cursor
-	mov si, .cancel_button_string
+	call .get_button_string_two
 	call os_print_string
 
 	mov cx, 1			; And update result we'll return
@@ -11307,11 +11325,31 @@ os_dialog_box:
 
 	ret
 
+.get_button_string_one:
+cmp [.tmp],2
+je .string_one_switch
+mov si, .ok_button_string
+ret
+.string_one_switch:
+mov si,.on_button_string
+ret
 
+.get_button_string_two:
+cmp [.tmp],2
+je .string_two_switch
+mov si, .cancel_button_string
+ret
+.string_two_switch:
+mov si,.off_button_string
+ret
+	
 	.ok_button_string	db 'OK', 0
 	.cancel_button_string	db 'Cancel', 0
-	.ok_button_noselect	db '   OK   ', 0
-	.cancel_button_noselect	db '   Cancel   ', 0
+	; .ok_button_noselect	db '   OK   ', 0
+	; .cancel_button_noselect	db '   Cancel   ', 0
+
+.on_button_string	db 'On', 0
+.off_button_string	db ' Off', 0
 
 	.tmp dw 0
 	
@@ -13173,12 +13211,13 @@ mov di,alarmtextstr
 call getstr
 jmp kernel
 
-;---------------------------
+;---------------------------------
 ; Aplaun OS additional os_routines
-;---------------------------
+;---------------------------------
 
 ; -----------------------------------------------------------------
 ; Program to display PCX images (320x200, 8-bit only)
+; more resolutions with basic support
 ; -----------------------------------------------------------------
 ;IN: si-start of the image location
 os_print_splash:
@@ -13186,7 +13225,15 @@ os_print_splash:
 	mov ax, 0A000h			; ES = video memory
 	mov es, ax
 
-
+	mov al,[si+3] ; Bits per pixel
+	mov [.bits_per_pixel],al
+	mov ax,[si+8] ; X Maximum
+	inc ax
+	mov [.width],ax
+	mov ax,[si+10] ; Y Maximum
+	inc ax
+	mov [.height],ax
+	
 	;mov si, 1080h			; Move source to start of image data
 	add si,80h				; (First 80h bytes is header)
 
@@ -13202,7 +13249,11 @@ os_print_splash:
 	lodsb				; Get byte to put on screen
 .single:
 	rep stosb			; And show it (or all of them)
-	cmp di, 64001
+	;cmp di, 64001
+	mov ax,[.height]
+	imul ax,[.width]
+	inc ax
+	cmp di,ax
 	jb .decode
 
 
@@ -13211,7 +13262,19 @@ os_print_splash:
 	out dx, al			; Tell VGA controller that...
 	inc dx				; ...3c9h = palette data register
 
-	mov cx, 768			; 256 colours, 3 bytes each
+; 256 colours, 3 bytes each
+push ax
+xor cx,cx
+mov cl,[.bits_per_pixel]
+mov ax,1
+.no_of_colours_loop:
+imul ax,2 ; 2^bits
+loop .no_of_colours_loop
+mov cx,ax
+pop ax
+imul cx,3 ; For 3 bytes
+
+	;mov cx, 768
 .setpal:
 	lodsb				; Grab the next byte.
 	shr al, 2			; Palettes divided by 4, so undo
@@ -13221,32 +13284,45 @@ os_print_splash:
 	mov ax, [kernel_seg]			; Reset ES back to original value
 	mov es, ax
 ret
+.bits_per_pixel:
+db 0
+.width:
+dw 0
+.height:
+dw 0
 
 ;IN: ax=help string bx=location to store result
 ;Provides option to select yes or no
 ;and stores the result in position pointed by bx
 os_get_switch_dialog:
+pusha
 push bx
 ;mov bx,filestr
-mov bx,c_setting
+;mov bx,.switch_string
+mov bx,0
 mov cx,.switch_select
-mov dx,1
+mov dx,2
 call os_dialog_box
 pop bx
 cmp ax,0
 je .on
+popa
 mov byte [bx],0x0f
-jmp c_setting_f
+ret
 .on:
+popa
 mov byte [bx],0xf0
 ret
+; .switch_string:
+; db "Switch >>",0
 .switch_select:
-db "Select OK for On and Cancel for OFF",0
+db "Select your option :",0
 
 ;IN: ax=help string bx=location to store result
 ;Provides option to enter a number in dialog box
 ;and stores the result in position pointed by bx
 os_get_int_dialog:
+pusha
 push bx
 mov bx,ax
 mov ax,tempstr
@@ -13255,6 +13331,7 @@ mov si,tempstr
 call atoi
 pop bx
 mov [bx],al
+popa
 ret
 
 c_setting_f:
@@ -13519,7 +13596,7 @@ call printwordh
 call space
 mov si,messagestr
 call prnstr
-call colon
+;call colon
 mov ax,[message]
 call printwordh
 
@@ -13859,6 +13936,21 @@ xor dx,dx
 call setpos_c
 mov ah,0x06
 int 0x61
+
+;Set cursor according to mode
+cmp byte [insert_mode],0x0f
+je .overwrite_mode_cursor
+mov cx,0x0506
+mov ah,0x01
+int 10h
+jmp .cursor_set
+.overwrite_mode_cursor:
+mov cx,0x090f
+mov ah,0x01
+int 10h
+;jmp .cursor_set
+.cursor_set:
+
 mov cx,[firstrow]
 jmp showscreen.firstline
 
@@ -13976,14 +14068,12 @@ cmp ah,0x41
 je .deleteline
 cmp ah,0x42
 je .details
-cmp ah,0x43
+cmp ah,0x43 ; F9
 je .option
 cmp ah,0x47
 je .home
 cmp ah,0x4f
 je .end
-cmp ah,0x51
-je .page_down
 cmp ah,0x49
 je .page_up
 cmp ah,0x48
@@ -13994,13 +14084,21 @@ cmp ah,0x4D
 je .right
 cmp ah,0x50
 je .down
+cmp ah,0x51
+je .page_down
+cmp ah,0x52
+je .mode_toggle
 cmp ah,0x53
 je .del
 
+; If not a special key then add to file
 push ax
 call getcurrentpos
-call strshiftr
+cmp byte [insert_mode],0x0F
+je .overwrite_mode
+call strshiftr ; Insert a space
 inc word [filesize]
+.overwrite_mode:
 pop ax
 mov [si],al
 cmp al,13
@@ -14024,6 +14122,9 @@ add word [firstrow],6
 jmp mainloop
 .page_up:
 sub word [firstrow],6
+jmp mainloop
+.mode_toggle:
+not byte [insert_mode]
 jmp mainloop
 
 .enter:
@@ -14190,16 +14291,8 @@ je .free_roam
 jmp mainloop
 .free_roam:
 mov ax,.free_roam_str
-mov bx,c_edit
-mov cx,os_get_switch_dialog.switch_select
-mov dx,1
-call os_dialog_box
-cmp ax,0
-je .okfree
-mov byte [free_roam],0x0f
-jmp .option
-.okfree:
-mov byte [free_roam],0xf0
+mov bx,free_roam
+call os_get_switch_dialog
 jmp .option
 .free_roam_str:
 db "Free Roam in Memory",0
@@ -14807,6 +14900,8 @@ comm2:
 dw 0x0000
 free_roam:
 db 0x0f
+insert_mode:
+db 0xF0
 
 kernelreturnflag:
 db 0x0F
@@ -15126,7 +15221,7 @@ db "F1About [F2]Save F3Copy F4Paste [F5]New [F6]Load [F7]LineDel F8Details F9Opt
 shutdownstr:
 db 'System Halted. Safe to turn off.',0
 process_returnstr:
-db 'Return Value',0
+db 'RetValue',0
 ;drive_f:
 ;db 'Drive :',0
 ; imsgf:
@@ -15138,11 +15233,11 @@ db 'Mouse',0
 gameportstr:
 db 'GmPort',0
 messagestr:
-db 'message',0
+db 'msg:',0
 freespacestr:
 db 'free space : ',0
 kernel_idle_time_str:
-db 'idle-kernel waiting time',0
+db 'idle kernel waiting time',0
 kernel_idle_command_str:
 db 'idle-kernel command',0
 imsge:
@@ -15314,7 +15409,7 @@ times 40 db 0
 ; times previous_command_buffersize db 0
 
 found:
-;times 10 db 0
+times 10 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45+0x100)-($-$$) db 0 ; Optimal Size

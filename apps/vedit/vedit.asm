@@ -9,40 +9,62 @@ org 0x6000
 use16
 
 vedit:
+pop dx
+mov [return_location],dx
 mov bx,[loc]
 cmp si,0
 jne .load_file_arg
 .file_selector:
-mov ah,0x86
-int 0x61
+;mov ah,0x86 ; OS file_selector
+;int 0x61
+mov ah,0x57
+int 0x2b
 mov si,ax
+cmp dx,0x0f0f
+je .quit
 ;jmp .file_loaded
 .load_file_arg:
-pusha
+push si
 mov cx,8+3
 mov di,filename
-rep movsb
-popa
-mov bx,[loc]
+rep movsb ; Copy it to filename
+; mov dx,filename
+; mov ah,03h
+; int 61h
+; call getkey
+pop si
+
+;Load file into memory
+;mov ah,0x85
+;int 0x61
+mov cx,[loc]
 mov dx,si
-mov ah,0x85
-int 0x61
-.file_loaded:
-mov ah,0x02
+mov ah,0x50
+int 0x2b
+mov [filesize],bx
+;.file_loaded:
+mov ah,0x02 ; Get color
 int 0x64
 mov [tempcolor],dl
-mov dx,0x0A0A
-push dx
+
+;mov dx,0x0A0A
+;push dx
 ;mov si,[loc]
-mov word [pos],0x0654
-mov ah,0x06
-int 0x64
-mov ax,dx
+
+; mov ah,0x06
+; int 0x64
+; mov ax,dx
+
+;Calculate no. of frames
+mov ax,[filesize]
 mov dx,0
 mov cx,0x0200
 div cx
 mov word [frame],ax
 mov word [cur_frame],0x0001
+
+mov word [screen_pos],0x0A0A
+mov word [pos],0x0654
 .loop:
 mov ax,0x0FA0
 mov dx,[cur_frame]
@@ -54,10 +76,12 @@ xor dx,dx
 call setpos
 ;mov cx,0x07D0
 call memcpyprint
-pop dx
-push dx
+mov dx,[screen_pos]
+;mov dx,[pos]
 call setpos
 .vedit_control:
+call getpos
+mov [screen_pos],dx
 call getkey
 cmp ah,0x01
 je .quit
@@ -105,9 +129,7 @@ cmp ah,0x85
 je .save_file
 cmp ah,0x86
 je .play_video
-push ax
 call .calculate_pos
-pop ax
 mov [bx],al
 inc bx
 mov ah,[bx]
@@ -117,11 +139,15 @@ call printf
 add word [pos],2
 jmp .vedit_control
 .quit:
-pop dx
+;pop dx
 ; mov dl,[color2]
 ; mov [color],dl
 ; jmp kernel
-ret
+;ret
+mov dl,[tempcolor]
+mov ah,01h
+int 61h
+jmp word [return_location]
 .up:
 sub word [pos],0x00A0
 call getpos
@@ -199,13 +225,12 @@ dec dl
 call setpos
 jmp .vedit_control
 .chaincopy:
-mov byte [.chain],0xf0
+mov byte [chain_copy],0xf0
 call .calculate_pos
 mov di,bx
 jmp .vedit_control
-.chain: db 0x0f
 .copy:
-mov byte [.chain],0x0f
+mov byte [chain_copy],0x0f
 call .calculate_pos
 mov al,[bx]
 inc bx
@@ -215,7 +240,7 @@ jmp .vedit_control
 .paste:
 call .calculate_pos
 
-cmp byte [.chain],0xf0
+cmp byte [chain_copy],0xf0
 je .chain_on
 mov [bx],di
 mov si,bx
@@ -262,10 +287,20 @@ jmp .vedit_control
 call video
 jmp vedit.loop
 .save_file:
-mov ah,0x81
-mov dx,[loc]
-int 0x61
-jmp .vedit_control
+; mov ah,0x81
+; mov dx,[loc]
+; int 0x61
+mov dx,filename
+mov ah,0x54
+int 0x2b
+
+mov dx,filename
+mov bx,[loc]
+mov cx,[filesize]
+mov ah,0x51
+int 0x2b
+;jmp .vedit_control
+jmp .loop
 .setwall:
 mov ah,0x50
 int 0x61
@@ -300,9 +335,6 @@ xor ah,ah
 int 61h
 jmp .vedit_control
 .page_down:
-pop dx
-call getpos
-push dx
 dec word [cur_frame]
 cmp word [cur_frame],1
 jl .frameless
@@ -312,9 +344,6 @@ mov dl,[frame]
 mov [cur_frame],dl
 jmp .loop
 .page_up:
-pop dx
-call getpos
-push dx
 mov dl,[frame]
 inc word [cur_frame]
 cmp [cur_frame],dl
@@ -325,6 +354,7 @@ mov word [cur_frame],1
 jmp .loop
 
 .calculate_pos:
+push ax
 mov ax,0x0FA0
 mov dx,[cur_frame]
 dec dx
@@ -332,6 +362,7 @@ mul dx
 add ax,[loc]
 mov bx,ax
 add bx,[pos]
+pop ax
 ret
 
 .re_print:
@@ -393,7 +424,7 @@ inc word [cur_frame]
 jmp .loop
 .videoexit:
 call getkey
-cmp ah,0x43
+cmp ah,0x43 ; F9
 je .setwall
 ;jmp kernel
 ret
@@ -477,13 +508,20 @@ db ' (PgUp-FrameUp,PgDown-FrameDown)',0
 vedit_helpstr4:
 db 0x1B,0x18,0x19,0x1A,'-Move F6-Fill,F7-Clear,F8-Clean,F9-SetWall,F10-Load,F11-Save,F12-Video',0
 
+chain_copy: db 0x0f
 tempcolor: db 0x42
 pos: dw 0
 frame: dw 4
 cur_frame: dw 4
 loc: dw 0xA000
 slowmode: db 0x0f
+screen_pos:
+db 0,0
+return_location:
+dw 0
 
+filesize:
+dw 0
 filename:
 times 8+3 db 0
 dw 0
