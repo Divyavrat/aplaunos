@@ -11,10 +11,8 @@ New
 * shell language with - vars,logic,loops
 * more documentation, more comments to explain code
 * segmentation fault, integer cmp - to solve file system error
-* stack instability in fdir must be solved
 * os_rename_file fix two filename input
 * multitasking for programs
-* file not found skipped for file as command
 * paint editor - fix
 * file commands searched through path list
 

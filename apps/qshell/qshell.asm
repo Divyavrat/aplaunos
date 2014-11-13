@@ -265,16 +265,17 @@ call draw_button
 jmp .mouse_button_check_done
 
 .mouse_button_not_found:
+
+mov si,[currently_drawing_button]
+lodsw
+mov si,ax
+call draw_button
+
 mov si,[selected_button]
 lodsw
 mov si,ax
 mov ax,buttons_list
 mov [selected_button],ax
-call draw_button
-
-mov si,[currently_drawing_button]
-lodsw
-mov si,ax
 call draw_button
 
 ;pop si ;ReStore
@@ -482,15 +483,30 @@ file_handler:
 call os_file_selector ; Get file name
 cmp dx,0x0f0f ; If file not selected
 je .quit
+mov [.selected_file],ax
 
+mov dx,.command_list
+mov bx,.file_operation_str
+mov cx,.file_operation_str_help
+mov ah,0x22
+int 0x2b
+cmp dx,0x0f0f ;Failed
+je file_handler
+
+cmp ax,1
+je .execute_file
+cmp ax,2
+je .copy_file
+jmp .quit
 ; mov bx,0
 ; mov cx,0
 ; call os_dialog_box
 
+.execute_file:
 ;Change file name to
 ; name.extension
 ;format
-mov si,ax
+mov si,[.selected_file]
 mov al,0x20
 call os_string_tokenize
 push di
@@ -508,8 +524,35 @@ mov dx,TEMPLOC ; Store in keyboard buffer
 mov ah,0x0D
 int 0x61
 jmp quick_exit_handler ; Execute
+
+.copy_file:
+mov dx,[.selected_file]
+mov ah,0x52
+int 0x2b
+mov dx,.copy_cmd
+mov ah,0x0D
+int 0x61
+jmp file_handler
+
 .quit:
 ret
+.selected_file:
+dw 0
+
+.file_operation_str:
+db "Select a file operation : ",0
+.file_operation_str_help:
+db "Press esc to cancel",0
+.command_list:
+db "Execute the file"
+db ",Create a Copy"
+db ",Delete"
+db ",Rename"
+db ",Quit"
+db 0
+
+.copy_cmd:
+db "copy",0
 
 ;===================
 ;Command Execution

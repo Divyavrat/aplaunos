@@ -151,9 +151,9 @@ sti
 ; mov word [NUMBER_OF_DRIVES],bx
 ; mov word [NUMBER_OF_HEADS],cx
 ; mov [DRIVE_TYPE],dh
-mov [drive],dl
+;mov [drive],dl
 ;mov word [currentdir],0x0013
-
+mov byte [drive],0
 ; Drive Setup
 cmp dl, 0
 	je .no_change
@@ -211,9 +211,7 @@ call os_reset
 ; call welcome
 ; .skip_welcome:
 mov si,autorunstr
-call pipespace2enter
-mov si,autorunstr
-call pipestore
+call store_pipe_command
 
 kernel:
 ;---------------------------
@@ -253,9 +251,7 @@ jl command_line
 mov byte [.idle_time_elapsed],0 ;Reset Counter
 ; What to execute if kernel is idle
 mov si,idle_kenel_commandstr
-call pipespace2enter
-mov si,idle_kenel_commandstr
-call pipestore
+call store_pipe_command
 jmp command_line
 
 ;If a special key is found
@@ -918,7 +914,6 @@ jmp drive_comm
 
 c_dir_f:
 mov byte [command_tempchar],'q'
-mov byte [comm2],'q'
 jmp fdir
 
 runa:
@@ -5410,6 +5405,7 @@ ret
 ;t=roam selector interrupt
 ;
 fdir:
+mov word [comm2],'q'
 call store_HTS
 ;mov [var_n],sp
 cmp byte [command_tempchar],'t'
@@ -8727,6 +8723,7 @@ mov ax,dx
 call os_write_file
 iret
 os_file_exists_i:
+mov ax,dx
 call os_file_exists
 call check_carry
 iret
@@ -12655,9 +12652,10 @@ iret
 int61h_pipestore:
 mov di,dx
 mov si,dx
-call pipespace2enter
-mov si,di
-call pipestore
+; call pipespace2enter
+; mov si,di
+; call pipestore
+call store_pipe_command
 iret
 
 int61h_mint:
@@ -13763,27 +13761,36 @@ pipe:
 mov di,found
 call getstr
 mov si,found
-call pipespace2enter
-mov si,found
-call pipestore
+call store_pipe_command
 jmp kernel
 
+;IN:si-command to store
+store_pipe_command:
+call pipespace2enter
+call pipestore
+ret
+
 pipespace2enter:
+pusha
+.loop:
 lodsb
 cmp al,0x20
 je .space
 cmp al,0x00
 je .end
-jmp pipespace2enter
+jmp .loop
 .space:
 mov al,0x0D
 dec si
 mov [si],al
-jmp pipespace2enter
+jmp .loop
 .end:
+popa
 ret
 
 pipestore:
+pusha
+.loop:
 lodsb
 cmp al,0x0D
 je .enter
@@ -13791,12 +13798,13 @@ cmp al,0x00
 je .end
 mov ah,0x00
 call keybsto
-jmp pipestore
+jmp .loop
 .enter:
 mov ah,0x1C
 call keybsto
-jmp pipestore
+jmp .loop
 .end:
+popa
 ret
 
 keybsto:
@@ -14837,7 +14845,7 @@ dw 0x0013
 returncode:
 db 0x00
 size:
-dw 0x0200
+dw 0x01
 drive:
 db 0x80
 drive2:
@@ -14857,7 +14865,7 @@ db 0x74
 ; ymouse:
 ; dw 0x0000
 page:
-dw 0x0000
+dw 0
 ;--------
 ;File Locations
 loc:
@@ -15173,9 +15181,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1026
+dw 1027
 verstring:
-db ' Aplaun OS (version 1.02.6) ',0
+db ' Aplaun OS (version 1.02.7) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
@@ -15409,7 +15417,7 @@ times 40 db 0
 ; times previous_command_buffersize db 0
 
 found:
-times 10 db 0
+times 15 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45+0x100)-($-$$) db 0 ; Optimal Size
