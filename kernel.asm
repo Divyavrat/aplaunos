@@ -122,12 +122,12 @@ jmp os_mouse_rightclick				; 0126h
 jmp os_input_wait				; 0129h
 jmp os_mouse_scale				; 012Ch
 jmp os_seed_random				; 012Fh
-jmp os_bcd_to_int				; 0132h
-jmp os_long_int_negate				; 0135h
-jmp os_square_root				; 0138h
-jmp os_check_for_extkey				; 013Bh
-jmp os_draw_circle				; 013Eh
-jmp os_get_api_ver_string	;0141h	; IN: Nothing; OUT: SI = API version number
+;jmp os_bcd_to_int				; 0132h
+jmp os_long_int_negate				; 0132h
+jmp os_square_root				; 0135h
+jmp os_check_for_extkey				; 0138h
+jmp os_draw_circle				; 013Bh
+jmp os_get_api_ver_string	;013Eh	; IN: Nothing; OUT: SI = API version number
 	
 ; ===========================
 ;	Main Code
@@ -3241,17 +3241,17 @@ call newline
 mov si,editor_list
 call prnstr
 call newline
-mov si,setting_list
-call prnstr
-call newline
-mov si,setting2_list
-call prnstr
-call newline
-mov si,showsetting_list
-call prnstr
-call newline
-mov si,misc_list
-call prnstr
+; mov si,setting_list
+; call prnstr
+; call newline
+; mov si,setting2_list
+; call prnstr
+; call newline
+; mov si,showsetting_list
+; call prnstr
+; call newline
+; mov si,misc_list
+; call prnstr
 ; call newline
 ; mov si,advanced_cmd
 ; call prnstr
@@ -8567,6 +8567,7 @@ mov word [int21h_read_file.loc],0
 mov ax,dx
 mov cx,[locf4]
 call os_load_file
+call check_carry
 iret
 
 int21h_save_file:
@@ -8659,6 +8660,20 @@ cmp ah,0x56
 je os_get_file_size_i
 cmp ah,0x57
 je os_file_selector_i
+
+cmp ah,0x60
+je os_memory_free_i
+cmp ah,0x61
+je os_memory_allocate_i
+cmp ah,0x62
+je os_memory_release_i
+cmp ah,0x63
+je os_memory_read_i
+cmp ah,0x64
+je os_memory_write_i
+cmp ah,0x65
+je os_memory_reset_i
+
 iret
 
 os_print_string_i:
@@ -8717,10 +8732,12 @@ iret
 os_load_file_i:
 mov ax,dx
 call os_load_file
+call check_carry
 iret
 os_write_file_i:
 mov ax,dx
 call os_write_file
+call check_carry
 iret
 os_file_exists_i:
 mov ax,dx
@@ -8736,10 +8753,12 @@ call os_remove_file
 iret
 os_rename_file_i:
 call os_rename_file
+call check_carry
 iret
 os_get_file_size_i:
 mov ax,dx
 call os_get_file_size
+call check_carry
 iret
 os_file_selector_i:
 call os_file_selector
@@ -8754,6 +8773,26 @@ call os_send_via_serial
 iret
 os_get_via_serial_i:
 call os_get_via_serial
+iret
+
+os_memory_free_i:
+call os_memory_free
+iret
+os_memory_allocate_i:
+call os_memory_allocate
+call check_carry
+iret
+os_memory_release_i:
+call os_memory_release
+iret
+os_memory_read_i:
+call os_memory_read
+iret
+os_memory_write_i:
+call os_memory_write
+iret
+os_memory_reset_i:
+call os_memory_reset
 iret
 
 os_print_string:
@@ -8851,17 +8890,17 @@ ret
 .tmp dw 0
 
 os_text_mode:
-	; Put the operating system in text mode (mode 03h)
-	pusha
-	
-	mov ax, 3			; Back to text mode
-	mov bx, 0
-	int 10h
-	mov ax, 1003h			; No blinking text!
-	int 10h
-	
-	popa
-	ret
+; Put the operating system in text mode (mode 03h)
+pusha
+
+mov ax, 3			; Back to text mode
+mov bx, 0
+int 10h
+mov ax, 1003h			; No blinking text!
+int 10h
+
+popa
+ret
 
 os_clear_screen:
 pusha
@@ -9316,7 +9355,7 @@ os_memory_free:
 ; OUT: BH = Memory Handle, CF = set if not enough memory, otherwise cleared
 os_memory_allocate:
 	pusha
-	 
+
 	;mov ax, 0x1000
 	mov ax, 0x0
 	mov ds, ax
@@ -9495,7 +9534,7 @@ os_memory_read:
 ; IN: BH = handle, DS:SI = source locations
 os_memory_write:
 	pusha
-	
+	push es
 	mov dx, ds
 	
 	; mov ax, 0x0
@@ -9544,6 +9583,7 @@ os_memory_write:
 	loop .find_blocks
 	
 .finished:
+	pop es
 	popa
 	ret
 	
@@ -15181,21 +15221,21 @@ gdt_end:
 db 0
 
 ver:
-dw 1027
+dw 1028
 verstring:
-db ' Aplaun OS (version 1.02.7) ',0
+db ' Aplaun OS (version 1.02.8) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
 db 'View/Editors: text,code,doc,edit,type,sound,paint',0
-setting_list:
-db 'Settings: loc,prompt,color,drive,autosize',0
-setting2_list:
-db 'echo,page,help,exit,calc,clock',0
-showsetting_list:
-db 'driveinfo,debug,alias,border,setting',0
-misc_list:
-db 'micro,wall,restart,reboot,reset,cls',0
+; setting_list:
+; db 'Settings: loc,prompt,color,drive,autosize',0
+; setting2_list:
+; db 'echo,page,help,exit,calc,clock',0
+; showsetting_list:
+; db 'driveinfo,debug,alias,border,setting',0
+; misc_list:
+; db 'micro,wall,restart,reset,cls',0
 ; advanced_cmd:
 ; db 'Adv/pro: fhlt,step,addpathc,dataseg,runa',0
 ; common_control:
@@ -15205,7 +15245,7 @@ db 'Locations: loc(apps/files),loc2(Folder),loc3(FAT)',0
 ; experimental:
 ; db 'Experimental: ',0
 file_command:
-db 'File: q-quick,a-cmp,z,{fname,nm},fnew,del,fsave',0
+db 'File: q,a,z,{fname,nm},fnew,del,fsave',0
 dir_command:
 db 'Dir: dir,newdir,cd,cd..,rename,copy,roam',0
 mint_list:
@@ -15329,9 +15369,9 @@ db 'Alarm',0 ; anykey=kernel enter=continue
 path_list:
 times 10 dw 0
 autorunstr:
-db 'pwd confg lvlh ',0
+;db 'pwd confg lvlh ',0
 ;db 'confg pwd lvlh ',0
-;db 'auto ',0
+db 'autorun ',0
 idle_kernel_waittime:
 db 10
 idle_kenel_commandstr:

@@ -64,6 +64,12 @@ It uses a small dictionary to identify the words.
 
 Try - `What's the time now ?`
 
+MHELP
+-----
+
+Searches for word in input provide help.
+Basic help is provided here.
+
 LIFE
 ----
 

@@ -25,12 +25,12 @@ mov [oldcolor],dl
 ; shl dl,4
 ;mov [color_background],dl
 call setcolor1
+cmp byte [pwd],0
+je menu.newpwd
 mov ah,0x06
 int 61h
 mov ah,0x0B
 int 61h
-cmp byte [pwd],0
-je menu.newpwd
 call setcolor2
 mov ah,0x03
 mov dx,ask
@@ -233,6 +233,10 @@ int 0x61
 jmp .quit
 
 .newpwd:
+mov ah,0x06
+int 61h
+mov ah,0x0B
+int 61h
 mov ah,0x03
 mov dx,welcome_str
 int 61h

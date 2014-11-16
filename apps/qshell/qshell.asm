@@ -9,13 +9,13 @@
 CODELOC equ 0x6000
 TEMPLOC equ 0x9000
 TEMPLO2 equ 0xA000
-FILESIZE equ 6
+FILESIZE equ 14
 org CODELOC
 use16
 
 jmp code_start
 version_string:
-db " Aplaun OS Quick Shell ver 1.6",0
+db " Aplaun OS Quick Shell ver 1.8",0
 
 code_start:
 mov [initial_stack],sp
@@ -31,25 +31,35 @@ call setcolor1
 mov ah,0x06
 int 61h
 
+;Load settings from memory
+mov ah,0x61 ;Allocate function
+mov dx,1 ; One block
+int 0x2b
+cmp dx,0xf0f0
+jne .set_configuration
+mov [data_settings_handle],bh
+
+mov ah,0x63
+mov bh,[data_settings_handle]
+mov di,data_settings
+int 0x2b
+cmp word [configuration_finished],0xf0f0
+je .set_configuration_skip
+.set_configuration:
 ;Set shell as default to run
-mov dx,set_idle_command
-mov ah,0x0D
-int 0x61
-mov ah,0x0F
-int 0x61
-mov dx,set_idle_time
-mov ah,0x0D
-int 0x61
-mov ah,0x0F
-int 0x61
+mov word [configuration_finished],0xf0f0
+call data_settings_save
+call lock_handler
+mov dx,autorun_str
+call execute_string
+jmp code_start
+.set_configuration_skip:
 
 jmp welcome_screen
-set_idle_command:
-db "idlecmd qshell ",0
-set_idle_time:
-db "idletime 0 ",0
 set_extra_idle_time:
 db "idletime 20 ",0
+autorun_str:
+db "confg ",0
 
 welcome_screen:
 call mouselib_setup
@@ -59,10 +69,10 @@ call mouselib_move
 mov si,buttons_list
 mov [selected_button],si
 main_screen:
+;call mouselib_hide
+; .loop:
 call os_hide_cursor
 call os_clear_screen
-;call mouselib_hide
-.loop:
 	mov ax,version_string
 	mov bx,.welcome_str
 	mov cx,[color]
@@ -83,25 +93,27 @@ call os_clear_screen
 	.button_draw_loop_done:
 	
 	.recheck:
-	call mouselib_locate ; Get Mouse position
-	;call mouselib_freemove
-	call mouselib_show ; Show mouse
-	call mouselib_input_wait ; Wait for an event
-	jc .key_pressed ; If keyboard input is recieved
-	; call mouselib_anyclick
-	; jc .button
-	; call mouselib_hide
-	; jmp .recheck ; Else check mouse
-	jmp .button
+call mouselib_locate ; Get Mouse position
+;call mouselib_freemove
+call mouselib_show ; Show mouse
+	;call mouselib_input_wait ; Wait for an event
+call waitevent_idle_functions
+
+jc .key_pressed ; If keyboard input is recieved
+; call mouselib_anyclick
+; jc .button
+; call mouselib_hide
+; jmp .recheck ; Else check mouse
+jmp .button
 .key_pressed:
-	;call os_check_for_key
-	call mouselib_hide
-	mov ah,0x00
-	int 0x16
-	; cmp al, 27 ;Esc
-	; je exit_handler
-	cmp al, 13 ;Enter
-	je .enter_selected_button
+;call os_check_for_key
+call mouselib_hide
+mov ah,0x00
+int 0x16
+; cmp al, 27 ;Esc
+; je exit_handler
+cmp al, 13 ;Enter
+je .enter_selected_button
 	
 cmp ah,0x47
 je .decrease_selected_button;.home
@@ -177,7 +189,8 @@ jmp main_screen
 	jmp .button_key_check_loop ;Check more keys
 	.button_key_check_loop_end:
 	
-	jmp .loop
+	;jmp .loop
+	jmp main_screen
 .key_found:
 sub si,2
 mov [selected_button],si
@@ -237,8 +250,17 @@ mov ax,[si+12] ; Get Mouse Handler
 mov bx,[mouse_button]
 mov cx,[mouse_x]
 mov dx,[mouse_y]
+
+pusha
+;Redraw the previous button
+mov bx,[selected_button]
+mov bx,[bx]
 mov si,[currently_drawing_button]
-mov [selected_button],si
+mov [selected_button],si ;Set new button
+mov si,bx
+;call draw_button
+;call draw_selected_button
+popa
 
 cmp bx,0 ; Check if mouse was clicked
 je .mouse_over ; If not then just over draw
@@ -256,10 +278,7 @@ call di
 jmp .mouse_button_done
 .no_draw_handler:
 ;Draw with default function
-mov si,[selected_button]
-lodsw
-mov si,ax
-call draw_button
+call draw_selected_button
 .mouse_button_done:
 ;jmp .recheck
 jmp .mouse_button_check_done
@@ -271,18 +290,15 @@ lodsw
 mov si,ax
 call draw_button
 
-mov si,[selected_button]
-lodsw
-mov si,ax
-mov ax,buttons_list
-mov [selected_button],ax
-call draw_button
+;mov ax,buttons_list
+;mov [selected_button],ax
 
 ;pop si ;ReStore
 mov si,[currently_drawing_button]
 add si,2
 jmp .mouse_button_check
 .mouse_button_check_done:
+call draw_selected_button
 cmp word [mouse_button],0
 jne .button_clicked
 jmp .recheck
@@ -325,13 +341,16 @@ ret
 
 ; SI-pointing to button data
 draw_button:
-; pusha
+pusha
 ; mov dx,[selected_button]
+; mov ah,0x24
+; int 0x61
+; mov dx,[currently_drawing_button]
 ; mov ah,0x24
 ; int 0x61
 ; mov ah,0
 ; int 16h
-; popa
+popa
 call collect_button_data
 mov ax,[currently_drawing_button]
 clc
@@ -377,6 +396,13 @@ mov si,[button_text] ;Get pointer to text
 call os_print_string
 ret
 
+draw_selected_button:
+mov si,[selected_button]
+lodsw
+mov si,ax
+call draw_button
+ret
+
 mouse_get_button_value:
 mov bx,0
 call mouselib_anyclick
@@ -403,11 +429,67 @@ add bx,4
 .done:
 ret
 
+;While no event occurs
+;execute idle functions
+waitevent_idle_functions:
+	pusha
+	
+	; Clear the mouse update flag so we can tell when the driver had updated it
+	mov byte [mouselib_int_changed], 0
+.input_wait:
+	; Check with BIOS if there is a keyboard key available - but don't collect the key
+
+	mov ah, 11h
+	int 16h
+	jnz .keyboard_input
+	
+	; Check if the mouse driver has received anything
+	cmp byte [mouselib_int_changed], 1
+	je .mouselib_int_input
+
+; call mouselib_remove_driver
+mov dx,idle_functions_list
+mov [.current_idle_function],dx
+;TODO add watch and other pins
+.idle_function_loop:
+mov si,[.current_idle_function]
+cmp si,0
+je .no_idle_command
+lodsw
+mov dx,ax
+cmp dx,0
+je .no_idle_command
+mov [.current_idle_function],si
+call dx
+jmp .idle_function_loop
+.current_idle_function:
+dw 0
+.no_idle_command:
+; call mouselib_setup
+call os_hide_cursor
+
+	hlt
+	
+	jmp .input_wait
+	
+.keyboard_input:
+	popa
+	stc
+	ret
+	
+.mouselib_int_input:
+	popa
+	clc
+	ret
+
 ;===================
 ;Return back to OS
 ;after resetting drivers
 ;===================
 exit_handler:
+mov dx,common_filename
+mov ah,0x52
+int 0x2b
 mov dx,set_extra_idle_time
 mov ah,0x0D
 int 0x61
@@ -419,16 +501,48 @@ call mouselib_hide
 call os_clear_screen
 call os_show_cursor
 call mouselib_remove_driver
+call data_settings_save
+ret ; Return to OS
+common_filename:
+db "common.txt",0
+
+execute_string:
+mov ah,0x0D
+int 0x61
+mov ah,0x0F
+int 0x61
 ret
+
+data_settings_save:
+mov ah,0x64 ;Data Write
+mov bh,[data_settings_handle]
+mov si,data_settings
+int 0x2b
+mov ah,0x62 ;Memory Released
+mov bh,[data_settings_handle]
+int 0x2b
+ret
+
+;List to pointers to execute when idle
+;Each word for each function. End with zero.
+idle_functions_list:
+dw draw_digital_watch
+; dw draw_analog_watch
+dw roaming_robot
+dw 0
 
 ;List of all button data pointers
 ;Each word to indicate one button. End with zero.
 buttons_list:
 dw file_button_data
 dw command_button_data
+dw password_button_data
+dw tutorial_button_data
+
 dw shutdown_button_data
 dw restart_button_data
 dw halt_button_data
+dw lock_button_data
 
 dw command_line_button_data
 
@@ -454,21 +568,29 @@ file_button_data:
 dw 0x29,2,5,10,3,0,file_handler,'f'
 db '[f] File',0
 command_button_data:
-dw 0x4F,20,5,15,3,0,command_handler,'c'
+dw 0x4F,20,5,13,3,0,command_handler,'c'
 db '[c] Command',0
+password_button_data:
+dw 0x6F,2,10,10,3,0,password_handler,0
+db 'Password',0
+tutorial_button_data:
+dw 0x5F,12,10,10,3,0,tutorial_screen,0x3B00
+db 'Tutorial',0
 
 shutdown_button_data:
-dw 0x74,6,20,20,3,0,shutdown_handler,'q'
+dw 0x47,7,21,14,3,0,shutdown_handler,'q'
 db '[q] Shutdown',0
 restart_button_data:
-dw 0x74,27,20,20,3,0,restart_handler,'r'
+dw 0x47,22,21,13,3,0,restart_handler,'r'
 db '[r] Restart',0
 halt_button_data:
-dw 0x7F,48,20,10,3,0,halt_handler,0
+dw 0x87,36,21,6,3,0,halt_handler,0
 db 'Halt',0
-
+lock_button_data:
+dw 0x67,43,21,10,3,0,lock_handler,'l'
+db '[l] Lock',0
 command_line_button_data:
-dw 0x12,0x32,13,20,3,0,exit_handler,0x011B
+dw 0x12,54,21,20,3,0,exit_handler,0x011B
 db 'Commandline ->>',0
 
 selected_button:
@@ -485,11 +607,10 @@ cmp dx,0x0f0f ; If file not selected
 je .quit
 mov [.selected_file],ax
 
-mov dx,.command_list
+mov ax,.command_list
 mov bx,.file_operation_str
 mov cx,.file_operation_str_help
-mov ah,0x22
-int 0x2b
+call os_list_dialog
 cmp dx,0x0f0f ;Failed
 je file_handler
 
@@ -497,6 +618,10 @@ cmp ax,1
 je .execute_file
 cmp ax,2
 je .copy_file
+cmp ax,3
+je .delete_file
+cmp ax,4
+je .rename_file
 jmp .quit
 ; mov bx,0
 ; mov cx,0
@@ -526,12 +651,24 @@ int 0x61
 jmp quick_exit_handler ; Execute
 
 .copy_file:
+mov dx,.copy_cmd
+jmp .file_command
+
+.delete_file:
+mov dx,.del_cmd
+jmp .file_command
+
+.rename_file:
+mov dx,.rename_cmd
+;jmp .file_command
+
+.file_command:
+push dx
 mov dx,[.selected_file]
 mov ah,0x52
 int 0x2b
-mov dx,.copy_cmd
-mov ah,0x0D
-int 0x61
+pop dx
+call execute_string
 jmp file_handler
 
 .quit:
@@ -552,7 +689,11 @@ db ",Quit"
 db 0
 
 .copy_cmd:
-db "copy",0
+db 'copy ',0
+.del_cmd:
+db 'del ',0
+.rename_cmd:
+db 'rename ',0
 
 ;===================
 ;Command Execution
@@ -806,6 +947,26 @@ mov ah,0x57
 int 0x2b
 ret
 
+os_load_file:
+pusha
+mov dx,ax
+mov ah,0x50
+int 0x2b
+mov [.temp],dx
+popa
+mov dx,[.temp]
+ret
+.temp:
+dw 0
+
+os_write_file:
+pusha
+mov dx,ax
+mov ah,0x51
+int 0x2b
+popa
+ret
+
 ; ------------------------------------------------------------------
 ; os_string_tokenize -- Reads tokens separated by specified char from
 ; a string. Returns pointer to next token, or 0 if none left
@@ -860,6 +1021,1232 @@ os_string_strip:
 	popa
 	ret
 
+; Password Utility
+PASSWORD_DIALOG_LOC equ 0x0202
+PASSWORD_LENGTH equ 256
+pwd equ PASSWORD_LENGTH*0
+message equ PASSWORD_LENGTH*1
+recieved equ PASSWORD_LENGTH*2
+
+lock_handler:
+; password_start:
+; shr dl,4
+; shl dl,4
+;mov [color_background],dl
+call load_password_file
+
+; If password is empty
+; then get new one
+cmp byte [pwd+TEMPLOC],0
+je password_handler.getnew_password
+
+;Get password and check it
+call check_pwd
+
+;Show message if it exists
+cmp byte [message+TEMPLOC],0
+je .no_message
+mov ax,welcome_str
+mov bx,haveamsg_str
+mov cx,message+TEMPLOC
+call os_dialog_box
+mov byte [message+TEMPLOC],0
+.no_message:
+
+;Return
+call save_password_file
+ret
+
+load_password_file:
+;Load password file
+mov ax,password_file_name
+mov cx,TEMPLOC
+call os_load_file
+cmp dx,0x0f0f
+jne .found
+mov byte [pwd+TEMPLOC],0
+mov byte [message+TEMPLOC],0
+.found:
+ret
+
+save_password_file:
+mov ax,password_file_name
+mov bx,TEMPLOC
+mov cx,512
+call os_write_file
+ret
+
+password_handler:
+call load_password_file
+; .skip:
+.password_menu_loop:
+;Show menu for choices
+call os_clear_screen
+mov ax,password_menu
+mov bx,welcome_str
+mov cx,welcome_str2
+call os_list_dialog
+cmp dx,0x0f0f ;Failed
+je .quit
+cmp ax,1
+je .quit
+cmp ax,2
+je .passchange
+; cmp al,'2'
+; je .autorunstring
+; cmp al,'3'
+; je welcome_screen
+cmp ax,3
+je .message
+; cmp al,'5'
+; je .save_quit
+.quit:
+call save_password_file
+ret
+
+.passchange:
+call check_pwd
+jmp .passchange_skip
+.getnew_password:
+mov ax,welcome_str3
+mov bx,welcome_recommend
+mov cx,welcome_recommend2
+call os_dialog_box
+.passchange_skip:
+mov bx,enter_new_password_str
+mov ax,pwd+TEMPLOC
+call os_input_dialog
+;jmp .password_menu_loop
+jmp .password_menu_loop
+
+.message:
+mov bx,enter_msg_str
+mov ax,message+TEMPLOC
+call os_input_dialog
+jmp .password_menu_loop
+
+check_pwd:
+call os_clear_screen
+call os_show_cursor
+; mov bl,0x3F
+; mov dx,PASSWORD_DIALOG_LOC
+; mov si,80-2-2
+; mov di,25-2
+; call os_draw_block
+mov dx,PASSWORD_DIALOG_LOC
+call os_move_cursor
+mov si,enter_password_str
+call os_print_string
+mov dx,PASSWORD_DIALOG_LOC
+add dx,0x020A
+call os_move_cursor
+mov di,recieved+TEMPLOC
+call getpwd
+
+mov al,0
+mov ah,0x05
+mov bx,recieved+TEMPLOC
+mov dx,pwd+TEMPLOC
+int 0x61
+cmp al,0xF0
+jne .wrong
+ret
+.wrong:
+jmp check_pwd
+
+getpwd:
+mov ah,0
+int 0x16
+cmp al,13
+je .done
+stosb
+mov dl,0xFE
+mov ah,0x02
+int 0x21
+jmp getpwd
+.done:
+mov al,0
+stosb
+ret
+
+get_string:
+mov ah,0
+int 0x16
+cmp al,13
+je .end
+stosb
+mov dl,al
+mov ah,0x02
+int 0x21
+jmp get_string
+.end:
+mov al,0
+stosb
+ret
+
+setcolor2:
+mov dl,[color2]
+mov ah,0x01
+int 0x61
+ret
+
+cryption:
+
+ret
+.ecode: db 0x40
+
+tutorial_screen:
+;call mouselib_setup
+; mov cx, 0
+; mov dx, 0
+; call mouselib_move
+call os_hide_cursor
+call os_clear_screen
+;call mouselib_hide
+.loop:
+	mov ax,.osstring
+	mov bx,.welcome_str1
+	mov cx,[color]
+	call os_draw_background
+	mov bl,0x30
+	mov dx,0x0202
+	mov si,76
+	mov di,5
+	call os_draw_block
+	mov dx,0x0305
+	call os_move_cursor
+	mov si,.welcome_str_t1
+	call os_print_string
+	mov bl,0x30
+	mov dx,0x1502
+	mov si,76
+	mov di,0x18
+	call os_draw_block
+	mov dx,0x1605
+	call os_move_cursor
+	mov si,.welcome_str_t2
+	call os_print_string
+	mov bl,0x97
+	mov dx,0x0602
+	mov si,10
+	mov di,9
+	call os_draw_block
+	mov dx,0x0704
+	call os_move_cursor
+	mov si,.welcome_str_t3
+	call os_print_string
+	mov bl,0x8D
+	mov dx,0x060C
+	mov si,10
+	mov di,9
+	call os_draw_block
+	mov dx,0x070E
+	call os_move_cursor
+	mov si,.welcome_str_t4
+	call os_print_string
+	mov bl,0x29
+	mov dx,0x0616
+	mov si,10
+	mov di,9
+	call os_draw_block
+	mov dx,0x0717
+	call os_move_cursor
+	mov si,.welcome_str_t5
+	call os_print_string
+	mov bl,0xAC
+	mov dx,0x0620
+	mov si,10
+	mov di,9
+	call os_draw_block
+	mov dx,0x0722
+	call os_move_cursor
+	mov si,.welcome_str_t6
+	call os_print_string
+	mov bl,0xE4
+	mov dx,0x062A
+	mov si,11
+	mov di,9
+	call os_draw_block
+	mov dx,0x072B
+	call os_move_cursor
+	mov si,.welcome_str_t7
+	call os_print_string
+	mov bl,0x6F
+	mov dx,0x0635
+	mov si,10
+	mov di,9
+	call os_draw_block
+	mov dx,0x0736
+	call os_move_cursor
+	mov si,.welcome_str_t8
+	call os_print_string
+	
+	mov bl,0x7F
+	mov dx,0x0A02
+	mov si,20
+	mov di,0x0D
+	call os_draw_block
+	mov dx,0x0B06
+	call os_move_cursor
+	mov si,.welcome_str_e1
+	call os_print_string
+	mov bl,0xF7
+	mov dx,0x0A16
+	mov si,20
+	mov di,0x0D
+	call os_draw_block
+	mov dx,0x0B18
+	call os_move_cursor
+	mov si,.welcome_str_e2
+	call os_print_string
+	mov bl,0x70
+	mov dx,0x0A2A
+	mov si,20
+	mov di,0x0D
+	call os_draw_block
+	mov dx,0x0B2C
+	call os_move_cursor
+	mov si,.welcome_str_e3
+	call os_print_string
+	
+	mov bl,0x12
+	mov dx,0x1032
+	mov si,20
+	mov di,0x15
+	call os_draw_block
+	mov dx,0x1235
+	call os_move_cursor
+	mov si,.continue_str
+	call os_print_string
+	
+	.recheck:
+	call mouselib_locate
+	;call mouselib_freemove
+	call mouselib_show
+	call mouselib_input_wait
+	jc .key_pressed
+	call mouselib_anyclick
+	jc .button
+	call mouselib_hide
+	jmp .recheck
+.key_pressed:
+	;call os_check_for_key
+	call mouselib_hide
+	mov ah,0x00
+	int 0x16
+	cmp al, 27
+	je .exit
+	cmp al, 13
+	je .exit
+	cmp al,'c'
+	je .common_link
+	cmp al,'f'
+	je .folder
+	cmp al,'a'
+	je .app
+	cmp al,'e'
+	je .editing
+	cmp al,'u'
+	je .customize
+	cmp al,'s'
+	je .shutdown
+	cmp al,'m'
+	je .example_link
+	cmp al,'p'
+	je .examplefolder
+	cmp al,'l'
+	je .exampleapp
+	jmp .loop
+.button:
+call mouselib_hide
+call mouselib_locate
+;call mouselib_freemove
+cmp dx,6
+jl .exit
+cmp dx,20
+jg .exit
+cmp dx,9
+jl .common
+cmp dx,0x0D
+jl .example
+.exit:
+call mouselib_hide
+call os_clear_screen
+call os_show_cursor
+;call mouselib_remove_driver
+;jmp password_start
+ret
+
+.common:
+cmp cx,0x35
+jge .shutdown
+cmp cx,0x2A
+jge .customize
+cmp cx,0x20
+jge .editing
+cmp cx,0x16
+jge .app
+cmp cx,0x0C
+jge .folder
+.common_link:
+mov ax,.welcome_str_t3m1
+mov bx,.welcome_str_t3m2
+mov cx,.welcome_str_t3m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.folder:
+mov ax,.welcome_str_t4m1
+mov bx,.welcome_str_t4m2
+mov cx,.welcome_str_t4m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.app:
+mov ax,.welcome_str_t5m1
+mov bx,.welcome_str_t5m2
+mov cx,.welcome_str_t5m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.editing:
+mov ax,.welcome_str_t6m1
+mov bx,.welcome_str_t6m2
+mov cx,.welcome_str_t6m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.customize:
+mov ax,.welcome_str_t7m1
+mov bx,.welcome_str_t7m2
+mov cx,.welcome_str_t7m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.shutdown:
+mov ax,.welcome_str_t8m1
+mov bx,.welcome_str_t8m2
+mov cx,.welcome_str_t8m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.example:
+cmp cx,0x2A
+jge .exampleapp
+cmp cx,0x16
+jge .examplefolder
+.example_link:
+mov ax,.welcome_str_e1m1
+mov bx,.welcome_str_e1m2
+mov cx,.welcome_str_e1m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.examplefolder:
+mov ax,.welcome_str_e2m1
+mov bx,.welcome_str_e2m2
+mov cx,.welcome_str_e2m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+.exampleapp:
+mov ax,.welcome_str_e3m1
+mov bx,.welcome_str_e3m2
+mov cx,.welcome_str_e3m3
+mov dx,0
+call os_dialog_box
+jmp tutorial_screen
+
+.osstring:
+db ' Aplaun OS Tutorial ',0
+.welcome_str1:
+db 'Welcome User to a new newbee World. Check out the commands first.',0
+.welcome_str_t1:
+db ' For all commands ask for "help". Or click on these to read.',0
+.welcome_str_t2:
+db ' Reminder: Try the commands without the quotes.',0
+.welcome_str_t3:
+db 'Common',0
+.welcome_str_t3m1:
+db 't is time d is date (check clock too).',0
+.welcome_str_t3m2:
+db 'calc to open calculator. (try "2+6-3")',0
+.welcome_str_t3m3:
+db 'cls to clear screen',0
+.welcome_str_t4:
+db 'Folder',0
+.welcome_str_t4m1:
+db 'nm to name a file/folder (example.txt)',0
+.welcome_str_t4m2:
+db 'q to list all files and folders.',0
+.welcome_str_t4m3:
+db 'q also loads the file if found equal.',0
+.welcome_str_t5:
+db 'App/Prog',0
+.welcome_str_t5m1:
+db 'to start it just type the name',0
+.welcome_str_t5m2:
+db 'to give arguments press space and type',0
+.welcome_str_t5m3:
+db 'Add commonly used programs to path list.',0
+.welcome_str_t6:
+db 'Editing',0
+.welcome_str_t6m1:
+db 'edit to change text documents',0
+.welcome_str_t6m2:
+db 'code to alter machine codes',0
+.welcome_str_t6m3:
+db 'read to open simple txt books',0
+.welcome_str_t7:
+db 'cUstomize',0
+.welcome_str_t7m1:
+db 'color , color2 to change colors',0
+.welcome_str_t7m2:
+db 'prompt and scrollmode for more customs',0
+.welcome_str_t7m3:
+db 'Apps can even change your font and cursor',0
+.welcome_str_t8:
+db 'Shutdown',0
+.welcome_str_t8m1:
+db 'e to exit / fhlt to halt',0
+.welcome_str_t8m2:
+db 'restart to restart',0
+.welcome_str_t8m3:
+db 'reboot to reboot',0
+
+.welcome_str_e1:
+db 'exaMple-file',0
+.welcome_str_e1m1:
+db 'nm test.txt',0
+.welcome_str_e1m2:
+db 'q',0
+.welcome_str_e1m3:
+db 'edit',0
+.welcome_str_e2:
+db 'examPle-folder',0
+.welcome_str_e2m1:
+db 'nm folder',0
+.welcome_str_e2m2:
+db 'q',0
+.welcome_str_e2m3:
+db 'dir',0
+.welcome_str_e3:
+db 'exampLe-app',0
+.welcome_str_e3m1:
+db 'hangman',0
+.welcome_str_e3m2:
+db 'life',0
+.welcome_str_e3m3:
+db 'viewer',0
+
+.continue_str:
+db 'Continue ->>',0
+
+password_menu:
+db 'Continue ->>'
+db ',Change password'
+db ',Leave a message for the next user'
+db 0
+
+enter_password_str:
+db ' Enter Password: ',0
+enter_new_password_str:
+db ' Enter New Password: ',0
+enter_msg_str:
+db ' Enter Message: ',0
+haveamsg_str:
+db ' You have a message : ',0
+; correct_str:
+; db ' Correct ',0
+welcome_str:
+db ' Welcome User.',0
+welcome_str2:
+db ' Select your action ->',0
+
+welcome_str3:
+db 'Thankyou for trying out Aplaun OS. ',0
+welcome_recommend:
+db 'We recommend you to enter a new password',0
+welcome_recommend2:
+db 'also check our new tutorial. ',0
+password_file_name:
+db "pass.pwd",0
+
+roaming_robot:
+cmp word [robot_position],0
+jne .update
+mov word [robot_position],0x1010
+jmp .new_update
+.update:
+;call draw_robot
+.new_update:
+call update_robot_position
+call draw_robot
+ret
+draw_robot:
+mov dx,[robot_position]
+;call setpos
+call os_move_cursor
+call invert_char
+ret
+invert_char:
+; Find the colour of the character
+	mov ah, 08h
+	mov bh, 0
+	int 10h
+	
+	; Invert it to get its opposite
+	not ah
+	
+	; Display new character
+	mov bl, ah
+	mov ah, 09h
+	mov bh, 0
+	mov cx, 1
+	int 10h
+ret
+update_robot_position:
+mov ah,0x17
+mov dx,0
+mov bx,5
+int 0x61
+mov bx,[robot_position]
+cmp dx,1
+je .left
+cmp dx,2
+je .up
+cmp dx,3
+je .down
+cmp dx,4
+je .right
+jmp .done
+.left:
+dec bl
+jmp .done
+.up:
+dec bh
+jmp .done
+.down:
+inc bh
+jmp .done
+.right:
+inc bl
+jmp .done
+.done:
+cmp bl,0
+jl .reset
+cmp bh,0
+jl .reset
+cmp bl,80
+jge .reset
+cmp bh,25
+jge .reset
+jmp .update
+.reset:
+mov bx,0x1010
+.update:
+mov [robot_position],bx
+ret
+
+draw_digital_watch:
+; call getpos
+; push dx
+; mov byte [color],0x11
+;call getpos
+mov dx,[detail_pos]
+call setpos
+call time
+mov dx,[detail_pos]
+inc dh
+call setpos
+call date
+mov dx,[detail_pos]
+inc dh
+inc dh
+call setpos
+call timer
+; pop dx
+; call os_move_cursor
+ret
+
+draw_analog_watch:
+; mov ax,0x0003
+; int 0x10
+; mov ax,0x0500
+; int 10h
+; call getpos
+; push dx
+mov dl,[color]
+push dx
+; call os_hide_cursor
+
+;mov bx,0x0F38
+;add bl,dl
+;sub bl,dh
+;add bh,bl
+
+mov bl,0 ;Color
+mov dl,0x15 ;Start X
+add dl,0x14
+mov dh,0x07 ;Start Y
+mov si,0x27-0x15+1 ;Width
+mov di,0x13+1 ;End Y
+call os_draw_block
+
+mov ah,0x02
+int 0x1a
+mov al,ch
+call bcd2hex
+mov ch,al
+call convert
+add bh,0x14
+push bx
+mov dx,[centre_pos]
+;push dx
+call line
+
+mov ah,0x02
+int 0x1a
+mov al,cl
+call bcd2hex
+xor ah,ah
+mov cl,0x05
+div cl
+mov ch,al
+call convert
+add bh,0x14
+push bx
+mov dx,[centre_pos]
+mov byte [color],0x45
+call line
+
+mov ah,0x02
+int 0x1a
+mov al,dh
+call bcd2hex
+xor ah,ah
+mov cl,0x05
+div cl
+mov ch,al
+call convert
+add bh,0x14
+push bx
+mov dx,[centre_pos]
+mov byte [color],0x34
+; mov byte [color],0x38
+call line
+
+xor cx,cx
+mov byte [color],0x0f
+.board:
+push cx
+mov ch,cl
+call convert
+add bh,0x14
+xchg bh,bl
+mov dx,bx
+call setpos
+pop cx
+;push cx
+mov ax,cx
+add al,0x30
+call printc
+;pop cx
+inc cx
+cmp cx,12
+jl .board
+
+call delay
+mov byte [color],0x07
+mov dx,[centre_pos]
+pop bx
+call line
+mov dx,[centre_pos]
+pop bx
+call line
+mov dx,[centre_pos]
+pop bx
+call line
+
+; mov ah,0x01
+; int 0x16
+; jz watch
+; mov dx,0x0a00
+; call setpos
+; mov cx,0x0506
+; mov ah,0x01
+; int 0x10
+; call os_show_cursor
+xor bx,bx
+mov es,bx
+pop dx
+mov [color],dl
+; pop dx
+;call setpos
+; call os_move_cursor
+ret
+
+printf:
+pusha
+mov ah,0x0E
+int 0x10
+popa
+ret
+
+printc:
+;mov al,0x20
+;printf:
+pusha
+xor bh,bh
+mov ah,0x09
+mov bl,[color]
+mov cx,0x0001
+int 0x10
+;call getpos
+;inc dl
+;call setpos
+popa
+ret
+
+colon:
+mov al,':'
+call printf
+ret
+
+space:
+mov al,' '
+call printf
+ret
+
+printh:
+push ax
+shr al,4
+cmp al,10
+sbb al,69h
+das
+call printf
+pop ax
+ror al,4
+shr al,4
+cmp al,10
+sbb al,69h
+das
+call printf
+ret
+
+newline:
+mov al,0x0D
+call printf
+mov al,0x0A
+call printf
+ret
+
+date:
+mov ah,0x04
+int 0x1a
+mov al,dl
+call printh
+call colon
+mov al,dh
+call printh
+call colon
+mov al,ch
+call printh
+;call colon
+mov al,cl
+call printh
+ret
+
+time:
+mov ah,0x02
+int 0x1a
+mov al,ch
+call printh
+call colon
+mov al,cl
+call printh
+call colon
+mov al,dh
+call printh
+ret
+
+timer:
+;mov ah,0x00
+xor ah,ah
+int 0x1a
+mov al,ch
+call printh
+call colon
+mov al,cl
+call printh
+call colon
+mov al,dh
+call printh
+call colon
+mov al,dl
+call printh
+ret
+
+getpos:
+mov ah,0x03
+xor bh,bh
+int 10h
+ret
+
+setpos:
+mov ah,0x02
+xor bh,bh
+int 10h
+ret
+
+delay:
+xor ah,ah
+int 1ah
+mov [wx],dl
+.delay_loop:
+xor ah,ah
+int 1ah
+cmp [wx],dl
+je .delay_loop
+ret
+
+line:
+mov [x],bh
+mov [y],bl
+;mov [x1],bh
+;mov [y1],bl
+mov [x2],dh
+mov [y2],dl
+
+mov ch,0
+mov cl,bh
+mov dh,0
+mov dl,bl
+
+mov ah,0
+mov al,[x2]
+mov si,ax
+mov ah,0
+mov al,[y2]
+mov di,ax
+mov bl,[color]
+call os_draw_line
+;call delay
+ret
+
+; Change the colour of a pixel
+; IN: AX=X, CX=Y, BL=colour
+; OUT: None, registers preserved
+
+os_set_pixel:
+pusha
+mov dl,al
+mov dh,cl
+mov [color],bl
+call setpos
+mov al,0x20
+call printc
+popa
+ret
+
+; Implementation of Bresenham's line algorithm. Translated from an implementation in C (http://www.edepot.com/linebresenham.html)
+; IN: CX=X1, DX=Y1, SI=X2, DI=Y2, BL=colour
+; OUT: None, registers preserved
+os_draw_line:
+	pusha				; Save parameters
+	
+	;mov ax, 1000h
+	;mov ds, ax
+	;mov es, ax
+	;inc byte [internal_call]
+	
+	xor ax, ax			; Clear variables
+	mov di, .x1
+	mov cx, 11
+	rep stosw
+	
+	popa				; Restore and save parameters
+	pusha
+	
+	mov [.x1], cx			; Save points
+	mov [.x], cx
+	mov [.y1], dx
+	mov [.y], dx
+	mov [.x2], si
+	mov [.y2], di
+	
+	mov [.colour], bl		; Save the colour
+	
+	mov bx, [.x2]
+	mov ax, [.x1]
+	cmp bx, ax
+	jl .x1gtx2
+	
+	sub bx, ax
+	mov [.dx], bx
+	mov ax, 1
+	mov [.incx], ax
+	jmp .test2
+	
+.x1gtx2:
+	sub ax, bx
+	mov [.dx], ax
+	mov ax, -1
+	mov [.incx], ax
+	
+.test2:
+	mov bx, [.y2]
+	mov ax, [.y1]
+	cmp bx, ax
+	jl .y1gty2
+	
+	sub bx, ax
+	mov [.dy], bx
+	mov ax, 1
+	mov [.incy], ax
+	jmp .test3
+	
+.y1gty2:
+	sub ax, bx
+	mov [.dy], ax
+	mov ax, -1
+	mov [.incy], ax
+	
+.test3:
+	mov bx, [.dx]
+	mov ax, [.dy]
+	cmp bx, ax
+	jl .dygtdx
+	
+	mov ax, [.dy]
+	shl ax, 1
+	mov [.dy], ax
+	
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
+	
+	shl bx, 1
+	mov [.dx], bx
+	
+.xloop:
+	mov ax, [.x]
+	mov bx, [.x2]
+	cmp ax, bx
+	je .done
+	
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .xloop1
+	
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
+	
+	mov ax, [.balance]
+	mov bx, [.dx]
+	sub ax, bx
+	mov [.balance], ax
+	
+.xloop1:
+	mov ax, [.balance]
+	mov bx, [.dy]
+	add ax, bx
+	mov [.balance], ax
+	
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
+	
+	jmp .xloop
+	
+.dygtdx:
+	mov ax, [.dx]
+	shl ax, 1
+	mov [.dx], ax
+	
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
+	
+	shl bx, 1
+	mov [.dy], bx
+	
+.yloop:
+	mov ax, [.y]
+	mov bx, [.y2]
+	cmp ax, bx
+	je .done
+	
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	xor si, si
+	mov di, [.balance]
+	cmp di, si
+	jl .yloop1
+	
+	mov ax, [.x]
+	mov bx, [.incx]
+	add ax, bx
+	mov [.x], ax
+	
+	mov ax, [.balance]
+	mov bx, [.dy]
+	sub ax, bx
+	mov [.balance], ax
+	
+.yloop1:
+	mov ax, [.balance]
+	mov bx, [.dx]
+	add ax, bx
+	mov [.balance], ax
+	
+	mov ax, [.y]
+	mov bx, [.incy]
+	add ax, bx
+	mov [.y], ax
+	
+	jmp .yloop
+	
+.done:
+	mov ax, [.x]
+	mov cx, [.y]
+	mov bl, [.colour]
+	call os_set_pixel
+	
+	popa
+	;dec byte [internal_call]
+	ret
+	
+	
+	.x1 dw 0
+	.y1 dw 0
+	.x2 dw 0
+	.y2 dw 0
+	
+	.x dw 0
+	.y dw 0
+	.dx dw 0
+	.dy dw 0
+	.incx dw 0
+	.incy dw 0
+	.balance dw 0
+	.colour db 0
+	.pad db 0
+
+convert:
+cmp ch,0x00
+je .h12
+cmp ch,0x01
+je .h1
+cmp ch,0x02
+je .h2
+cmp ch,0x03
+je .h3
+cmp ch,0x04
+je .h4
+cmp ch,0x05
+je .h5
+cmp ch,0x06
+je .h6
+cmp ch,0x07
+je .h7
+cmp ch,0x08
+je .h8
+cmp ch,0x09
+je .h9
+cmp ch,0x0A
+je .h10
+cmp ch,0x0B
+je .h11
+mov byte [color],0x23
+sub ch,12
+jmp convert
+.h1:
+mov bx,0x2108
+ret
+.h2:
+mov bx,0x250A
+ret
+.h3:
+mov bx,0x270D
+ret
+.h4:
+mov bx,0x2510
+ret
+.h5:
+mov bx,0x2112
+ret
+.h6:
+mov bx,0x1E13
+ret
+.h7:
+mov bx,0x1B12
+ret
+.h8:
+mov bx,0x1710
+ret
+.h9:
+mov bx,0x150D
+ret
+.h10:
+mov bx,0x170A
+ret
+.h11:
+mov bx,0x1B08
+ret
+.h12:
+mov bx,0x1E07
+ret
+
+bcd2hex:
+mov bl,al
+and al,0xF0
+ror al,4
+
+mov cl,0x0A
+mul cl
+and bl,0x0F
+add al,bl
+ret
+
+x:
+db 0x00
+y:
+db 0x00
+;x1:
+;db 0x00
+;y1:
+;db 0x00
+x2:
+db 0x00
+y2:
+db 0x00
+wx:
+db 0x00
+wy:
+db 0x00
+eps:
+db 0x00
+; color:
+; db 0x31
+centre_pos:
+dw 0x320D
+detail_pos:
+dw 0x032A
+
+;Variables
 initial_stack:
 dw 0x9000
 message_flag:
@@ -876,4 +2263,15 @@ db 0x30
 ;db 0x30
 
 include 'mouse.lib'
+
+data_settings_handle:
+db 0
+data_settings:
+configuration_finished:
+dw 0x0f0f
+robot_position:
+dw 0
+; dw 0x0A0A
+; dw 0x0101
+
 times (512*FILESIZE)-($-$$) db 0

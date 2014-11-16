@@ -1,6 +1,16 @@
 org 0x6000
 use16
 
+;========================
+; TALK
+; ----
+;An example of Artificial Intelligence to simulate enough
+; smartness to chat simple things with a user.
+; It uses a small dictionary to identify the words.
+;
+; Try - `What's the time now ?`
+;========================
+
 main_program:
 cmp si,0
 jne start.argument_found
@@ -42,6 +52,8 @@ cmp dl,0x0f
 jne .key
 
 .skip:
+
+;Search for commands
 
 mov dx,c_debug
 mov bx,founddebug
@@ -170,22 +182,30 @@ call findword
 mov bx,[loc]
 add bx,[pos]
 cmp byte [bx],'0'
-jl .not_found
+jl .not_number
 cmp byte [bx],'9'
-jg .not_found
+jg .not_number
 
-push bx
-mov dx,bx
-mov ah,0x2b
-int 0x61
+mov word [found_number],0
+
+.number_loop:
+mov dx,[found_number]
+imul dx,10
+mov al,[bx]
+sub al,'0'
+mov ah,0
+add dx,ax
+; mov ah,0x0E
+; int 10h
 mov [found_number],dx
-;mov dx,[strlen]
-;add [pos],dx
-pop bx
-mov dx,si
-sub dx,bx
-add [pos],dx
-jmp .cmploop
+inc word [pos]
+inc bx
+cmp byte [bx],'0'
+jl .not_number
+cmp byte [bx],'9'
+jg .not_number
+jmp .number_loop
+.not_number:
 
 .not_found:
 inc word [pos]
@@ -217,25 +237,26 @@ jmp bx
 cmp byte [.argument_call],0xf0;;skip
 je .notfound
 
-mov di,[loc]
-add di,[strlen]
-dec di
-mov al,'.'
-stosb
-mov al,'C'
-stosb
-mov al,'O'
-stosb
-mov al,'M'
-stosb
+; mov dx,[loc]
+; call prnstr
+; mov dx,[loc]
+; mov ah,0x3d
+; int 0x21
 
+; mov dx,[loc]
+; mov bx,0x8000
+; mov ah,0x85
+; int 0x61
+
+mov ah,0x50
 mov dx,[loc]
-mov ah,0x3d
-int 0x21
+mov cx,0x8000
+int 0x2b
 
 cmp dx,0xf0f0
 jne .notfound
-call ax
+;call ax
+call 0x8000
 jmp start
 .notfound:
 mov dx,notfoundstr
@@ -397,8 +418,8 @@ jmp presence_word
 .process:
 mov word [.found],0
 mov dx,[found_number]
-cmp dl,0
-je .number
+cmp dx,0
+jne .number
 ;mov bx,[loc]
 ;mov dx,[bx]
 mov dl,0x45
@@ -526,6 +547,7 @@ cmp ax,0
 jne .loop
 ret
 
+;Strings
 helpstr:
 db ' Talk to me : ',0
 debugstr:
@@ -575,6 +597,8 @@ dostr2:
 db "Best-'o-luck for that.",0
 youstr:
 db "You, Me, We are all the same.",0
+
+;Commands
 c_debug:
 db 'debug',0
 c_hy:
@@ -637,6 +661,8 @@ c_you:
 db 'you',0
 c_me:
 db 'me',0
+
+;Variables
 loc:
 dw 0x8000
 pos:

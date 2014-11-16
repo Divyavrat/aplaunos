@@ -17,8 +17,8 @@ cd..
 nm common.txt
 lIPrompt
 *prompt Apl@n >
-idletime 3
-*idlecmd roam
+idletime 0
+*idlecmd qshell
 cls
 lIWelcome
 iUisieir
@@ -29,5 +29,4 @@ echo
 @lISize
 @size 1
 @fsize 512
-@roam
 end

@@ -55,4 +55,16 @@ cmp ah,0x56
 je os_get_file_size_i
 cmp ah,0x57
 je os_file_selector_i
-iret
+
+cmp ah,0x60
+je os_memory_free_i
+cmp ah,0x61
+je os_memory_allocate_i
+cmp ah,0x62
+je os_memory_release_i
+cmp ah,0x63
+je os_memory_read_i
+cmp ah,0x64
+je os_memory_write_i
+cmp ah,0x65
+je os_memory_reset_i

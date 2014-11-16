@@ -72,7 +72,7 @@ os_dump_registers	equ	os_main+0090h	; Shows contents of AX, BX, CX, DX
 
 os_wait_for_key		equ	os_main+0012h	; Returns AL = key pressed
 os_check_for_key	equ	os_main+0015h	; Returns AL = key pressed
-
+os_check_for_extkey equ os_main+0138h ; Returns AX = key pressed
 
 ; File handling
 
@@ -131,7 +131,7 @@ os_string_tokenize	equ	os_main+00CFh	; SI = string, AL = sep char; returns
 
 os_get_random		equ	os_main+00B7h	; IN: AX, BX = low, high; OUT: CX = num
 os_bcd_to_int		equ	os_main+0051h	; AL = BCD number, returns AX = integer
-os_long_int_negate	equ	os_main+0081h	; DX:AX = number
+os_long_int_negate	equ	os_main+0132h	; DX:AX = number
 
 
 ; Ports
@@ -162,7 +162,7 @@ os_clear_graphics	equ	os_main+00E7h
 os_draw_horizontal_line equ os_main+0102h
 os_draw_vertical_line equ os_main+0105h
 os_draw_border equ os_main+00FFh
-os_draw_circle equ os_main+013Eh
+os_draw_circle equ os_main+013Bh
 
 ; Extended Memory Functions
 
@@ -197,7 +197,7 @@ os_get_api_version	equ	os_main+0057h	; Returns API version in AL
 os_pause		equ	os_main+0024h	; AX = 10ths of second to wait
 os_fatal_error		equ	os_main+0027h	; AX = error string location
 
-os_get_api_ver_string	equ	os_main+0141h	; IN: Nothing; OUT: SI = API version number
+os_get_api_ver_string	equ	os_main+013Eh	; IN: Nothing; OUT: SI = API version number
 
 
 os_text_mode equ os_main+00D2h
