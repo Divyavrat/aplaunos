@@ -6,17 +6,26 @@
 ; Divyavrat Jugtawat
 ;======================
 
+;Predefinitions
+
 CODELOC equ 0x6000
-TEMPLOC equ 0x9000
-TEMPLO2 equ 0xA000
-FILESIZE equ 14
+TEMPLOC equ data_settings_end
+FILESIZE equ 16
+PASSWORD_DIALOG_LOC equ 0x0202
+PASSWORD_LENGTH equ 256
+pwd equ PASSWORD_LENGTH*0
+message equ PASSWORD_LENGTH*1
+recieved equ PASSWORD_LENGTH*2
+
 org CODELOC
 use16
 
+;Jump to main code
 jmp code_start
 version_string:
-db " Aplaun OS Quick Shell ver 1.8",0
+db " Aplaun OS Quick Shell ver 1.9",0
 
+;Main Code
 code_start:
 mov [initial_stack],sp
 ;start:
@@ -47,7 +56,7 @@ cmp word [configuration_finished],0xf0f0
 je .set_configuration_skip
 .set_configuration:
 ;Set shell as default to run
-mov word [configuration_finished],0xf0f0
+call load_setting_file
 call data_settings_save
 call lock_handler
 mov dx,autorun_str
@@ -487,9 +496,6 @@ call os_hide_cursor
 ;after resetting drivers
 ;===================
 exit_handler:
-mov dx,common_filename
-mov ah,0x52
-int 0x2b
 mov dx,set_extra_idle_time
 mov ah,0x0D
 int 0x61
@@ -501,7 +507,13 @@ call mouselib_hide
 call os_clear_screen
 call os_show_cursor
 call mouselib_remove_driver
+;mov word [robot_position],0
 call data_settings_save
+mov word [configuration_finished],0xf0f0
+call save_setting_file
+mov dx,common_filename
+mov ah,0x52
+int 0x2b
 ret ; Return to OS
 common_filename:
 db "common.txt",0
@@ -511,6 +523,36 @@ mov ah,0x0D
 int 0x61
 mov ah,0x0F
 int 0x61
+ret
+
+close_execute_file:
+; mov ah,0x0D
+; int 0x61
+mov si,dx
+call pipestore
+mov ax,0x1C0D
+call keybsto
+jmp quick_exit_handler
+
+pipestore:
+pusha
+.loop:
+lodsb
+cmp al,0x0D
+je .enter
+cmp al,0x00
+je .end
+cmp al,'|'
+je .end
+mov ah,0x00
+call keybsto
+jmp .loop
+.enter:
+mov ah,0x1C
+call keybsto
+jmp .loop
+.end:
+popa
 ret
 
 data_settings_save:
@@ -535,15 +577,18 @@ dw 0
 ;Each word to indicate one button. End with zero.
 buttons_list:
 dw file_button_data
+dw edit_button_data
 dw command_button_data
 dw password_button_data
 dw tutorial_button_data
+dw favorites_button_data
+dw settings_button_data
 
 dw shutdown_button_data
 dw restart_button_data
 dw halt_button_data
 dw lock_button_data
-
+dw save_setting_button_data
 dw command_line_button_data
 
 buttons_list_end:
@@ -567,6 +612,9 @@ dw 0
 file_button_data:
 dw 0x29,2,5,10,3,0,file_handler,'f'
 db '[f] File',0
+edit_button_data:
+dw 0x2A,13,5,6,3,0,edit_handler,0
+db 'Edit',0
 command_button_data:
 dw 0x4F,20,5,13,3,0,command_handler,'c'
 db '[c] Command',0
@@ -574,8 +622,15 @@ password_button_data:
 dw 0x6F,2,10,10,3,0,password_handler,0
 db 'Password',0
 tutorial_button_data:
-dw 0x5F,12,10,10,3,0,tutorial_screen,0x3B00
+dw 0x5F,12,10,10,3,0,tutorial_screen,0x3B3B
 db 'Tutorial',0
+favorites_button_data:
+dw 0x18,2,15,15,3,0,favorites_handler
+db '`','~'
+db '[`] Favorites',0
+settings_button_data:
+dw 0xC1,18,15,14,3,0,settings_handler,0x3D3D
+db '[F3]Settings',0
 
 shutdown_button_data:
 dw 0x47,7,21,14,3,0,shutdown_handler,'q'
@@ -589,9 +644,12 @@ db 'Halt',0
 lock_button_data:
 dw 0x67,43,21,10,3,0,lock_handler,'l'
 db '[l] Lock',0
+save_setting_button_data:
+dw 0x26,54,21,10,3,0,save_setting_file,0x3C3C
+db '[F2]Save',0
 command_line_button_data:
-dw 0x12,54,21,20,3,0,exit_handler,0x011B
-db 'Commandline ->>',0
+dw 0x12,65,21,5,3,0,exit_handler,0x011B
+db 'CLD',0
 
 selected_button:
 dw 0
@@ -622,6 +680,14 @@ cmp ax,3
 je .delete_file
 cmp ax,4
 je .rename_file
+cmp ax,5
+je .new_file
+cmp ax,6
+je .new_directory
+cmp ax,7
+je .add_to_path
+cmp ax,8
+je .show_size
 jmp .quit
 ; mov bx,0
 ; mov cx,0
@@ -646,9 +712,11 @@ mov byte [di-1],0x0D ; Store Enter key
 mov byte [di-0],0
 
 mov dx,TEMPLOC ; Store in keyboard buffer
+; Execute
+; pop ax
 mov ah,0x0D
 int 0x61
-jmp quick_exit_handler ; Execute
+jmp quick_exit_handler
 
 .copy_file:
 mov dx,.copy_cmd
@@ -660,7 +728,46 @@ jmp .file_command
 
 .rename_file:
 mov dx,.rename_cmd
-;jmp .file_command
+jmp .file_command
+
+.new_file:
+mov ax,TEMPLOC
+mov word [.selected_file],TEMPLOC
+mov bx,.enter_new_filename_str
+call os_input_dialog
+mov dx,.new_file_cmd
+jmp .file_command
+
+.new_directory:
+mov ax,TEMPLOC
+mov word [.selected_file],TEMPLOC
+mov bx,.enter_new_directoryname_str
+call os_input_dialog
+mov dx,.new_dir_cmd
+jmp .file_command
+
+.add_to_path:
+mov dx,.add_to_path_cmd
+jmp .file_command
+
+.show_size:
+mov ax,[.selected_file]
+mov cx,TEMPLOC
+call os_load_file
+
+mov dx,bx
+mov bx,TEMPLOC
+mov ah,0x2A
+int 0x61
+mov bx,TEMPLOC ; Size into second line of dialog box...
+
+	mov ax, .size_msg_str
+	mov cx, [.selected_file]
+	call os_dialog_box
+
+jmp file_handler
+.size_msg_str:
+db 'File size (in bytes):', 0
 
 .file_command:
 push dx
@@ -685,6 +792,12 @@ db "Execute the file"
 db ",Create a Copy"
 db ",Delete"
 db ",Rename"
+db ",Create a new file"
+db ",Create a new directory"
+db ",Add directory to path list"
+;db ",Load file to memory"
+;db ",Open with application"
+db ",Show file size"
 db ",Quit"
 db 0
 
@@ -694,6 +807,24 @@ db 'copy ',0
 db 'del ',0
 .rename_cmd:
 db 'rename ',0
+.new_file_cmd:
+db 'fnew ',0
+.new_dir_cmd:
+db 'newdir ',0
+.add_to_path_cmd:
+db 'addpathc ',0
+
+.enter_new_filename_str:
+db 'Enter new file name :',0
+.enter_new_directoryname_str:
+db 'Enter new directory name :',0
+
+edit_handler:
+mov dx,.edit_cmd
+call execute_string
+ret
+.edit_cmd:
+db "edit ",0
 
 ;===================
 ;Command Execution
@@ -834,6 +965,128 @@ db "Are you sure ?",0
 failed_str:
 db "Failed",0
 
+favorites_handler:
+mov ax,favorites_list
+mov bx,.select_app_str
+mov cx,.line_str
+call os_list_dialog
+cmp dx,0x0f0f ;Failed
+je .quit
+dec ax
+imul ax,11+1
+add ax,favorites_list
+mov si,ax
+mov di,TEMPLOC
+mov cx,11
+rep movsb
+mov byte [di],0
+mov dx,TEMPLOC
+;call execute_string
+pop ax
+jmp close_execute_file
+.quit:
+ret
+.select_app_str:
+db "Select the application to run :",0
+.line_str:
+db "-------------------------------",0
+
+settings_handler:
+mov ax,.settings_menu
+mov bx,.setting_head_str
+mov cx,.setting_esc_str
+call os_list_dialog
+cmp dx,0x0f0f ;Failed
+je .quit
+
+cmp ax,1
+je .edit_favorites
+cmp ax,2
+je save_setting_file
+.quit:
+ret
+
+.edit_favorites:
+mov ax,favorites_list
+mov bx,.enter_new_favorites_str
+call os_input_dialog
+jmp settings_handler
+.enter_new_favorites_str:
+db "Edit Favorites List :",0
+
+.setting_head_str:
+db "Settings >>",0
+.setting_esc_str:
+db "Press esc to cancel",0
+.settings_menu:
+db "Edit favorites list"
+db ",Save and Close"
+db 0
+
+load_setting_file:
+;Save current directory
+mov ah,0x47
+int 0x21
+push dx
+;Set to root directory
+mov dx,0x0013
+mov ah,0x3B
+int 0x21
+;Load settings file
+mov ax,data_settings_filename
+mov cx,data_settings
+call os_load_file
+cmp dx,0x0f0f
+jne .found
+;RESET data
+call reset_settings_data
+call save_setting_file
+.found:
+mov word [configuration_finished],0xf0f0
+pop dx
+mov ah,0x3B ;Restore
+int 0x21
+ret
+
+save_setting_file:
+;Save current directory
+mov ah,0x47
+int 0x21
+push dx
+;Set to root directory
+mov dx,0x0013
+mov ah,0x3B
+int 0x21
+;Save settings file
+mov word [configuration_finished],0x0f0f
+mov ax,data_settings_filename
+mov bx,data_settings
+mov cx,data_settings_end-data_settings
+call os_write_file
+pop dx
+mov ah,0x3B ;Restore
+int 0x21
+ret
+
+reset_settings_data:
+mov di,data_settings
+mov si,.default_settings
+mov cx,.default_settings_end-.default_settings
+rep movsb
+ret
+.default_settings:
+dw 0x0f0f
+dw 0x1010
+
+db "edit|      ",','
+db "calc|      ",','
+db "MEDIT|     ",','
+db "CALENDAR|  "
+db 0
+times PASSWORD_LENGTH-(12*3) times 0
+
+.default_settings_end:
+
 keybsto:
 pusha
 mov cx,ax
@@ -953,10 +1206,14 @@ mov dx,ax
 mov ah,0x50
 int 0x2b
 mov [.temp],dx
+mov [.tempsize],bx
 popa
 mov dx,[.temp]
+mov bx,[.tempsize]
 ret
 .temp:
+dw 0
+.tempsize:
 dw 0
 
 os_write_file:
@@ -1022,12 +1279,6 @@ os_string_strip:
 	ret
 
 ; Password Utility
-PASSWORD_DIALOG_LOC equ 0x0202
-PASSWORD_LENGTH equ 256
-pwd equ PASSWORD_LENGTH*0
-message equ PASSWORD_LENGTH*1
-recieved equ PASSWORD_LENGTH*2
-
 lock_handler:
 ; password_start:
 ; shr dl,4
@@ -1058,6 +1309,14 @@ call save_password_file
 ret
 
 load_password_file:
+;Save current directory
+mov ah,0x47
+int 0x21
+push dx
+;Set to root directory
+mov dx,0x0013
+mov ah,0x3B
+int 0x21
 ;Load password file
 mov ax,password_file_name
 mov cx,TEMPLOC
@@ -1067,13 +1326,28 @@ jne .found
 mov byte [pwd+TEMPLOC],0
 mov byte [message+TEMPLOC],0
 .found:
+pop dx
+mov ah,0x3B ;Restore
+int 0x21
 ret
 
 save_password_file:
+;Save current directory
+mov ah,0x47
+int 0x21
+push dx
+;Set to root directory
+mov dx,0x0013
+mov ah,0x3B
+int 0x21
+;Save password file
 mov ax,password_file_name
 mov bx,TEMPLOC
 mov cx,512
 call os_write_file
+pop dx
+mov ah,0x3B ;Restore
+int 0x21
 ret
 
 password_handler:
@@ -1578,7 +1852,7 @@ jne .update
 mov word [robot_position],0x1010
 jmp .new_update
 .update:
-;call draw_robot
+call draw_robot
 .new_update:
 call update_robot_position
 call draw_robot
@@ -1589,11 +1863,16 @@ mov dx,[robot_position]
 call os_move_cursor
 call invert_char
 ret
-invert_char:
+
+get_current_cursor:
 ; Find the colour of the character
 	mov ah, 08h
 	mov bh, 0
 	int 10h
+ret
+
+invert_char:
+call get_current_cursor
 	
 	; Invert it to get its opposite
 	not ah
@@ -1606,9 +1885,13 @@ invert_char:
 	int 10h
 ret
 update_robot_position:
+; mov dx,[robot_position]
+; call os_move_cursor
+; call get_current_cursor
+; mov [.previous_color],ah
 mov ah,0x17
 mov dx,0
-mov bx,5
+mov bx,8
 int 0x61
 mov bx,[robot_position]
 cmp dx,1
@@ -1619,6 +1902,16 @@ cmp dx,3
 je .down
 cmp dx,4
 je .right
+
+cmp dx,5
+je .up_left
+cmp dx,6
+je .up_right
+cmp dx,7
+je .down_left
+cmp dx,8
+je .down_right
+
 jmp .done
 .left:
 dec bl
@@ -1632,6 +1925,24 @@ jmp .done
 .right:
 inc bl
 jmp .done
+
+.up_left:
+dec bl
+dec bh
+jmp .done
+.up_right:
+inc bl
+dec bh
+jmp .done
+.down_left:
+dec bl
+inc bh
+jmp .done
+.down_right:
+inc bl
+inc bh
+jmp .done
+
 .done:
 cmp bl,0
 jl .reset
@@ -1642,11 +1953,20 @@ jge .reset
 cmp bh,25
 jge .reset
 jmp .update
-.reset:
-mov bx,0x1010
+;mov bx,0x1010
 .update:
+; push bx
+; mov dx,bx
+; call os_move_cursor
+; call get_current_cursor
+; pop bx
+; cmp [.previous_color],ah
+; jne .reset
 mov [robot_position],bx
+.reset:
 ret
+.previous_color:
+db 0
 
 draw_digital_watch:
 ; call getpos
@@ -2264,6 +2584,8 @@ db 0x30
 
 include 'mouse.lib'
 
+data_settings_filename:
+db 'qsetting.txt',0
 data_settings_handle:
 db 0
 data_settings:
@@ -2271,6 +2593,9 @@ configuration_finished:
 dw 0x0f0f
 robot_position:
 dw 0
+favorites_list:
+times PASSWORD_LENGTH db 0
+data_settings_end:
 ; dw 0x0A0A
 ; dw 0x0101
 

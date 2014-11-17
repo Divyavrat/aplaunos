@@ -4,7 +4,6 @@ New
 * wav file player can be shifted to app
 * settime,setdate - wrong dates are stored
 * install - command to be fixed
-* format - feature to add (FAT16 formatting)
 * move feature - between directories
 * more help content. mhelp. video. pics.
 * more arguments and features must be added.

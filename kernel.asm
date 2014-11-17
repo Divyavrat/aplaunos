@@ -6541,10 +6541,10 @@ mov byte [ReadSectors.status],0x0f
 popa
 ret
 
-fileload_c:
+;IN: bx=location ah=function
+filedirect_c:
 ;call calculate_size
 mov al,[size]
-mov ah, 0x02
 mov ch, BYTE [absoluteTrack]
 mov cl, BYTE [absoluteSector]
 mov dh, BYTE [absoluteHead]
@@ -13044,7 +13044,8 @@ mov ax,dx
 call LBACHS
 ;mov bx,[locf4]
 pop bx
-call fileload_c
+mov ah,0x02 ;Read function
+call filedirect_c
 ;mov ax,[locf4]
 iret
 int61_savecluster:
@@ -13053,7 +13054,9 @@ mov ax,[cluster]
 call LBACHS
 pop bx
 ;mov bx,[locf4]
-call filesave_c
+;call filesave_c
+mov ah,0x03 ;Write function
+call filedirect_c
 iret
 int61_LBACHS:
 mov ax,[cluster]
@@ -15221,9 +15224,9 @@ gdt_end:
 db 0
 
 ver:
-dw 1028
+dw 1029
 verstring:
-db ' Aplaun OS (version 1.02.8) ',0
+db ' Aplaun OS (version 1.02.9) ',0
 main_list:
 db 'Main : load,save,run,execute,batch',0
 editor_list:
@@ -15457,7 +15460,7 @@ times 40 db 0
 ; times previous_command_buffersize db 0
 
 found:
-times 15 db 0
+times 25 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
 times (512*45+0x100)-($-$$) db 0 ; Optimal Size

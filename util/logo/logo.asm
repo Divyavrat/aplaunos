@@ -1,6 +1,15 @@
 org 0x6000
 use16
 
+;======================
+; LOGO
+; ----
+
+; Draw lines and circles
+; on a 320x200 playground.
+; Check out lots of colours too.
+;======================
+
 mov byte [color],0x4a
 
 start:
@@ -52,6 +61,11 @@ mov si,command
 mov di,c_cls
 call cmpstr
 jc start
+
+mov si,command
+mov di,c_help
+call cmpstr
+jc c_help_f
 
 mov si,command
 mov di,c_clear
@@ -864,6 +878,23 @@ call gethex
 mov [color],al
 jmp logo
 
+c_help_f:
+mov dx,0
+call setpos
+mov si,help_str
+call prnstr
+call getkey
+jmp logo
+
+prnstr:
+lodsb
+cmp al,0
+je prnstr_quit
+call printf
+jmp prnstr
+prnstr_quit:
+ret
+
 c_dot_f:
 call getno
 ;mov cx,ax
@@ -970,10 +1001,11 @@ c_quit:
 db 'quit',0
 c_bye:
 db 'bye',0
-c_circle:
-db 'circle',0
 c_cls:
 db 'cls',0
+c_help:
+db 'help',0
+
 c_clear:
 db 'clear',0
 c_color:
@@ -982,6 +1014,8 @@ c_dot:
 db 'dot',0
 c_line:
 db 'line',0
+c_circle:
+db 'circle',0
 c_bar:
 db 'bar',0
 c_rect:
@@ -990,6 +1024,9 @@ c_poly:
 db 'poly',0
 c_polygon:
 db 'polygon',0
+
+help_str:
+db "dot,line,circle,rect,poly,color,cls",0
 
 command:
 times 10 db 0

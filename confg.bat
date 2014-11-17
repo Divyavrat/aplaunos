@@ -14,6 +14,9 @@ cd..
 cd apps
 addpathc
 cd..
+cd tools
+addpathc
+cd..
 nm common.txt
 lIPrompt
 *prompt Apl@n >
