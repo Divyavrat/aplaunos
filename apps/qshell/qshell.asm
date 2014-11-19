@@ -9,13 +9,16 @@
 ;Predefinitions
 
 CODELOC equ 0x6000
-TEMPLOC equ data_settings_end
-FILESIZE equ 16
+TEMPLOC equ code_end
+FILESIZE equ 18
 PASSWORD_DIALOG_LOC equ 0x0202
 PASSWORD_LENGTH equ 256
 pwd equ PASSWORD_LENGTH*0
 message equ PASSWORD_LENGTH*1
 recieved equ PASSWORD_LENGTH*2
+bpbBytesPerSector equ 512
+bpbTotalSectors equ 2880
+DEFAULT_BUTTON_HEIGHT equ 3
 
 org CODELOC
 use16
@@ -23,7 +26,7 @@ use16
 ;Jump to main code
 jmp code_start
 version_string:
-db " Aplaun OS Quick Shell ver 1.9",0
+db " Aplaun OS Quick Shell ver 1.9.2",0
 
 ;Main Code
 code_start:
@@ -281,14 +284,14 @@ jmp .mouse_button_check_done
 .mouse_over:
 ;Redraw button with over graphics
 
-cmp di,0 ; Check if draw handler is present
-je .no_draw_handler
-call di
-jmp .mouse_button_done
-.no_draw_handler:
+; cmp di,0 ; Check if draw handler is present
+; je .no_draw_handler
+;call di
+;jmp .mouse_button_done
+; .no_draw_handler:
 ;Draw with default function
 call draw_selected_button
-.mouse_button_done:
+; .mouse_button_done:
 ;jmp .recheck
 jmp .mouse_button_check_done
 
@@ -321,7 +324,9 @@ db 0
 ;Button data
 button_width:
 dw 0
-button_text:
+; button_text:
+; dw 0
+button_draw_handler:
 dw 0
 
 ;Mouse data
@@ -346,6 +351,14 @@ mov di,ax
 mov ax,0
 add al,dh
 add di,ax
+
+lodsw ;Load draw handler
+mov [button_draw_handler],ax
+;Skip Mouse Handler
+;Skip Shortcut key
+add si,4
+mov cx,si ;Save pointer to text
+mov si,[button_width]
 ret
 
 ; SI-pointing to button data
@@ -365,45 +378,52 @@ mov ax,[currently_drawing_button]
 clc
 cmp [selected_button],ax
 jne .not_selected
+; dec dh
+; dec dl
 not bx
+; inc di
 stc
 .not_selected:
-
 ; cmp si,buttons_list_end
 ; jge .do_not_draw
-lodsw ;Load draw handler
+mov ax,[button_draw_handler]
 cmp ax,0
-je .draw_with_default
+jne .draw_handler_present
+;Else use default draw method
+mov ax,default_draw_function
+.draw_handler_present:
 call ax
-
 ; cmp word [currently_drawing_button],buttons_list
 ; jl .do_not_draw
 ; cmp word [currently_drawing_button],buttons_list_end
 ; jge .do_not_draw
 ; call os_print_string
-ret
-.draw_with_default:
-call default_draw_function
-.do_not_draw:
+; .draw_with_default:
+; call default_draw_function
+; .do_not_draw:
 ret
 
 default_draw_function:
-;Skip Mouse Handler
-;Skip Shortcut key
-add si,4
-mov [button_text],si ;Save pointer to text
-mov si,[button_width]
-
 ;Draw Block Function
 call os_draw_block
-
-inc dh
-inc dl
 call os_move_cursor
-mov si,[button_text] ;Get pointer to text
+mov si,cx ;Get pointer to text
 ;Print Button Text
 call os_print_string
 ret
+
+; big_button_draw_function:
+; ;Draw Block Function
+; inc si
+; inc di
+; call os_draw_block
+; inc dh
+; inc dl
+; call os_move_cursor
+; mov si,cx ;Get pointer to text
+; ;Print Button Text
+; call os_print_string
+; ret
 
 draw_selected_button:
 mov si,[selected_button]
@@ -583,6 +603,7 @@ dw password_button_data
 dw tutorial_button_data
 dw favorites_button_data
 dw settings_button_data
+dw format_button_data
 
 dw shutdown_button_data
 dw restart_button_data
@@ -606,49 +627,70 @@ dw 0
 ; 1 word - Draw Handler
 ; 1 word - Mouse Handler
 ; 1 word - Shortcut key
-;
+; String - Button Name
 ;===================
 
 file_button_data:
-dw 0x29,2,5,10,3,0,file_handler,'f'
-db '[f] File',0
+dw 0x29,2,5,6,DEFAULT_BUTTON_HEIGHT
+dw 0,file_handler
+db 'f','F'
+db '[F]ile',0
 edit_button_data:
-dw 0x2A,13,5,6,3,0,edit_handler,0
+dw 0x2A,13,5,4,DEFAULT_BUTTON_HEIGHT
+dw 0,edit_handler,0
 db 'Edit',0
 command_button_data:
-dw 0x4F,20,5,13,3,0,command_handler,'c'
-db '[c] Command',0
+dw 0x4F,20,5,9,DEFAULT_BUTTON_HEIGHT
+dw 0,command_handler
+db 'c','C'
+db '[C]ommand',0
 password_button_data:
-dw 0x6F,2,10,10,3,0,password_handler,0
+dw 0x6F,2,10,8,DEFAULT_BUTTON_HEIGHT
+dw 0,password_handler,0
 db 'Password',0
 tutorial_button_data:
-dw 0x5F,12,10,10,3,0,tutorial_screen,0x3B3B
+dw 0x5F,12,10,8,DEFAULT_BUTTON_HEIGHT
+dw 0,tutorial_screen,0x3B3B
 db 'Tutorial',0
 favorites_button_data:
-dw 0x18,2,15,15,3,0,favorites_handler
+dw 0x18,2,15,13,DEFAULT_BUTTON_HEIGHT
+dw 0,favorites_handler
 db '`','~'
-db '[`] Favorites',0
+db '[`]Favorites',0
 settings_button_data:
-dw 0xC1,18,15,14,3,0,settings_handler,0x3D3D
+dw 0xC1,18,15,12,DEFAULT_BUTTON_HEIGHT
+dw 0,settings_handler,0x3D3D
 db '[F3]Settings',0
+format_button_data:
+dw 0xD1,32,15,6,DEFAULT_BUTTON_HEIGHT
+dw 0,format_handler,0
+db 'Format',0
 
 shutdown_button_data:
-dw 0x47,7,21,14,3,0,shutdown_handler,'q'
-db '[q] Shutdown',0
+dw 0x47,7,21,11,DEFAULT_BUTTON_HEIGHT
+dw 0,shutdown_handler,'q'
+db '[q]Shutdown',0
 restart_button_data:
-dw 0x47,22,21,13,3,0,restart_handler,'r'
-db '[r] Restart',0
+dw 0x47,22,21,9,DEFAULT_BUTTON_HEIGHT
+dw 0,restart_handler
+db 'r','R'
+db '[R]estart',0
 halt_button_data:
-dw 0x87,36,21,6,3,0,halt_handler,0
+dw 0x87,36,21,4,DEFAULT_BUTTON_HEIGHT
+dw 0,halt_handler,0
 db 'Halt',0
 lock_button_data:
-dw 0x67,43,21,10,3,0,lock_handler,'l'
-db '[l] Lock',0
+dw 0x67,43,21,6,DEFAULT_BUTTON_HEIGHT
+dw 0,lock_handler
+db 'l','L'
+db '[L]ock',0
 save_setting_button_data:
-dw 0x26,54,21,10,3,0,save_setting_file,0x3C3C
+dw 0x26,54,21,8,DEFAULT_BUTTON_HEIGHT
+dw 0,save_setting_file,0x3C3C
 db '[F2]Save',0
 command_line_button_data:
-dw 0x12,65,21,5,3,0,exit_handler,0x011B
+dw 0x12,65,21,3,DEFAULT_BUTTON_HEIGHT
+dw 0,exit_handler,0x011B
 db 'CLD',0
 
 selected_button:
@@ -714,9 +756,10 @@ mov byte [di-0],0
 mov dx,TEMPLOC ; Store in keyboard buffer
 ; Execute
 ; pop ax
-mov ah,0x0D
-int 0x61
-jmp quick_exit_handler
+; mov ah,0x0D
+; int 0x61
+; jmp quick_exit_handler
+jmp close_execute_file
 
 .copy_file:
 mov dx,.copy_cmd
@@ -1087,6 +1130,8 @@ times PASSWORD_LENGTH-(12*3) times 0
 
 .default_settings_end:
 
+;Functions
+
 keybsto:
 pusha
 mov cx,ax
@@ -1116,112 +1161,6 @@ lodsb
 stosb
 cmp al,0
 jne memcpy
-ret
-
-os_print_string:
-pusha
-mov ah,0x01
-int 0x2b
-popa
-ret
-
-os_move_cursor:
-pusha
-mov ah,0x03
-int 0x2b
-popa
-ret
-
-os_show_cursor:
-pusha
-mov ah,0x05
-int 0x2b
-popa
-ret
-
-os_hide_cursor:
-pusha
-mov ah,0x06
-int 0x2b
-popa
-ret
-
-os_clear_screen:
-pusha
-mov ah,0x06
-int 0x61
-popa
-ret
-
-os_dialog_box:
-pusha
-mov dx,ax
-mov ah,0x20
-int 0x2b
-popa
-ret
-
-os_dialog_box2:
-mov dx,ax
-mov ah,0x21
-int 0x2b
-ret
-
-os_list_dialog:
-mov dx,ax
-mov ah,0x22
-int 0x2b
-ret
-
-os_input_dialog:
-mov dx,ax
-mov ah,0x23
-int 0x2b
-ret
-
-os_draw_background:
-pusha
-mov dx,ax
-mov ah,0x25
-int 0x2b
-popa
-ret
-
-os_draw_block:
-pusha
-mov ah,0x26
-int 0x2b
-popa
-ret
-
-;ax=selected file name
-os_file_selector:
-mov ah,0x57
-int 0x2b
-ret
-
-os_load_file:
-pusha
-mov dx,ax
-mov ah,0x50
-int 0x2b
-mov [.temp],dx
-mov [.tempsize],bx
-popa
-mov dx,[.temp]
-mov bx,[.tempsize]
-ret
-.temp:
-dw 0
-.tempsize:
-dw 0
-
-os_write_file:
-pusha
-mov dx,ax
-mov ah,0x51
-int 0x2b
-popa
 ret
 
 ; ------------------------------------------------------------------
@@ -2541,6 +2480,173 @@ and bl,0x0F
 add al,bl
 ret
 
+format_handler:
+call os_clear_screen ;Clear
+
+;Confirm formatting
+mov ax,format_version_string
+mov bx,unsaved_str
+mov cx,confirm_str
+call os_dialog_box2 ;OK/CANCEL
+cmp ax,0 ;if cancelled
+jne quit
+
+;Load kernel file to memory
+mov ax,0x4C0D
+call keybsto
+mov ax,format_version_string
+mov bx,kernel_filename
+mov cx,loading_str
+call os_dialog_box
+
+mov ax,kernel_filename
+mov cx,TEMPLOC
+call os_load_file
+cmp dx,0xF0F0
+jne not_loaded
+mov [kernel_filesize],bx ;Save size for later
+
+;Clear all drive sectors after MBR
+mov cx,bpbTotalSectors
+clear_loop:
+push cx
+mov dx,cx
+inc dx
+mov ah,0x71 ;Set cluster
+int 0x61
+
+mov bx,bpbTotalSectors
+sub bx,dx
+mov dx,bx
+mov [current_cluster],dx
+mov bx,tempstr
+mov ah,0x2A ;INT to String
+int 0x61
+
+; mov bl,0x36
+; mov ax,0x1201 ;Stop refresh
+; int 0x10 ;BIOS API
+
+;Show progress
+mov ax,0x4C0D
+call keybsto
+mov ax,format_version_string
+mov bx,clearing_str
+mov cx,tempstr
+call os_dialog_box
+
+xor eax,eax
+mov ax,[current_cluster]
+xor edx,edx
+;imul ax,100
+imul eax,80
+; mov ebx,80
+; mul ebx
+mov ebx,bpbTotalSectors
+div ebx
+mov dh,1
+mov dl,1
+mov si,ax
+;dec si
+mov di,2
+mov bl,0x2F
+cmp ax,1
+jb .skip_progress
+;cmp ax,80
+cmp ax,78
+ja .skip_progress
+call os_draw_block
+; mov dx,0
+; call os_move_cursor
+; mov dx,ax
+; mov ah,0x20
+; int 0x61
+; mov ax,0x0E20
+; int 0x10
+; int 0x10
+.skip_progress:
+call os_hide_cursor
+
+; mov bl,0x36
+; mov ax,0x1200 ;Start refresh
+; int 0x10 ;BIOS API
+
+mov ah,0x73 ;Save cluster LBA
+mov bx,clean_sector
+int 0x61
+pop cx
+loop clear_loop
+
+;Save kernel file back to drive
+mov ax,0x4C0D
+call keybsto
+mov ax,format_version_string
+mov bx,kernel_filename
+mov cx,saving_str
+call os_dialog_box
+
+mov ax,kernel_filename
+mov bx,TEMPLOC
+mov cx,[kernel_filesize]
+call os_write_file
+
+call os_clear_screen
+mov ax,0x4C0D
+call keybsto
+mov ax,format_version_string
+mov bx,kernel_filename
+mov cx,finished_str
+call os_dialog_box
+mov dx,0
+call os_move_cursor
+
+;After successful save
+;quit to kernel
+mov ah,0x4C ;Quit function
+mov al,0 ;No Error
+int 0x21 ;DOS API
+
+quit:
+;Return back
+ret
+
+not_loaded:
+;Show load error
+mov ax,load_error_str1
+mov bx,load_error_str2
+mov cx,load_error_str3
+call os_dialog_box
+;Return
+ret
+
+;Strings and Variables
+kernel_filename:
+db 'kernel.com',0
+kernel_filesize:
+dw 23552
+current_cluster:
+dw 1
+
+format_version_string:
+db " Aplaun OS FORMAT tool ver 0.3",0
+loading_str:
+db "Loading...",0
+clearing_str:
+db "Clearing data in sectors :",0
+saving_str:
+db "Saving...",0
+finished_str:
+db "Finished",0
+load_error_str1:
+db "Kernel file : Load error",0
+load_error_str2:
+db "Check if drive is still connected.",0
+load_error_str3:
+db "Or if file is present and can be loaded.",0
+
+clean_sector:
+times bpbBytesPerSector db 0
+
 x:
 db 0x00
 y:
@@ -2583,6 +2689,10 @@ db 0x30
 ;db 0x30
 
 include 'mouse.lib'
+include 'api2b.inc'
+
+tempstr:
+times 40 db 0
 
 data_settings_filename:
 db 'qsetting.txt',0
@@ -2598,5 +2708,7 @@ times PASSWORD_LENGTH db 0
 data_settings_end:
 ; dw 0x0A0A
 ; dw 0x0101
+
+code_end:
 
 times (512*FILESIZE)-($-$$) db 0
