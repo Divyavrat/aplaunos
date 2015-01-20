@@ -100,6 +100,14 @@ mov dx,c_exit
 mov bx,foundexit
 call findword
 
+mov dx,c_help
+mov bx,foundhelp
+call findword
+
+mov dx,c_how
+mov bx,foundhelp
+call findword
+
 mov bx,[loc]
 add bx,[pos]
 cmp byte [bx],'0'
@@ -222,6 +230,11 @@ jmp start.cmploop
 newline:
 mov ah,0x0B
 int 0x61
+ret
+
+printf:
+mov ah,2
+int 0x21
 ret
 
 prnstr:
@@ -349,6 +362,17 @@ int 0x61
 .process:
 ret
 
+foundhelp:
+mov cx,c_start
+mov si,cx
+sub cx,c_end
+.loop:
+lodsb
+mov dl,al
+call printf
+loop .loop
+ret
+
 foundfile:
 mov dx,filestr
 call prnstr
@@ -396,6 +420,7 @@ notfoundstr:
 db 'NotFound',0
 
 ;Commands
+c_start:
 c_debug:
 db 'debug',0
 c_file:
@@ -419,6 +444,11 @@ c_quit:
 db 'quit',0
 c_exit:
 db 'exit',0
+c_help:
+db 'help',0
+c_how:
+db 'how',0
+c_end:
 
 ;Variables
 loc:
