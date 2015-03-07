@@ -1,6 +1,7 @@
 New
 ===
 
+* new GUI - easy to use , simple, advanced features
 * wav file player can be shifted to app
 * settime,setdate - wrong dates are stored
 * install - command to be fixed
