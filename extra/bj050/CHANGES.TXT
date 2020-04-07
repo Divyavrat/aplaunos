@@ -1,0 +1,175 @@
+Blue Jay 0.10 (04/01/2011)
+# released on Google Code
+
+Blue Jay 0.11 (05/01/2011)
+# New command VOL: Shows the current label and filesystem of the disk
+# New program CAL.COM: basic calculator written in BJ-BASIC
+# New program TRON.COM: MikeOS's tron game ported using BJ-BASIC
+# New program HARDLIST.COM: MikeOS's hardware list program ported to work on Blue Jay
+# STAKAN now included with Blue Jay
+
+Blue Jay 0.20 (06/01/2011)
+# os_show_cursor: fixed bug, showed the cursor as a solid block, now shows as _
+# kernel.asm: startup sequence now shows the kernel version, API Version, and
+  a hardware check
+# kernel.asm: added %DEFINE BJ_API_VER2 as a way to get the api version in a string format
+# FAT12 write support driver included in FILE.ASM
+# Parallel port system calls included in PORTS.ASM
+# New program DEBUG.COM: A program where you can type in hex code and it will execute it
+  like a Blue Jay program
+# Added ndisasm.exe into the programs directory so you can get a program's code in hex format
+# HARDLIST.COM removed, contents now shown in startup
+# New System Calls
+   FILE.ASM:
+	os_write_file
+	os_file_exists
+	os_create_file
+	os_remove_file
+	os_rename_file
+	os_get_file_size
+   PORTS.ASM:
+	os_port_byte_out
+	os_port_byte_in
+	os_port_word_out
+	os_prot_word_in
+   SCREEN.ASM:
+	os_draw_block
+	os_input_dialog
+	os_list_dialog
+   STRING.ASM:
+	os_string_strincmp
+	os_string_parse
+	os_string_reverse
+	os_string_to_int
+	os_string_charchange
+	os_sint_to_string
+   MATH.ASM:
+	os_get_random
+   MISC.ASM:
+	os_get_api_ver_string
+# Re-organized the syscalls into separate files
+	SYSCALLS/CLI.ASM
+	SYSCALLS/DOS.ASM
+	SYSCALLS/FILE.ASM
+	SYSCALLS/INTERNAL.ASM
+	SYSCALLS/KEYBOARD.ASM
+	SYSCALLS/MATH.ASM
+	SYSCALLS/MISC.ASM
+	SYSCALLS/PORTS.ASM
+	SYSCALLS/SCREEN.ASM
+	SYSCALLS/SOUND.ASM
+	SYSCALLS/STRING.ASM
+
+Blue Jay 0.25 (07/22/2011)
+# SPLASH.PCX: New splash during startup sequence
+# Main interface now shows the hardware check and the main directory
+# CLI.ASM: DIR command now shows file size along side the file
+# New system calls
+   FILE.ASM:
+	os_list_directory
+
+Blue Jay BETA (0.30) (09/01/2011)
+# When you try to execute the splash or the kernel, it now spits out an error
+# Fixed flashing issues with Piano.com and other system calls
+# If AUTORUN.COM exists on the disk, it will be executed immediately 
+  after the kernel has loaded, before showing the CLI
+# Updated licence
+# New system calls
+   FILE.ASM:
+	os_filename_convert
+  
+Blue Jay 0.31 (10/01/2011)
+# Hardware no longer displayed during startup to prevent overflow with
+  the file list
+# New command: HARD: displays the hardware list
+# Removed system calls
+   FILE.ASM:
+	os_filename_convert: no longer needed,
+	conversion now done internally
+# Fixed system calls
+   SCREEN.ASM:
+	os_file_selector: Fixed bug that occured
+	with the new os_get_file_list - will now
+	work properly
+	os_dialog_box: Removed the '[=' and added
+	a solid bar in its place
+
+Blue Jay 0.32 (10/21/2011)
+# New program FILEMAN.COM: A basic file manager with 5 functions.Delete, Rename,
+  Create, Show file size, and Show disk info
+# New program SERIAL.COM: Minicom like program for Blue Jay
+# Command edited VER: Now shows copyright dates, along with the MikeOS Developers
+# API code comments are shorter and more accurate
+# How the system calls are included is now reordered
+# All system calls updated to the MikeOS 4.3b3 code
+# Fixed system calls:
+    FILE.ASM:
+	os_write_file
+	os_file_exists
+	os_create_file
+	os_remove_file
+	os_rename_file
+	os_get_file_size
+	# All of the system calls listed above overwrote the kernel area
+	  when used, but now they use the 8k os_buffer at the end of the kernel
+# New system calls:
+    STRING.ASM:
+	os_string_tokenize
+
+Blue Jay 0.40 (08/01/2012)
+# Blue Jay Function Interface included in kernel
+# New commmand DEL: Deletes a file
+# New commmand NEW: Creates a file
+# New commmand RENAME: Renames a file
+# New commmand SWITCHINT: Switches to the Blue Jay Function Interface
+# os_buffer expanded from 8192 bytes to 16383 bytes
+# KERNEL padding srunken from 57344 bytes to 49152 bytes
+# KERNEL.BJK file size is now able to be seen in FILEMAN.COM
+# DEBUG.COM: API Version now shown at startup as a reference
+# VER command now shows API version
+# New Programs (From Joshua Beck)
+    PLAY.COM:
+	Playbacks .SND files made in TUNEEDIT.COM - For an example play AVIGNON.SND
+    TUNEEDIT.COM:
+	Creates .SND files that can be played by PLAY.COM
+# Fixed Programs
+    CAL.COM
+	Exit error fixed
+	Revamped interface
+# Fixed system calls
+    MISC.ASM:
+	os_get_api_ver_string: Returns API version in 0 terminated SI instead of AL
+# New system calls
+    SOUND.ASM:
+	os_speaker_freq: Generates PC speaker tone with frequencies instead of divisors
+
+Blue Jay 0.50 (10/01/2012)
+# MikeBASIC 4.3.1 now included in the kernel, Give it a try with some of joshua's Programs
+# Blue Jay Text Editor included within the disk, edit Unix formatted .txt or .bas files
+# Kernel padding completely removed, os_buffer now at the beginning of the kernel
+# os_buffer beginning of kernel, 8092 bytes
+# CLI no longer included in kernel to make room for the large MikeBASIC language
+# Autorun is now handled in KERNEL.ASM, also it will autorun BASIC programs!
+# All menus and dialog boxes are Blue Jay Blue instead of red
+# Splash now autocontinues after loading OS
+# New Programs
+     Joshua Beck:
+	CF.BAS: Cosmic Flight - Travel through the galaxy try to rack up the high score
+	CALC.BAS: Calculator - A more advanced calculator that makes the old one look like TRS-80 BASIC
+	DRAW.BAS: ASCII Artist - Create pictures using your keyboard!
+	SPEED.BAS: Speed Test - Calculates speed of your computer in BASIC operations
+     Justin Tokarchuk:
+	MUNCHER.BAS: Muncher: Eat all the apples to get your high score
+     Mike Saunders:
+	MIKETRON.BAS: MikeTron: A snake-like game using keys Q,A,O,P
+# Removed Programs:
+     TRON.COM
+	No need for a repeat of MIKETRON.BAS
+     FILEMAN.COM
+	No need, built into function interface
+# New System Calls:
+     PORTS.ASM
+	os_serial_port_enable: Enables serial port to ethier 1200 baud or 9600 baud
+# Removed System Calls:
+     os_command_line
+	CLI no longer included with kernel

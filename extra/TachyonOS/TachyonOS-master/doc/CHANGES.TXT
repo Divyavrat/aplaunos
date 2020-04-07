@@ -1,0 +1,201 @@
+=============================================================================
+TachyonOS - A small 16-bit x86 operating system.
+Copyright (C) 2013 TachyonOS Developers, uses GPL licence see doc/LICENCE.TXT
+Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/MikeOS/LICENSE.TXT
+=============================================================================
+
+------------------------
+Build #11 (30 July 2015)
+------------------------
+* Fixed many bugs in disk API.
+* Updated Yotta to 1.03x10^25
+* Updated Memory Manipulator to 3.2.0
+* Updated ASCII Artist to 3.1.0
+* Updated MB++ Library to 4.1.0
+* Updated Calculator to 2.1.0
+
+---------------------------
+Build #9 (01 Feburary 2015)
+---------------------------
+* Fixed a bug causing the output of the 'VLINE' and 'HLINE' BASIC commands to
+  have incorrect colours.
+* Fixed a bug causing menu icons to display incorrectly after switching back 
+  from graphics mode.
+* New main menu background.
+
+
+--------------------------
+Build #8 (30 January 2015) 
+--------------------------
+* Added menu icons.
+* Reduced binary size of BASIC intepreter.
+* Added BASIC keyword 'COLOURINFO'
+* Improved build and test system for windows.
+* Moved binary only programs from 'programs' to 'diskfiles' directory.
+* Fixed a bug causing circle drawing to fail.
+
+
+------------------------
+Build #7 (23 March 2013)
+------------------------
+* Added system call 'os_square_root'
+* Added system call 'os_check_for_extkey'
+* Added system call 'os_draw_circle'
+* Added BASIC keyword 'LEFTMOUSE'
+* Added BASIC keyword 'MIDDLEMOUSE'
+* Added BASIC keyword 'RIGHTMOUSE'
+* Added BASIC command 'LOCATEMOUSE'
+* Added BASIC command 'MOVEMOUSE'
+* Added BASIC command 'WAITMOUSE'
+* Added BASIC command 'WAITANY'
+* Added BASIC command 'LOCKMOUSE'
+* Added BASIC command 'RELEASEMOUSE'
+* Added BASIC command 'USEMOUSE'
+* Added BASIC command 'CIRCLE'
+* Modified BASIC command 'GETKEY' to collect arrow keys
+* Fixed incorrect menu entry for 'Hangman'
+* Fixed UI Shell giving programs garbage parameters.
+
+
+------------------------
+Build #6 (21 March 2013)
+------------------------
+* Added 'not equal' symbol, '!' to IF and LOOP BASIC commands
+* Added BASIC command BLOCKIF 
+* Added BASIC command ENDIF
+* Modified os_pause to save CPU power.
+* Keyboard API moved to zkernel.
+* Math API moved to zkernel.
+* Ports API moved to zkernel.
+* Implimented new Mouse API and driver.
+* Added system call 'os_mouse_setup'
+* Added system call 'os_mouse_locate'
+* Added system call 'os_mouse_move'
+* Added system call 'os_mouse_show'
+* Added system call 'os_mouse_hide'
+* Added system call 'os_mouse_wait'
+* Added system call 'os_mouse_anyclick'
+* Added system call 'os_mouse_leftclick'
+* Added system call 'os_mouse_middleclick'
+* Added system call 'os_mouse_rightclick'
+* Added system call 'os_mouse_range'
+* Added system call 'os_mouse_scale'
+* Added system call 'os_input_wait'
+* Fixed a bug causing the OS to lockup on writing extended memory.
+* UI Shell is now in a seperate file from the kernel.
+* UI Shell uses a menu file 'menu.txt' on disk rather than a hardcoded menu.
+
+-----------------------
+Build #5 (9 March 2013)
+-----------------------
+* Fixed os_memory_reset not working.
+* Fixed os_memory_free returning incorrect value.
+* Fixed os_memory_allocate not working correctly.
+* Fixed os_memory_read copying to incorrect location.
+* Fixed os_memory_write lockup to system.
+* os_list_dialog and os_file_selector now accept page up/down keys.
+* os_list_dialog and os_file_selector now accept home/end keys.
+* Integrated Memory API into BASIC.
+	* Added BASIC keyword 'FREEMEM'
+	* Added BASIC command 'MEMORY ALLOCATE'
+	* Added BASIC command 'MEMORY RELEASE'
+	* Added BASIC command 'MEMORY READ'
+	* Added BASIC command 'MEMORY WRITE'
+* Rewrote os_draw_block to run more efficiently
+* Reduced flickering in os_list_dialog
+* Moved os_draw_block to zkernel
+* Moved os_move_cursor to zkernel
+* ZKernel functions are now in a seperate folder in 'source/features/zkernel/'
+* Added API call os_draw_border
+* Added API call os_draw_horizontal_line
+* Added API call os_draw_vertical_line
+* Extended BASIC Command 'Box' to work in text mode.
+* Extended BASIC Command 'BoxFilled' to work in text mode.
+* Added BASIC command 'Interface'
+* Added BASIC command 'VLine'
+* Added BASIC command 'HLine'
+* Added BASIC command 'InputBox'
+* Added BASIC command 'Question'
+* Added BASIC command 'Left'
+* Added BASIC command 'Mid'
+* Added BASIC command 'Right'
+* Added BASIC command 'Trim'
+* Added BASIC command 'Reverse'
+* Added BASIC command 'Split'
+* Added BASIC command 'Clock'
+
+-----------------------
+Build #4 (7 March 2013)
+-----------------------
+* Moved sound API into zkernel, old call vector redirect to new ones for binary
+	compatibility with MikeOS.
+* Move background file buffer to zkernel
+* Added BASIC command 'GRAPHICSMODE'
+* Added BASIC command 'TEXTMODE'
+* Added BASIC command 'FLOOD'
+* Added BASIC command 'PLOT'
+* Added BASIC command 'POINT'
+* Added BASIC command 'BOX'
+* Added BASIC command 'BOXFILLED'
+* Added BASIC command 'LINE'
+* Added BASIC command 'POLYGON'
+* Modified BASIC command 'CLS' to work in graphics mode.
+* Create documentation on new BASIC commands in 'doc/New_BASIC_Commands.txt'
+* Renamed API documentation 'doc/New_API_functions.txt'
+* Fixed os_get_pixel return results to the wrong register.
+* Fixed zkernel calls inside main kernel.
+* Removed assembly graphics demo application.
+* Added BASIC graphics demo application.
+
+-----------------------
+Build #3 (3 March 2013)
+-----------------------
+* Added new Extended Memory API - untested
+	New system calls:
+	os_memory_allocate
+	os_memory_release
+	os_memory_free
+	os_memory_reset
+	os_memory_read
+	os_memory_write
+* Rewrote os_wait_for_key to significantly reduce the CPU load while waiting for key
+	
+-----------------------
+Build #2 (2 March 2013)
+-----------------------
+* Added new graphics API
+	New system calls:
+	os_text_mode
+	os_graphics_mode
+	os_set_pixel
+	os_get_pixel
+	os_draw_line
+	os_draw_rectangle
+	os_draw_rectangle
+	os_clear_graphics
+
+* Created new API documentation in 'source/New API functions.txt'
+* Kernel now split into 'kernel.asm' and the new 'zkernel.asm', which resides segment 0x1000
+* Now source compatible with MikeOS thought build file wrapper 'mikedev.inc'
+* Uses build numbers rather than version numbers.
+* Added on-disk assembler program, 'asm.bin'
+* Added graphics API demonstation program, 'graphics.bin'
+* Added main menu entry 'Graphics Test' for 'graphics.bin'
+
+---------------------------------------
+Build #1 (27 Feb 2013) - formally 1.0.0
+---------------------------------------
+
+(changes from MikeOS 4.3.1)
+* New UI Shell 
+	* Main OS Menu.
+	* File context menus.
+	* File list now under 'All Programs'
+	* Added APM restart and shutdown.
+	* Allows for centralised colour schemes
+* New UI theme
+* Added Custom backgrounds functionality
+* Replaced MikeOS Text Editor with Yotta Text Editor
+* Replaced MikeOS File Manager with BlackSVK File Manager
+* Many more programs added
+* Several new BASIC commands

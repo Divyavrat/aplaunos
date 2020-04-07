@@ -1,0 +1,107 @@
+{T0
+Main Menu
+=NULL
+}
+
+{L0
+File Manager
+Text Editor
+Picture Editor
+Sound Editor
+Memory Editor
+Mouse API Test
+BASIC Shell
+Commandline Shell
+Entertainment >
+Utilities >
+All Programs >
+
+Restart
+Turn Off
+}
+
+{A0
+*BFM.BIN
+*YOTTA.BIN
+*DRAW.BAS
+*TUNEEDIT.BIN
+*MEMEDIT.BAS
+*MOUSE.BIN
+*BASIC.BAS
+=CMDLINE
+>1
+>2
+=FILELIST
+=NULL
+=REBOOT
+=SHUTDOWN
+}
+
+{I0
+128
+128
+128
+133
+128
+128
+131
+131
+129
+129
+129
+32
+132
+132
+}
+
+{T1
+Entertainment Menu
+>0
+}
+
+{L1
+Hangman
+Muncher
+Cosmic Flight
+MikeTron Reloaded
+Sudoku
+}
+
+{A1
+*HANGMAN.BIN
+*MUNCHER.BAS
+*CF.BAS
+*MIKETRON.BAS
+*SUDOKU.BAS
+}
+
+{I1
+128
+128
+128
+128
+128
+}
+
+{T2
+Utilities Menu
+>0
+}
+
+{L2
+Calculator
+System Monitor
+Set Password
+}
+
+{A2
+*CALC.BAS
+*MONITOR.BIN
+*NEWPASS.BAS
+}
+
+{I2
+134
+134
+134
+}

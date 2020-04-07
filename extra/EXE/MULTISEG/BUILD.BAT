@@ -1,0 +1,2 @@
+fasm m.asm
+pause

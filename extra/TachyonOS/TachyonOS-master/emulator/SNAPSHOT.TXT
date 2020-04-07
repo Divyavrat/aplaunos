@@ -1,0 +1,25 @@
+ Welcome to the Tachyon Operating System
+
+
+   ÜÜÜ               Main Menu
+    Û
+    Û    o
+    Ü    p
+   Û Û   e             € File Manager
+   ÛßÛ   r             € Text Editor
+   ß ß   a             € Picture Editor
+   Ûßß   t             € Sound Editor
+   Û     i             € Memory Editor
+   ßßß   n             € Mouse API Test
+   Û Û   g             ƒ BASIC Shell
+   ßßÛ                 ƒ Commandline Shell
+   ÛÜÛ   s              Entertainment >
+         y              Utilities >
+   ÛßÛ   s              All Programs >
+   ÛÜÛ   t
+         e             „ Restart
+   ÛßÛ   m             „ «urn Off
+   Û Û
+
+
+ Version OS Build #7

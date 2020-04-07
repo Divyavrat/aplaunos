@@ -1,0 +1,795 @@
+rem Yotta Text Editor
+goto start
+
+apicall:
+  pokeint i d
+  x = d + 2
+  pokeint j x
+  x = d + 4
+  pokeint v x
+  x = d + 6
+  pokeint y x
+  call c
+  peekint y x
+  x = d + 4
+  peekint v x
+  x = d + 2
+  peekint j x
+return
+
+render_text:
+  i = 10
+  gosub apicall
+  i = 8
+  j = f
+  v = 2
+  y = 20
+  gosub apicall
+  gosub lineinfo
+return
+
+showcursor:
+  move a b
+  ink 112
+  curschar u
+  print chr u ;
+  ink 7
+return
+
+hidecursor:
+  move a b
+  ink 7
+  curschar u
+  print chr u ;
+return
+
+lineinfo:
+  o = h
+  do
+    o = o - 1
+    peek v o
+    if o < g then v = 10
+  loop until v = 10
+  o = o + 1
+
+  l = 0
+  x = o
+
+  if x = e then return
+  peek v x
+  if v = 10 then return
+
+  do
+    x = x + 1
+    l = l + 1
+    peek v x
+    if x = e then v = 10
+  loop until v = 10
+return
+
+scroll:
+  if i = 0 then i = 18
+  if i = 1 then i = 19
+  j = f
+  gosub apicall
+  f = j
+  h = j
+  if i = 18 then n = n - v
+  if i = 19 then n = n + v
+  gosub lineinfo
+return
+
+backnln:
+  i = i + 1
+  do
+    j = j - 1
+    peek u j
+    if u = 10 then i = i - 1
+    if j < g then i = 0
+  loop until i = 0
+  j = j + 1
+return
+
+fwdnln:
+  if i = 0 then return
+  do
+    peek u j
+    j = j + 1
+    if u = 10 then i = i - 1
+    if j > e then i = 0
+  loop until i = 0
+  if j > e then j = e
+return
+
+resetpos:
+  a = 0
+  b = 2
+  h = f
+return
+
+redraw:
+  i = 3
+  gosub apicall
+  i = 4
+  j = & $2
+  gosub apicall
+  i = 9
+  j = p
+  gosub apicall
+  gosub render_text
+  gosub showcursor
+return
+
+set_caption:
+  i = 5
+  j = & $3
+  gosub apicall
+return
+
+set_modified:
+  p = 1
+  i = 9
+  j = 1
+  gosub apicall
+return
+
+clear_modified:
+  p = 0
+  i = 9
+  j = 0
+  gosub apicall
+return
+
+question:
+  i = 13
+  j = & $3
+  gosub apicall
+return
+
+prompt:
+  i = 6
+  j = & $3
+  v = & $4
+  gosub apicall
+return
+
+set_range:
+  i = 20
+  j = g
+  v = e
+  gosub apicall
+return
+
+start:
+  t = 1
+  cls
+  cursor off
+  x = progstart
+  x = x - 2
+  peekint c x
+  x = x - 2
+  peekint d x
+
+  x = progstart
+  x = x - 5
+  peek v x
+  if v = 2 then goto restore
+
+  gosub redraw
+  gosub loadfile
+
+main:
+  gosub showcursor
+  do
+    i = 17
+    gosub apicall
+    k = j
+    gosub hidecursor
+    if k = 27 then k = 24
+    if k = 1 then gosub gosol
+    if k = 2 then gosub goleft
+    if k = 3 then gosub curpos
+    if k = 4 then gosub delete
+    if k = 5 then gosub goeol
+    if k = 6 then gosub goright
+    if k = 7 then gosub gethelp
+    if k = 8 then gosub backspace
+    if k = 9 then gosub goline
+    if k = 10 then gosub copytext
+    if k = 11 then gosub cuttext
+    if k = 12 then gosub redraw
+    if k = 13 then gosub insline
+    if k = 14 then gosub godown
+    if k = 15 then gosub writeout
+    if k = 16 then gosub goup
+    if k = 17 then gosub goeof
+    if k = 18 then gosub readfile
+    if k = 19 then gosub gosof
+    if k = 20 then gosub basparm
+    if k = 21 then gosub paste
+    if k = 22 then gosub nextpage
+    if k = 23 then gosub search
+    if k = 25 then gosub prevpage
+    if k = 26 then gosub runbasic
+    if k > 31 and k < 127 then gosub inschar
+    if k = 127 then gosub delete
+    if k = 128 then gosub goup
+    if k = 129 then gosub godown
+    if k = 130 then gosub goleft
+    if k = 131 then gosub goright
+    if k = 133 then gosub gosol
+    if k = 134 then gosub goeol
+    if k = 135 then gosub prevpage
+    if k = 136 then gosub nextpage
+    gosub showcursor
+  loop until k = 24
+  $4 = ""
+  goto exit_okay
+
+exit_okay:
+  gosub unsaved
+  if w = 2 then goto main
+  cls
+  if $4 = "" then rem
+  else print $4
+  x = progstart
+  x = x - 5
+  poke 0 x
+  end
+
+unsaved:
+  if p = 0 then return
+  $3 = "Save modified buffer (ANSWERING 'No' WILL DESTROY CHANGES) ? "
+  gosub question
+  w = v
+  if w = 0 then gosub save_current
+return
+
+loadfile:
+  $3 = "Loading..."
+  gosub set_caption
+
+  size $1
+
+  v = ramstart
+  x = 0 - v
+  if r = 0 and s > x then gosub filelimit
+
+  p = 0
+
+  a = 0
+  b = 2
+  n = 1
+
+  if $1 = "" then goto newfile
+  if r > 0 then goto newfile
+
+  g = ramstart
+  f = g
+  h = g
+
+  e = g + s - 1
+  if s = 0 then e = g
+  load $1 g
+
+  $2 = $1
+  i = 4
+  j = & $2
+  z = ramstart
+  w = 0
+  for x = z to e
+    peek v x
+    if v = 10 then w = w + 1
+  next x
+  m = w
+
+  gosub set_range
+  gosub redraw
+
+  if m = 1 then $3 = "Read 1 line"
+  if m > 1 then $3 = "Read " + m + " lines"
+  if s = 0 then $3 = "Read 0 lines"
+  gosub set_caption
+return
+
+filelimit:
+  $3 = "File too large"
+  gosub set_caption
+  waitkey k
+  $1 = ""
+goto newfile
+
+newfile:
+  $2 = $1
+  i = 4
+  j = & $1
+  gosub apicall
+
+  g = ramstart
+  f = g
+  h = g
+  o = g
+  l = 0
+  e = g
+  m = 1
+  n = 1
+
+  gosub set_range
+  gosub redraw
+  $3 = "New File"
+  gosub set_caption
+return
+
+goup:
+  if b = 2 then goto scrollup
+
+  i = 1
+  j = o
+  gosub backnln
+  h = j
+  gosub lineinfo
+
+  if a > l then a = l
+  h = o + a
+  b = b - 1
+  n = n - 1
+return
+
+
+scrollup:
+  if f = g then return
+
+  i = 0
+  v = 1
+  gosub scroll
+  
+  gosub lineinfo
+  if a > l then a = l
+  h = o + a
+return
+
+godown:
+  if n = m then return
+  if b = 21 then goto scrolldown
+
+  b = b + 1
+  h = o + l + 1
+  n = n + 1
+
+  gosub lineinfo
+  if a > l then a = l
+  h = h + a
+return
+
+scrolldown:
+  i = 1
+  v = 1
+  gosub scroll
+  h = y
+
+  gosub lineinfo
+  if a > l then a = l
+  h = o + a
+return
+
+goleft:
+  if a = 0 then goto preveol
+  a = a - 1
+  h = h - 1
+return
+
+preveol:
+  if n = 1 then return
+  gosub goup
+  gosub goeol
+return
+
+goright:
+  if a = 79 then goto nextsol
+  if a = l then goto nextsol
+  a = a + 1
+  h = h + 1
+return
+
+nextsol:
+  if n = m then return
+  gosub gosol
+  gosub godown
+return
+
+goeol:
+  if a = l then return
+  x = l
+  if x > 79 then x = 79
+  a = x
+  h = o + x
+return
+
+goeof:
+  if m < 21 then return  
+
+  i = 20
+  j = e + 1
+  gosub backnln
+  f = j
+
+  gosub resetpos
+  gosub render_text
+
+  n = m - 19
+return
+
+gosol:
+  if a = 0 then return
+  h = h - a
+  a = 0
+return
+
+gosof:
+  f = g
+  gosub resetpos
+  gosub render_text
+
+  n = 1
+return
+
+gethelp:
+  $3 = ""
+  gosub set_caption
+  i = 14
+  j = g
+  v = e
+  gosub apicall
+
+  gosub render_text
+return
+
+curpos:
+  w = a + 1
+  x = l + 1
+  y = h - g
+  v = e - g
+  $3 = "line " + n + "/" + m + ", col " + w + "/" + x + ", char " + y + "/" + v
+  gosub set_caption
+return
+
+inschar:
+  if p = 0 then gosub set_modified
+
+  i = 0
+  j = h
+  v = 1
+  gosub apicall
+  e = e + 1
+  l = l + 1
+
+  i = 11
+  j = a
+  v = b
+  gosub apicall
+
+  poke k h
+  move a b
+  print chr k ;
+goto goright
+
+insline:
+  if p = 0 then gosub set_modified
+
+  i = 0
+  j = h
+  v = 1
+  gosub apicall
+  e = e + 1
+
+  poke 10 h
+  m = m + 1
+
+  gosub render_text
+goto nextsol
+
+backspace:
+  if h = g then return
+  gosub goleft
+  gosub delete
+return
+
+
+delete:
+  if p = 0 then gosub set_modified
+
+  if h = e then return
+  if a = l then goto delnl
+
+  i = 1
+  j = h
+  v = 1
+  gosub apicall
+
+  e = e - 1
+
+  l = l - 1
+  if l > 79 then goto render_text
+
+  i = 12
+  j = a
+  v = b
+  gosub apicall
+return
+
+delnl:
+  i = 1
+  j = h
+  v = 1
+  gosub apicall
+
+  e = e - 1
+  m = m - 1
+  gosub render_text
+return
+
+nextpage:
+  x = m - n
+  if x < 35 then goto goeof
+
+  gosub resetpos
+
+  i = 1
+  v = 18
+  gosub scroll
+return
+
+prevpage:
+  if n < 18 then goto gosof
+
+  gosub resetpos
+
+  i = 0
+  v = 18
+  gosub scroll
+return
+
+remline:
+  if g = e then return
+  if p = 0 then gosub set_modified
+  gosub gosol
+
+  i = 1
+  j = o
+  v = l + 1
+  gosub apicall
+
+  m = m - 1
+  if m = 0 then m = 1
+  gosub render_text
+  a = 0
+return
+
+cuttext:
+  gosub copytext
+  gosub remline
+return
+
+copytext:
+  if g = e then return
+  w = 1
+  x = o
+
+  do
+    peek v x
+    string set $5 w v
+    x = x + 1
+    w = w + 1
+    if w = 127 then v = 10
+    if x > e then v = 10
+  loop until v = 10
+  v = 0
+  string set $5 w v
+
+  w = w - 1
+  $3 = "" + w + " characters added to line buffer"
+  gosub set_caption
+return
+
+paste:
+  if $5 = "" then return
+  if p = 0 then gosub set_modified
+
+  len $5 v
+  e = e + v
+
+  i = 0
+  j = h
+  gosub apicall
+
+  len $5 y
+  x = h
+  for w = 1 to y
+    string get $5 w v
+    poke v x
+    if v = 10 then m = m + 1
+    x = x + 1
+  next w
+
+  $3 = "Pasted line buffer to file"
+  gosub set_caption
+  gosub render_text
+return
+
+readfile:
+  gosub unsaved
+  if w = 2 then return
+
+  $3 = "File to insert : "
+  $4 = ""
+  i = 6
+  j = & $3
+  v = & $4
+  gosub apicall
+
+  if $4 = "" then goto cancelled
+  $1 = $4
+  x = 0
+  gosub clear_modified
+
+  a = 0
+  b = 2
+  n = 1
+  gosub loadfile
+return
+
+writeout:
+  if $2 = "" then goto writename
+  $3 = "Save to existing file? "
+  gosub question
+  if v = 0 then goto save_current
+  if v = 2 then goto cancelled
+
+writename:
+  $3 = "File Name to Write: "
+  gosub prompt
+  if $4 = "" then goto cancelled
+  $2 = $4
+
+save_current:
+  if $2 = "" then goto writename
+  delete $2
+  v = e - g + 1
+  save $2 g v
+  if r > 0 then goto saveerror
+
+  if m = 1 then $3 = "Wrote 1 line"
+  if m > 1 then $3 = "Wrote " + m + " lines"
+  gosub set_caption
+
+  case upper $2
+  i = 4
+  j = & $2
+  gosub apicall
+  gosub clear_modified
+return
+
+runbasic:
+  gosub save_current
+  if $2 = "" then return
+
+  x = d + 2
+  v = & $2
+  pokeint v x
+  x = d + 4
+  v = variables
+  pokeint v x
+
+  x = progstart
+  x = x - 5
+  poke 2 x
+end
+
+basparm:
+  $3 = "Parameters: "
+  gosub prompt
+  i = 7
+  j = & $4
+  gosub apicall
+return
+
+search:
+  $3 = "Search: "
+  gosub prompt
+  if $4 = "" and $6 = "" then goto cancelled
+  else if $4 = "" then $4 = $6
+
+  i = 2
+  j = h + 1
+  v = e - h
+  y = & $4
+  gosub apicall
+
+  if j = 0 then goto notfound
+  $6 = $4
+  n = n + y
+
+  h = v
+  i = 9
+  j = v
+  gosub backnln
+  f = j
+
+  b = 11
+  if n < 11 then b = n
+  gosub render_text
+  a = h - o
+return
+
+goline:
+  $3 = "Line Number: "
+  gosub prompt
+  if $4 = "" then return
+
+  number $4 i
+  if i > m then goto goeof
+  if i = 0 then return
+  n = i
+  i = i - 1
+  j = g
+  gosub fwdnln
+
+  f = j
+  gosub resetpos
+  gosub render_text
+return
+
+notfound:
+  $3 = $4 + " not found"
+  gosub set_caption
+return
+
+cancelled:
+  $3 = "Cancelled"
+  gosub set_caption
+return
+
+saveerror:
+  $3 = "Bad filename or read-only disk"
+  gosub set_caption
+  $2 = ""
+return
+
+restore:
+  peekint x d
+  z = variables
+  for y = 1 to 20
+    peekint w x
+    pokeint w z
+    x = x + 2
+    z = z + 2
+  next y
+  x = x + 10
+  peekint z x
+
+  x = progstart
+  x = x - 5
+  poke 1 x
+
+  i = 3
+  gosub apicall
+  $3 = "Loading..."
+  gosub set_caption
+
+  gosub set_range
+
+  x = ramstart
+  load $1 x
+  if r > 0 then end
+  $2 = $1
+  gosub redraw
+goto main
+
+debug:
+  move 0 0
+  $6 = "DEBUG" + t
+  print $6
+  pause 5
+  t = t + 1
+return
+

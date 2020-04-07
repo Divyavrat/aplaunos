@@ -1,0 +1,22 @@
+	%MACRO __INPUT_BUFFER__ 0
+		times 255 db 0
+	%ENDMACRO
+	
+	%MACRO __FILENAME_BUFFER__ 0
+		times 13 db 0
+	%ENDMACRO
+	
+	%MACRO STRING 1
+		db %1, 0
+	%ENDMACRO
+	
+	%MACRO STR 1
+		db %1, 0
+	%ENDMACRO
+	
+	%MACRO LSTR 1
+		db %1, DOS_NEWLINE, 0
+	%ENDMACRO
+	
+	%DEFINE DOS_NEWLINE 13, 10
+	
