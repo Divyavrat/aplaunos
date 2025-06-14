@@ -19,77 +19,76 @@ org 0x0500
 use16
 
 ;system calls:
-	jmp start			; 0000h -- Called from bootloader
-	jmp os_print_string		; 0003h
-	jmp os_move_cursor		; 0006h
-	jmp os_clear_screen		; 0009h
-	jmp os_print_horiz_line		; 000Ch
-	jmp os_print_newline		; 000Fh
-	jmp os_wait_for_key		; 0012h
-	jmp os_check_for_key		; 0015h
-	jmp os_int_to_string		; 0018h
-	jmp os_speaker_tone		; 001Bh
-	jmp os_speaker_off		; 001Eh
-	jmp os_load_file		; 0021h
-	jmp os_pause			; 0024h
-	jmp os_fatal_error		; 0027h
-	jmp os_draw_background		; 002Ah
-	jmp os_string_length		; 002Dh
-	jmp os_string_uppercase		; 0030h
-	jmp os_string_lowercase		; 0033h
-	jmp os_input_string		; 0036h
-	jmp os_string_copy		; 0039h
-	jmp os_dialog_box		; 003Ch
-	jmp os_string_join		; 003Fh
-	jmp os_get_file_list		; 0042h
-	jmp os_string_compare		; 0045h
-	jmp os_string_chomp		; 0048h
-	jmp os_string_strip		; 004Bh
-	jmp os_string_truncate		; 004Eh
-	jmp os_bcd_to_int		; 0051h
-	jmp os_get_time_string		; 0054h
-	jmp os_get_api_version		; 0057h
-	jmp os_file_selector		; 005Ah
-	jmp os_get_date_string		; 005Dh
-	jmp os_send_via_serial		; 0060h
-	jmp os_get_via_serial		; 0063h
-	jmp os_find_char_in_string	; 0066h
-	jmp os_get_cursor_pos		; 0069h
-	jmp os_print_space		; 006Ch
-	jmp os_dump_string		; 006Fh
-	jmp os_print_digit		; 0072h
-	jmp os_print_1hex		; 0075h
-	jmp os_print_2hex		; 0078h
-	jmp os_print_4hex		; 007Bh
-	jmp os_long_int_to_string	; 007Eh
-	jmp os_long_int_negate		; 0081h
-	jmp os_set_time_fmt		; 0084h
-	jmp os_set_date_fmt		; 0087h
-	jmp os_show_cursor		; 008Ah
-	jmp os_hide_cursor		; 008Dh
-	jmp os_dump_registers		; 0090h
-	jmp os_string_strincmp		; 0093h
-	jmp os_write_file		; 0096h
-	jmp os_file_exists		; 0099h
-	jmp os_create_file		; 009Ch
-	jmp os_remove_file		; 009Fh
-	jmp os_rename_file		; 00A2h
-	jmp os_get_file_size		; 00A5h
-	jmp os_input_dialog		; 00A8h
-	jmp os_list_dialog		; 00ABh
-	jmp os_string_reverse		; 00AEh
-	jmp os_string_to_int		; 00B1h
-	jmp os_draw_block		; 00B4h
-	jmp os_get_random		; 00B7h
-	jmp os_string_charchange	; 00BAh
-	jmp os_serial_port_enable	; 00BDh
-	jmp os_sint_to_string		; 00C0h
-	jmp os_string_parse		; 00C3h
-	jmp os_run_basic		; 00C6h
-	jmp os_port_byte_out		; 00C9h
-	jmp os_port_byte_in		; 00CCh
-	jmp os_string_tokenize		; 00CFh
-
+jmp start			; 0000h -- Called from bootloader
+jmp os_print_string		; 0003h
+jmp os_move_cursor		; 0006h
+jmp os_clear_screen		; 0009h
+jmp os_print_horiz_line		; 000Ch
+jmp os_print_newline		; 000Fh
+jmp os_wait_for_key		; 0012h
+jmp os_check_for_key		; 0015h
+jmp os_int_to_string		; 0018h
+jmp os_speaker_tone		; 001Bh
+jmp os_speaker_off		; 001Eh
+jmp os_load_file		; 0021h
+jmp os_pause			; 0024h
+jmp os_fatal_error		; 0027h
+jmp os_draw_background		; 002Ah
+jmp os_string_length		; 002Dh
+jmp os_string_uppercase		; 0030h
+jmp os_string_lowercase		; 0033h
+jmp os_input_string		; 0036h
+jmp os_string_copy		; 0039h
+jmp os_dialog_box		; 003Ch
+jmp os_string_join		; 003Fh
+jmp os_get_file_list		; 0042h
+jmp os_string_compare		; 0045h
+jmp os_string_chomp		; 0048h
+jmp os_string_strip		; 004Bh
+jmp os_string_truncate		; 004Eh
+jmp os_bcd_to_int		; 0051h
+jmp os_get_time_string		; 0054h
+jmp os_get_api_version		; 0057h
+jmp os_file_selector		; 005Ah
+jmp os_get_date_string		; 005Dh
+jmp os_send_via_serial		; 0060h
+jmp os_get_via_serial		; 0063h
+jmp os_find_char_in_string	; 0066h
+jmp os_get_cursor_pos		; 0069h
+jmp os_print_space		; 006Ch
+jmp os_dump_string		; 006Fh
+jmp os_print_digit		; 0072h
+jmp os_print_1hex		; 0075h
+jmp os_print_2hex		; 0078h
+jmp os_print_4hex		; 007Bh
+jmp os_long_int_to_string	; 007Eh
+jmp os_long_int_negate		; 0081h
+jmp os_set_time_fmt		; 0084h
+jmp os_set_date_fmt		; 0087h
+jmp os_show_cursor		; 008Ah
+jmp os_hide_cursor		; 008Dh
+jmp os_dump_registers		; 0090h
+jmp os_string_strincmp		; 0093h
+jmp os_write_file		; 0096h
+jmp os_file_exists		; 0099h
+jmp os_create_file		; 009Ch
+jmp os_remove_file		; 009Fh
+jmp os_rename_file		; 00A2h
+jmp os_get_file_size		; 00A5h
+jmp os_input_dialog		; 00A8h
+jmp os_list_dialog		; 00ABh
+jmp os_string_reverse		; 00AEh
+jmp os_string_to_int		; 00B1h
+jmp os_draw_block		; 00B4h
+jmp os_get_random		; 00B7h
+jmp os_string_charchange	; 00BAh
+jmp os_serial_port_enable	; 00BDh
+jmp os_sint_to_string		; 00C0h
+jmp os_string_parse		; 00C3h
+jmp os_run_basic		; 00C6h
+jmp os_port_byte_out		; 00C9h
+jmp os_port_byte_in		; 00CCh
+jmp os_string_tokenize		; 00CFh
 jmp os_text_mode				; 00D2h
 jmp os_graphics_mode				; 00D5h
 jmp os_set_pixel				; 00D8h
@@ -128,7 +127,7 @@ jmp os_square_root				; 0135h
 jmp os_check_for_extkey				; 0138h
 jmp os_draw_circle				; 013Bh
 jmp os_get_api_ver_string	;013Eh	; IN: Nothing; OUT: SI = API version number
-	
+
 ; ===========================
 ;	Main Code
 ; ===========================
@@ -6396,57 +6395,119 @@ mov dx,0
 mov es,dx
 ret
 
+; Delete a cluster chain starting at the given cluster
+; IN: AX = First cluster in chain to delete
 delete_cluster:
-mov dx,[dir_seg]
-mov es,dx
-mov ax,[filenew.cluster]
-          mov si,.setze
-		  mov di,.setzo
-		  jmp get_cluster_data
-.setze:
-mov [filenew.cluster],dx
-mov dx,[es:bx]
-and dx,0xf000
-mov word [es:bx],dx
+	pusha
+	mov [.current], ax         ; Save start cluster
 
-mov dx,[filenew.cluster]
-cmp dx,0x0000
-je .done
-cmp dx,0x0ff0
-jle delete_cluster
-jmp .done
-.setzo:
-mov [filenew.cluster],dx
-mov dx,[es:bx]
-and dx,0x000f
-mov word [es:bx],dx
+.delete_loop:
+	mov ax, [.current]         ; Get current cluster
+	cmp ax, 0x0002            ; Check if valid cluster
+	jb .done
+	cmp ax, 0xFF0             ; Check if end of chain
+	jae .done
 
-mov dx,[filenew.cluster]
-cmp dx,0x0000
-je .done
-cmp dx,0x0ff0
-jb delete_cluster
+	call get_cluster_data      ; Get next cluster in chain
+	jc .error                 ; Handle invalid clusters
+	mov [.next], dx           ; Save next cluster
+	
+	; Clear current cluster entry
+	mov ax, [.current]        ; Calculate FAT entry position
+	mov cx, ax
+	mov dx, ax
+	shr dx, 1                ; Divide by 2 for FAT12 entry
+	add cx, dx               ; Total offset = cluster + (cluster/2)
+	
+	mov bx, [loc3]           ; Get FAT base
+	add bx, cx               ; Point to FAT entry
+	
+	mov dx, word [es:bx]     ; Get full FAT entry
+	test ax, 1               ; Check if odd/even
+	jz .clear_even
+
+.clear_odd:
+	and dx, 0x000F           ; Keep low 4 bits (part of next entry)
+	jmp .write_entry
+
+.clear_even:
+	and dx, 0xF000           ; Keep high 4 bits (part of prev entry)
+
+.write_entry:
+	mov word [es:bx], dx     ; Write back cleared entry
+	
+	mov ax, [.next]          ; Move to next cluster
+	mov [.current], ax
+	cmp ax, 0xFF8            ; Check if end of chain
+	jb .delete_loop
+
 .done:
-ret
+	popa
+	clc                      ; Clear carry - success
+	ret
 
-;IN: ax-Cluster to check
-;OUT: dx-Data in cluster
+.error:
+	popa 
+	stc                      ; Set carry - error
+	ret
+
+.current:    dw 0           ; Current cluster being processed
+.next:       dw 0           ; Next cluster in chain
+
+;IN: ax-Cluster number to check
+;OUT: dx-Next cluster number in chain, CF set on error
 get_cluster_data:
-mov cx, ax ; copy current cluster
-mov     dx, ax ; copy current cluster
-shr     dx, 0x0001 ; divide by two
-add     cx, dx ; sum for (3/2)
-mov word bx, [loc3] ; location of FAT in memory
-add     bx, cx ; index into FAT
-mov     dx, WORD [es:bx] ; read two bytes from FAT
-test    ax, 0x0001
-jnz     .ODD_CLUSTER
-.EVEN_CLUSTER:
-and dx, 0000111111111111b ; take low twelve bits
-jmp si
-.ODD_CLUSTER:
-shr dx, 0x0004 ; take high twelve bits
-jmp di
+    cmp ax, 0x0002              ; First valid cluster is 2
+    jb .error
+    ; cmp ax, [diskinfo.last_cluster] ; Check against max cluster
+    ; ja .error
+
+    push cx                     ; Save registers
+    push bx
+
+    mov cx, ax                  ; Calculate FAT offset
+    mov dx, ax                  ; Copy cluster number
+    shr dx, 1                  ; Divide by 2 (each FAT entry is 12 bits)
+    add cx, dx                 ; Total offset = cluster + (cluster/2)
+    
+    mov word bx, [loc3]        ; Get FAT base address
+    add bx, cx                 ; Add offset to get FAT entry
+    mov dx, word [es:bx]       ; Get FAT entry (16 bits)
+    
+    test ax, 1                 ; Check if cluster number is odd/even
+    jz .even_cluster
+
+.odd_cluster:
+    shr dx, 4                  ; For odd clusters, use upper 12 bits
+    jmp .validate
+
+.even_cluster:
+    and dx, 0x0FFF             ; For even clusters, use lower 12 bits
+
+.validate:
+    cmp dx, 0x0FF7             ; Check for bad cluster
+    je .error
+    cmp dx, 0x0FF8             ; Check for end of chain
+    jae .end_of_chain
+    
+    pop bx                     ; Restore registers
+    pop cx
+    clc                        ; Clear carry - valid cluster
+    ret
+
+.error:
+    pop bx                     ; Restore registers
+    pop cx
+    mov dx, 0                  ; Return 0 for error
+    stc                        ; Set carry to indicate error
+    ret
+
+.end_of_chain:
+    pop bx                     ; Restore registers
+    pop cx
+    mov dx, 0xFFF             ; Return end-of-chain marker
+    clc                        ; Clear carry - valid end marker
+    ret
 
 calculate_fat:
 
@@ -9012,17 +9073,78 @@ mov bx,[filesize]
 .quit:
 ret
 
-; --------------------------------------------------------------------------
-; os_create_file -- Creates a new 0 byte file on the floppy disk
-; IN: AX = location of filename; OUT: Nothing
 
+; Create a new file
+; IN: AX = filename location
+; OUT: CF set on error
 os_create_file:
-pusha
-call get_name
-mov byte [command_tempchar],'f'
-call filenew
-popa
-ret
+	pusha
+	call get_name              ; Convert filename to FAT format
+	
+	; Check if file exists
+	mov byte [command_tempchar], 'e'
+	mov [.filename_save], ax
+	call filenew
+	jnc .exists_error         ; Error if file exists
+	
+	; Find free root directory entry
+	mov di, [loc2]            ; Root dir buffer
+	mov cx, [bpbRootEntries]
+	xor dx, dx               ; Entry counter
+	
+.find_entry:
+	mov al, [di]
+	cmp al, 0                ; Empty entry
+	je .entry_found
+	cmp al, 0xE5             ; Deleted entry
+	je .entry_found
+	add di, 32               ; Next entry
+	inc dx
+	loop .find_entry
+	
+	; No free entries
+	; mov al, [fs_error_codes.dir_full] 
+	; call log_fs_error
+	mov si,mathprocstr ;If math CPU is present
+	call os_print_string
+	jmp .error
+
+.entry_found:
+	; Create directory entry
+	mov si, ImageName         ; Filename
+	mov cx, 11
+	rep movsb
+	
+	mov byte [di-11+0x0B], 0x20  ; Attributes = archive
+	mov dword [di-11+0x0C], 0    ; Reserved
+	mov word [di-11+0x10], 0     ; Create time 
+	mov word [di-11+0x12], 0     ; Create date
+	mov word [di-11+0x14], 0     ; Last access
+	mov word [di-11+0x16], 0     ; High bits of cluster number (FAT16)
+	mov word [di-11+0x18], 0     ; Last write time
+	mov word [di-11+0x1A], 0     ; First cluster
+	mov dword [di-11+0x1C], 0    ; File size
+	
+	; Save root directory
+	call SAVE_ROOT
+	jc .error
+	
+	popa
+	clc                      ; Success
+	ret
+
+.exists_error:
+	popa
+	stc                      ; Error - file exists
+	ret
+	
+.error:
+	popa
+	stc                      ; General error
+	ret
+
+.filename_save: dw 0
+.dir_full: db "Directory full",0
 
 ; --------------------------------------------------------------------------
 ; os_rename_file -- Change the name of a file on the disk
@@ -15463,5 +15585,5 @@ found:
 times 25 db 0
 
 ;times (512*44)-($-$$) db 0 ; Diet Size
-times (512*45+0x100)-($-$$) db 0 ; Optimal Size
-;times (512*47)-($-$$) db 0 ; Healthy Size
+; times (512*45+0x100)-($-$$) db 0 ; Optimal Size
+times (512*51)-($-$$) db 0 ; Healthy Size
