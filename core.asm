@@ -12,6 +12,7 @@
 
 org 0x0500
 use16
+jmp start
 
 ; Constants
 KERNEL_SEGMENT equ 0x0500
@@ -62,12 +63,14 @@ start:
     mov ax, KERNEL_SEGMENT
     mov ds, ax
     mov es, ax
+    mov fs, ax
+    mov gs, ax
     mov ss, ax
     mov sp, STACK_POINTER
     sti                     ; Enable interrupts
 
     ; Initialize system
-    call init_system
+    ;call init_system
     jmp main_loop
 
 ; System initialization

@@ -30,17 +30,42 @@ bsVolumeLabel: 	        DB "MOS FLOPPY " ; Volume Label: any 11 chars
 bsFileSystem: 	        DB "FAT12   " ; File system type: don't change!
 
 main:
-; Initialize segment registers
-cli                 ; Disable interrupts
-mov ax, 0x0000      ; Set up segments
-mov ds, ax
-mov es, ax
-mov ss, ax
-mov sp, 0x7C00      ; Set up stack pointer
-sti                 ; Enable interrupts
 
 ; Save boot drive number
-mov [boot_drive], dl
+; mov [boot_drive], dl
+
+; Initialize segment registers
+cli                 ; Disable interrupts
+mov ax, 0x07C0      ; Set up segments
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ax, 0x0000				; set the stack
+mov ss, ax
+mov sp, 0xFFFF
+sti                 ; Enable interrupts
+
+mov ah, 0x0E            ; BIOS Teletype Output function
+mov al, 'H'             ; Character to print (ASCII for 'H')
+xor bh, bh              ; Page number (usually 0 for text mode)
+int 0x10                ; Call BIOS video interrupt
+
+mov al, 'e'
+int 0x10
+
+mov al, 'l'
+int 0x10
+
+mov al, 'l'
+int 0x10
+
+mov al, 'o'
+int 0x10
+
+mov al, '!'
+int 0x10
+
 
 ; text mode
 pusha
