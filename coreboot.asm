@@ -110,7 +110,7 @@ print_string:
 ; Data
 boot_drive db 0
 cluster dw 0
-kernel_filename db 'KERNEL  COM'  ; FAT12 filename format
+kernel_filename db 'CORE    COM'  ; FAT12 filename format
 error_msg db 'Kernel not found', 0
 disk_error_msg db 'Disk error', 0
 

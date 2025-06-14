@@ -20,7 +20,7 @@ STACK_POINTER  equ 0xFFFF
 DISK_BUFFER    equ 0x1000  ; Buffer for disk operations
 FAT_BUFFER     equ 0x2000  ; Buffer for FAT
 ROOT_BUFFER    equ 0x3000  ; Buffer for root directory
-APPS_BUFFER    equ 0x1000  ; Buffer for apps
+APPS_BUFFER    equ 0x6000  ; Buffer for apps
 
 ; FAT12 specific constants
 SECTORS_PER_TRACK equ 18
@@ -34,7 +34,7 @@ RESERVED_SECTORS equ 1
 ; Constants for terminal
 PROMPT_STRING db '> ', 0
 CMD_BUFFER_SIZE equ 80
-CMD_BUFFER times CMD_BUFFER_SIZE db 0
+CMD_BUFFER: db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 CURRENT_DIR db 'A:\', 0
 
 ; Command table
@@ -823,5 +823,122 @@ write_fat_entry:
     ret
 .odd db 0
 
+; Create directory
+; Input: DS:SI = directory name
+; Output: CF = 1 if error
+create_directory:
+    pusha
+    mov di, ROOT_BUFFER
+    mov cx, ROOT_ENTRIES
+.search_loop:
+    mov al, [di]
+    test al, al
+    jz .found_empty
+    cmp al, 0xE5
+    je .found_empty
+    add di, 32
+    loop .search_loop
+    jmp .error
+    
+.found_empty:
+    ; Copy directory name
+    push di
+    mov cx, 11
+    rep movsb
+    
+    ; Set directory attributes
+    pop di
+    mov byte [di + 11], 0x10  ; Directory attribute
+    
+    ; Find free cluster
+    call find_free_cluster
+    test ax, ax
+    jz .error
+    
+    ; Set cluster in directory entry
+    mov [di + 26], ax
+    
+    ; Mark cluster as end of chain in FAT
+    mov bx, 0xFFF
+    call write_fat_entry
+    
+    ; Write root directory
+    mov ax, RESERVED_SECTORS + FAT_SIZE * 2
+    mov bx, ROOT_BUFFER
+    mov cx, (ROOT_ENTRIES * 32 + BYTES_PER_SECTOR - 1) / BYTES_PER_SECTOR
+    call write_sectors
+    
+    clc                     ; Clear carry flag (success)
+    jmp .done
+    
+.error:
+    stc                     ; Set carry flag (error)
+.done:
+    popa
+    ret
+
+; Write file
+; Input: AX = cluster number, BX = buffer address, CX = number of bytes
+; Output: CF = 1 if error
+write_file:
+    pusha
+    mov [.cluster], ax
+    mov [.buffer], bx
+    mov [.bytes], cx
+    
+.write_cluster:
+    ; Convert cluster to sector
+    mov ax, [.cluster]
+    sub ax, 2
+    mov cl, 1              ; Sectors per cluster
+    mul cl
+    add ax, RESERVED_SECTORS + FAT_SIZE * 2 + (ROOT_ENTRIES * 32 + BYTES_PER_SECTOR - 1) / BYTES_PER_SECTOR
+    
+    ; Write cluster
+    mov bx, [.buffer]
+    mov cx, 1
+    call write_sectors
+    jc .error
+    
+    ; Check if we need more clusters
+    mov cx, [.bytes]
+    sub cx, BYTES_PER_SECTOR
+    jle .done              ; If no more bytes to write, we're done
+    mov [.bytes], cx
+    
+    ; Find next free cluster
+    call find_free_cluster
+    test ax, ax
+    jz .error
+    
+    ; Link clusters in FAT
+    mov bx, ax             ; Save new cluster
+    mov ax, [.cluster]     ; Get old cluster
+    call write_fat_entry
+    
+    ; Update current cluster
+    mov [.cluster], bx
+    
+    ; Move buffer pointer
+    add word [.buffer], BYTES_PER_SECTOR
+    jmp .write_cluster
+    
+.done:
+    ; Mark last cluster as end of chain
+    mov ax, [.cluster]
+    mov bx, 0xFFF
+    call write_fat_entry
+    clc                     ; Clear carry flag (success)
+    jmp .exit
+    
+.error:
+    stc                     ; Set carry flag (error)
+.exit:
+    popa
+    ret
+.cluster dw 0
+.buffer dw 0
+.bytes dw 0
+
 ; End of kernel
-times 512-($-$$) db 0      ; Pad to 512 bytes
+times (512*3)-($-$$) db 0      ; Pad to 512 bytes
