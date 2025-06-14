@@ -1,6 +1,35 @@
-[BITS 16]           ; Tell assembler this is 16-bit code
-[ORG 0x7C00]        ; BIOS loads bootloader at this address
+use16           ; Tell assembler this is 16-bit code
+ORG 0        ; BIOS loads bootloader at this address
+start:	jmp main
+nop
 
+; ------------------------------------------------------------------
+; Disk description table, to make it a valid floppy
+; Note: some of these values are hard-coded in the source!
+; Values are those used by IBM for 1.44 MB, 3.5" diskette
+
+bpbOEM			db "My OS   " ; Disk label
+bpbBytesPerSector:  	DW 512 ; Bytes per sector
+bpbSectorsPerCluster: 	DB 1 ; Sectors per cluster
+bpbReservedSectors: 	DW 1 ; Reserved sectors for boot record
+bpbNumberOfFATs: 	DB 2 ; Number of copies of the FAT
+bpbRootEntries: 	DW 224 ; Number of entries in root dir
+; (224 * 32 = 7168 = 14 sectors to read)
+bpbTotalSectors: 	DW 2880 ; Number of logical sectors
+bpbMedia: 		DB 0xf0  ;; 0xF1 ; Medium descriptor byte
+bpbSectorsPerFAT: 	DW 9 ; Sectors per FAT
+bpbSectorsPerTrack: 	DW 18 ; Sectors per track (36/cylinder)
+bpbHeadsPerCylinder: 	DW 2 ; Number of sides/heads
+bpbHiddenSectors: 	DD 0 ; Number of hidden sectors
+bpbTotalSectorsBig:     DD 0 ; Number of LBA sectors
+bsDriveNumber: 	        DB 0 ; Drive No: 0
+bsUnused: 		DB 0
+bsExtBootSignature: 	DB 0x29;0x41 ; Drive signature: 41 for floppy
+bsSerialNumber:	        DD 0xa0a1a2a3 ; Volume ID: any number
+bsVolumeLabel: 	        DB "MOS FLOPPY " ; Volume Label: any 11 chars
+bsFileSystem: 	        DB "FAT12   " ; File system type: don't change!
+
+main:
 ; Initialize segment registers
 cli                 ; Disable interrupts
 mov ax, 0x0000      ; Set up segments
@@ -12,6 +41,17 @@ sti                 ; Enable interrupts
 
 ; Save boot drive number
 mov [boot_drive], dl
+
+; text mode
+pusha
+mov ax, 3
+mov bx, 0
+int 10h
+mov ax, 1003h
+int 10h
+popa
+mov si, kernel_filename
+call print_string
 
 ; Load FAT12 root directory
 mov ax, 19          ; Root directory starts at sector 19
