@@ -6,7 +6,7 @@
 ; - App loading: load and execute external application binaries from disk into memory
 ; 
 ; System: 16-bit Real Mode
-; Boot sector loads kernel at 0x7C00, kernel handles disk access via BIOS interrupts
+; Boot sector loads kernel at 0x0500, kernel handles disk access via BIOS interrupts
 ; Include basic error handling, register preservation, and comments for each routine
 ;
 
@@ -20,6 +20,7 @@ STACK_POINTER  equ 0xFFFF
 DISK_BUFFER    equ 0x1000  ; Buffer for disk operations
 FAT_BUFFER     equ 0x2000  ; Buffer for FAT
 ROOT_BUFFER    equ 0x3000  ; Buffer for root directory
+APPS_BUFFER    equ 0x1000  ; Buffer for apps
 
 ; FAT12 specific constants
 SECTORS_PER_TRACK equ 18
@@ -551,7 +552,7 @@ parse_command:
 .done:
     popa
     ret
-.unknown_msg db 'Unknown command', 0x0D, 0x0A, 0
+.unknown_msg db 'Unknown command.', 0x0D, 0x0A,'Current commands are ls, cd, mkdir, cp, mv, del, run.', 0x0D, 0x0A, 0
 
 ; Command handlers
 cmd_ls:
@@ -653,11 +654,11 @@ cmd_run:
     jz .error
     
     ; Load and execute program
-    mov bx, 0x1000         ; Load address
+    mov bx, APPS_BUFFER         ; Load address
     call read_file
     
     ; Execute program
-    call 0x1000:0000
+    call KERNEL_SEGMENT:0000
     jmp .done
     
 .error:
