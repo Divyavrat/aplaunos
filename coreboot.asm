@@ -106,6 +106,7 @@ read_root_dir_loop:
     add bx, [bpbBytesPerSector]
     inc si
     loop read_root_dir_loop
+call print_registers
 
 ; Search for kernel.com in root directory
 mov di, 0x1000      ; Start of root directory
@@ -182,12 +183,7 @@ kernel_not_found:
     jmp $
 
 read_sector:
-    push bx
-    push ax             ; Save sector number
-    
-    ; Print sector number
-    call print_hex_word
-    
+    push bx    
     mov ah, 0x02        ; BIOS read sector function
     mov al, 1           ; Number of sectors to read
     mov ch, 0           ; Cylinder number
@@ -196,6 +192,7 @@ read_sector:
     mov dh, 0           ; Head number
     mov dl, [boot_drive] ; Drive number
     pop bx              ; Buffer address
+    call print_registers
     int 0x13
     jc disk_error
     ret
@@ -221,9 +218,24 @@ print_hex_digit:
     int 0x10
     ret
 
+print_registers:
+    push ax
+    call print_hex_word
+    mov ax,bx
+    call print_hex_word
+    mov ax,cx
+    call print_hex_word
+    mov ax,dx
+    call print_hex_word
+    pop ax
+    ret
+
 disk_error:
+    push ax
     mov si, disk_error_msg
     call print_string
+    pop ax
+    call print_registers
     jmp $
 
 print_string:
