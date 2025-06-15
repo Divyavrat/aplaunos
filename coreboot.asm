@@ -155,7 +155,62 @@ kernel_found:
     ; Load FAT
     mov ax, 1            ; FAT starts at sector 1
     mov bx, 0x2000       ; Load FAT at 0x2000
-    call read_sector
+    call print_sector
+
+    ; Print FAT data in readable format
+    mov si, fat_header_msg
+    call print_string
+    
+    mov si, 0x2000       ; Start of FAT data
+    mov cx, 256          ; Print first 256 clusters (512 bytes / 2 bytes per cluster)
+    mov bx, 0            ; Cluster counter
+print_fat_loop:
+    ; Print cluster number
+    mov ax, bx
+    call print_hex_word
+    mov al, ':'
+    mov ah, 0x0E
+    int 0x10
+    mov al, ' '
+    int 0x10
+
+    ; Get and print cluster value
+    mov ax, [si]
+    and ax, 0x0FFF      ; Mask to 12 bits for FAT12
+    call print_hex_word
+    
+    ; Print newline every 8 entries
+    mov ax, bx
+    and ax, 0x07        ; Check if we're at 8th entry
+    cmp ax, 0x07
+    jne .no_newline
+    mov al, 13          ; Carriage return
+    mov ah, 0x0E
+    int 0x10
+    mov al, 10          ; Line feed
+    int 0x10
+    jmp .next
+.no_newline:
+    mov al, ' '         ; Space between entries
+    mov ah, 0x0E
+    int 0x10
+    mov al, ' '
+    int 0x10
+.next:
+    add si, 2           ; Move to next cluster (2 bytes per cluster)
+    inc bx
+    loop print_fat_loop
+
+    ; Print newline after FAT data
+    mov al, 13          ; Carriage return
+    mov ah, 0x0E
+    int 0x10
+    mov al, 10          ; Line feed
+    int 0x10
+
+    ; Wait for key press before continuing
+    mov ah, 0x00        ; BIOS get key function
+    int 0x16            ; Wait for key press
 
     ; Load kernel at 0x0500
     mov bx, 0x0500       ; Load kernel at 0x0500
@@ -220,12 +275,51 @@ print_string:
 .done:
     ret
 
+print_hex_byte:
+    push ax
+    push bx
+    mov ah, 0x0E        ; BIOS teletype function
+    mov bl, al          ; Save byte to print
+    shr al, 4           ; Get high nibble
+    call print_hex_nibble
+    mov al, bl          ; Get low nibble
+    and al, 0x0F
+    call print_hex_nibble
+    pop bx
+    pop ax
+    ret
+
+print_hex_nibble:
+    cmp al, 9
+    jle .decimal
+    add al, 'A' - 10
+    jmp .print
+.decimal:
+    add al, '0'
+.print:
+    int 0x10
+    ret
+
+print_hex_word:
+    push ax
+    push bx
+    mov ah, 0x0E        ; BIOS teletype function
+    mov bl, al          ; Save low byte
+    mov al, ah          ; Print high byte first
+    call print_hex_byte
+    mov al, bl          ; Print low byte
+    call print_hex_byte
+    pop bx
+    pop ax
+    ret
+
 ; Data
 boot_drive db 0
 cluster dw 0
 kernel_filename db 'CORE    COM'  ; FAT12 filename format
 error_msg db 'Kernel not found', 0
 disk_error_msg db 'Disk error', 0
+fat_header_msg db 'FAT Table (Cluster: Value):', 13, 10, 0
 
 times 510-($-$$) db 0   ; Pad remaining bytes with 0
 dw 0xAA55               ; Boot signature
