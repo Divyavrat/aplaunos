@@ -118,13 +118,12 @@ search_kernel:
     push di
     push si
     mov si, di
-    mov cx, 11      ; Filename length
-print_filename:
-    mov al, [si]
-    mov ah, 0x0E    ; BIOS teletype function
-    int 0x10
-    inc si
-    loop print_filename
+    mov di, filename_buffer    ; Use temporary buffer
+    mov cx, 11                ; Filename length
+    rep movsb                 ; Copy filename to buffer
+    mov byte [di], 0          ; Null terminate
+    mov si, filename_buffer   ; Point to buffer
+    call print_string
     ; Print newline
     mov al, 13      ; Carriage return
     int 0x10
@@ -155,7 +154,7 @@ kernel_found:
     ; Load FAT
     mov ax, 1            ; FAT starts at sector 1
     mov bx, 0x2000       ; Load FAT at 0x2000
-    call print_sector
+    call read_sector
 
     ; Print FAT data in readable format
     mov si, fat_header_msg
@@ -167,7 +166,8 @@ kernel_found:
 print_fat_loop:
     ; Print cluster number
     mov ax, bx
-    call print_hex_word
+    xor bx, bx          ; Byte mode
+    call print_hex
     mov al, ':'
     mov ah, 0x0E
     int 0x10
@@ -177,7 +177,8 @@ print_fat_loop:
     ; Get and print cluster value
     mov ax, [si]
     and ax, 0x0FFF      ; Mask to 12 bits for FAT12
-    call print_hex_word
+    mov bx, 1           ; Word mode
+    call print_hex
     
     ; Print newline every 8 entries
     mov ax, bx
@@ -275,21 +276,22 @@ print_string:
 .done:
     ret
 
-print_hex_byte:
+print_hex:
     push ax
     push bx
+    push cx
     mov ah, 0x0E        ; BIOS teletype function
-    mov bl, al          ; Save byte to print
+    mov cx, 2           ; Default to 2 digits (byte)
+    test bx, bx         ; Check if we're printing a word
+    jz .byte_mode
+    mov cx, 4           ; 4 digits for word
+.byte_mode:
+    mov bl, al          ; Save low byte
+    mov al, ah          ; Get high byte
+    jcxz .done          ; If cx is 0, we're done
+.print_loop:
+    mov al, bl          ; Get byte to print
     shr al, 4           ; Get high nibble
-    call print_hex_nibble
-    mov al, bl          ; Get low nibble
-    and al, 0x0F
-    call print_hex_nibble
-    pop bx
-    pop ax
-    ret
-
-print_hex_nibble:
     cmp al, 9
     jle .decimal
     add al, 'A' - 10
@@ -298,17 +300,21 @@ print_hex_nibble:
     add al, '0'
 .print:
     int 0x10
-    ret
-
-print_hex_word:
-    push ax
-    push bx
-    mov ah, 0x0E        ; BIOS teletype function
-    mov bl, al          ; Save low byte
-    mov al, ah          ; Print high byte first
-    call print_hex_byte
-    mov al, bl          ; Print low byte
-    call print_hex_byte
+    mov al, bl          ; Get low nibble
+    and al, 0x0F
+    cmp al, 9
+    jle .decimal2
+    add al, 'A' - 10
+    jmp .print2
+.decimal2:
+    add al, '0'
+.print2:
+    int 0x10
+    mov bl, ah          ; Move to next byte
+    mov ah, 0x0E        ; Reset BIOS function
+    loop .print_loop
+.done:
+    pop cx
     pop bx
     pop ax
     ret
@@ -317,9 +323,11 @@ print_hex_word:
 boot_drive db 0
 cluster dw 0
 kernel_filename db 'CORE    COM'  ; FAT12 filename format
-error_msg db 'Kernel not found', 0
-disk_error_msg db 'Disk error', 0
-fat_header_msg db 'FAT Table (Cluster: Value):', 13, 10, 0
+error_msg db 'N/A', 0
+disk_error_msg db 'Error', 0
+fat_header_msg db 'FAT:', 13, 10, 0
+filename_buffer:
+times 12 db 0    ; Buffer for temporary filename storage
 
 times 510-($-$$) db 0   ; Pad remaining bytes with 0
 dw 0xAA55               ; Boot signature
