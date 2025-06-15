@@ -9,7 +9,7 @@ nop
 ; Values are those used by IBM for 1.44 MB, 3.5" diskette
 
 ; BPB and root dir variables for USB/FAT16
-bpbOEM          db "My OS   " ; Disk label
+bpbOEM          db "Aplaun  " ; Disk label
 bpbBytesPerSector:      DW 512 ; Bytes per sector
 bpbSectorsPerCluster:   DB 1 ; Sectors per cluster
 bpbReservedSectors:     DW 1 ; Reserved sectors for boot record
@@ -87,14 +87,12 @@ mov [root_dir_size], ax
 
 ; text mode
 mov ah, 0x0E            ; BIOS Teletype Output function
-pusha
 mov ax, 3
 mov bx, 0
 int 10h
 mov ax, 1003h
 int 10h
-popa
-mov si, kernel_filename
+mov si, bpbOEM
 call print_string
 
 ; Load FAT16 root directory
@@ -113,10 +111,7 @@ read_root_dir_loop:
 mov di, 0x1000      ; Start of root directory
 mov cx, [bpbRootEntries]         ; Number of root directory entries
 search_kernel:
-    push cx
     ; Print current filename being checked
-    push di
-    push si
     mov si, di
     mov di, filename_buffer    ; Use temporary buffer
     mov cx, 11                ; Filename length
@@ -132,17 +127,13 @@ search_kernel:
     ; Wait for key press
     mov ah, 0x00    ; BIOS get key function
     int 0x16        ; Wait for key press
-    pop si
-    pop di
     
     mov cx, 11      ; Filename length
     mov si, kernel_filename
-    push di
+    mov di, 0x1000  ; Reset di to start of directory
     repe cmpsb      ; Compare filename
-    pop di
     je kernel_found
     add di, 32      ; Next directory entry
-    pop cx
     loop search_kernel
     jmp kernel_not_found
 
@@ -155,10 +146,6 @@ kernel_found:
     mov ax, 1            ; FAT starts at sector 1
     mov bx, 0x2000       ; Load FAT at 0x2000
     call read_sector
-
-    mov si, 0x2000       ; Start of FAT data
-    mov cx, 256          ; Print first 256 clusters (512 bytes / 2 bytes per cluster)
-    mov bx, 0            ; Cluster counter
 
     ; Load kernel at 0x0500
     mov bx, 0x0500       ; Load kernel at 0x0500
@@ -197,6 +184,10 @@ kernel_not_found:
 read_sector:
     push bx
     push ax             ; Save sector number
+    
+    ; Print sector number
+    call print_hex_word
+    
     mov ah, 0x02        ; BIOS read sector function
     mov al, 1           ; Number of sectors to read
     mov ch, 0           ; Cylinder number
@@ -207,6 +198,27 @@ read_sector:
     pop bx              ; Buffer address
     int 0x13
     jc disk_error
+    ret
+
+print_hex_word:
+    push ax
+    mov al, ah
+    call print_hex_byte
+    pop ax
+print_hex_byte:
+    push ax
+    shr al, 4
+    call print_hex_digit
+    pop ax
+print_hex_digit:
+    and al, 0x0F
+    add al, '0'
+    cmp al, '9'
+    jbe .done
+    add al, 'A' - '9' - 1
+.done:
+    mov ah, 0x0E
+    int 0x10
     ret
 
 disk_error:
@@ -228,7 +240,7 @@ print_string:
 ; Data
 boot_drive db 0
 cluster dw 0
-kernel_filename db 'CORE    COM'  ; FAT12 filename format
+kernel_filename db 'CORE    COM',0; FAT12 filename format
 error_msg db 'N/A', 0
 disk_error_msg db 'Error', 0
 filename_buffer:
