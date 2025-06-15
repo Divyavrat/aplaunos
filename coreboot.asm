@@ -156,62 +156,9 @@ kernel_found:
     mov bx, 0x2000       ; Load FAT at 0x2000
     call read_sector
 
-    ; Print FAT data in readable format
-    mov si, fat_header_msg
-    call print_string
-    
     mov si, 0x2000       ; Start of FAT data
     mov cx, 256          ; Print first 256 clusters (512 bytes / 2 bytes per cluster)
     mov bx, 0            ; Cluster counter
-print_fat_loop:
-    ; Print cluster number
-    mov ax, bx
-    xor bx, bx          ; Byte mode
-    call print_hex
-    mov al, ':'
-    mov ah, 0x0E
-    int 0x10
-    mov al, ' '
-    int 0x10
-
-    ; Get and print cluster value
-    mov ax, [si]
-    and ax, 0x0FFF      ; Mask to 12 bits for FAT12
-    mov bx, 1           ; Word mode
-    call print_hex
-    
-    ; Print newline every 8 entries
-    mov ax, bx
-    and ax, 0x07        ; Check if we're at 8th entry
-    cmp ax, 0x07
-    jne .no_newline
-    mov al, 13          ; Carriage return
-    mov ah, 0x0E
-    int 0x10
-    mov al, 10          ; Line feed
-    int 0x10
-    jmp .next
-.no_newline:
-    mov al, ' '         ; Space between entries
-    mov ah, 0x0E
-    int 0x10
-    mov al, ' '
-    int 0x10
-.next:
-    add si, 2           ; Move to next cluster (2 bytes per cluster)
-    inc bx
-    loop print_fat_loop
-
-    ; Print newline after FAT data
-    mov al, 13          ; Carriage return
-    mov ah, 0x0E
-    int 0x10
-    mov al, 10          ; Line feed
-    int 0x10
-
-    ; Wait for key press before continuing
-    mov ah, 0x00        ; BIOS get key function
-    int 0x16            ; Wait for key press
 
     ; Load kernel at 0x0500
     mov bx, 0x0500       ; Load kernel at 0x0500
@@ -249,10 +196,12 @@ kernel_not_found:
 
 read_sector:
     push bx
+    push ax             ; Save sector number
     mov ah, 0x02        ; BIOS read sector function
     mov al, 1           ; Number of sectors to read
     mov ch, 0           ; Cylinder number
-    mov cl, 1           ; Sector number
+    pop cx              ; Get sector number back
+    mov cl, ch          ; Sector number (use passed value)
     mov dh, 0           ; Head number
     mov dl, [boot_drive] ; Drive number
     pop bx              ; Buffer address
@@ -276,56 +225,12 @@ print_string:
 .done:
     ret
 
-print_hex:
-    push ax
-    push bx
-    push cx
-    mov ah, 0x0E        ; BIOS teletype function
-    mov cx, 2           ; Default to 2 digits (byte)
-    test bx, bx         ; Check if we're printing a word
-    jz .byte_mode
-    mov cx, 4           ; 4 digits for word
-.byte_mode:
-    mov bl, al          ; Save low byte
-    mov al, ah          ; Get high byte
-    jcxz .done          ; If cx is 0, we're done
-.print_loop:
-    mov al, bl          ; Get byte to print
-    shr al, 4           ; Get high nibble
-    cmp al, 9
-    jle .decimal
-    add al, 'A' - 10
-    jmp .print
-.decimal:
-    add al, '0'
-.print:
-    int 0x10
-    mov al, bl          ; Get low nibble
-    and al, 0x0F
-    cmp al, 9
-    jle .decimal2
-    add al, 'A' - 10
-    jmp .print2
-.decimal2:
-    add al, '0'
-.print2:
-    int 0x10
-    mov bl, ah          ; Move to next byte
-    mov ah, 0x0E        ; Reset BIOS function
-    loop .print_loop
-.done:
-    pop cx
-    pop bx
-    pop ax
-    ret
-
 ; Data
 boot_drive db 0
 cluster dw 0
 kernel_filename db 'CORE    COM'  ; FAT12 filename format
 error_msg db 'N/A', 0
 disk_error_msg db 'Error', 0
-fat_header_msg db 'FAT:', 13, 10, 0
 filename_buffer:
 times 12 db 0    ; Buffer for temporary filename storage
 
