@@ -106,41 +106,31 @@ read_root_dir_loop:
     add bx, [bpbBytesPerSector]
     inc si
     loop read_root_dir_loop
-call print_registers
 
 ; Search for kernel.com in root directory
 mov di, 0x1000      ; Start of root directory
 mov cx, [bpbRootEntries]         ; Number of root directory entries
-search_kernel:
-    ; Print current filename being checked
-    mov si, di
-    mov di, filename_buffer    ; Use temporary buffer
-    mov cx, 11                ; Filename length
-    rep movsb                 ; Copy filename to buffer
-    mov byte [di], 0          ; Null terminate
-    mov si, filename_buffer   ; Point to buffer
-    call print_string
-    ; Print newline
-    mov al, 13      ; Carriage return
-    int 0x10
-    mov al, 10      ; Line feed
-    int 0x10
-    ; Wait for key press
-    mov ah, 0x00    ; BIOS get key function
-    int 0x16        ; Wait for key press
+search_kernel_loop:
+    push di             ; Save pointer to the start of the current entry
     
-    mov cx, 11      ; Filename length
+    ; Compare filename
     mov si, kernel_filename
-    mov di, 0x1000  ; Reset di to start of directory
-    repe cmpsb      ; Compare filename
-    je kernel_found
-    add di, 32      ; Next directory entry
-    loop search_kernel
-    jmp kernel_not_found
+    push cx             ; Save the outer loop counter
+    mov cx, 11          ; Filename is 11 bytes long
+    repe cmpsb          ; Compare bytes
+    pop cx              ; Restore the outer loop counter
+    je kernel_found     ; If they match, we found it!
+
+    pop di              ; Restore pointer to the current entry
+    add di, 32          ; Move to the next 32-byte directory entry
+    loop search_kernel_loop ; Loop until all entries are checked
+
+    jmp kernel_not_found; If loop finishes, kernel was not found
 
 kernel_found:
+    pop di              ; Clean up the stack (from the push di before the jump)
     ; Get first cluster number
-    mov ax, [di + 26]    ; First cluster is at offset 26
+    mov ax, [di + 26]    ; First cluster is at offset 26 in the directory entry
     mov [cluster], ax
 
     ; Load FAT
@@ -183,17 +173,37 @@ kernel_not_found:
     jmp $
 
 read_sector:
-    push bx    
-    mov ah, 0x02        ; BIOS read sector function
-    mov al, 1           ; Number of sectors to read
-    mov ch, 0           ; Cylinder number
-    pop cx              ; Get sector number back
-    mov cl, ch          ; Sector number (use passed value)
-    mov dh, 0           ; Head number
-    mov dl, [boot_drive] ; Drive number
-    pop bx              ; Buffer address
-    call print_registers
+    ; ax = LBA, bx = buffer address
+    push cx              ; Save for calculations
+    push dx              ; Save for calculations
+
+    ; temp = LBA / SPT; sector = (LBA % SPT) + 1
+    xor dx, dx
+    mov cx, [bpbSectorsPerTrack] ; cx = 18
+    div cx               ; ax = temp (LBA/18), dx = sector-1
+    mov cl, dl
+    inc cl               ; cl = sector
+
+    ; ax has temp
+    ; cylinder = temp / HPC; head = temp % HPC
+    xor dx, dx
+    mov cx, [bpbHeadsPerCylinder] ; cx = 2
+    div cx               ; ax = cylinder, dx = head
+    
+    mov ch, al           ; ch = cylinder
+    mov dh, dl           ; dh = head
+    
+    ; Combine high cylinder bits if necessary (not for floppy)
+    
+    mov ah, 2            ; Read function
+    mov al, 1            ; Read 1 sector
+    mov dl, [boot_drive]
+    ; cx has cylinder/sector, dx has head
+    ; bx has buffer address (wasn't touched)
     int 0x13
+    
+    pop dx
+    pop cx
     jc disk_error
     ret
 
@@ -235,7 +245,6 @@ disk_error:
     mov si, disk_error_msg
     call print_string
     pop ax
-    call print_registers
     jmp $
 
 print_string:
@@ -257,6 +266,5 @@ error_msg db 'N/A', 0
 disk_error_msg db 'Error', 0
 filename_buffer:
 times 12 db 0    ; Buffer for temporary filename storage
-
 times 510-($-$$) db 0   ; Pad remaining bytes with 0
 dw 0xAA55               ; Boot signature
