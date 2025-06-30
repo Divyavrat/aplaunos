@@ -80,17 +80,18 @@ init_system:
     mov ax, 0x0003         ; 80x25 text mode
     int 0x10
     ; Initialize disk system
-    call init_disk
+    ;call init_disk
     ; Load FAT
-    call load_fat
+    ;call load_fat
     ; Load root directory
-    call load_root
+    ;call load_root
     popa
     ret
 
 ; Main system loop
 main_loop:
-    call handle_input
+    ; call handle_input
+    call terminal
     jmp main_loop
 
 ; Disk initialization
