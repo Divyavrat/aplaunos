@@ -65,7 +65,6 @@ read_root_loop:
     inc si
     loop read_root_loop
 
-    call print_char_al
     mov al, '1'
     call print_char_al
 
