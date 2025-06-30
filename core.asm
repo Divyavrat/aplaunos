@@ -70,7 +70,7 @@ start:
     sti                     ; Enable interrupts
 
     ; Initialize system
-    ;call init_system
+    call init_system
     jmp main_loop
 
 ; System initialization
