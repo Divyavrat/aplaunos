@@ -11485,7 +11485,7 @@ os_dialog_box:
 	ret
 
 .get_button_string_one:
-cmp [.tmp],2
+cmp word [.tmp],2
 je .string_one_switch
 mov si, .ok_button_string
 ret
@@ -11494,7 +11494,7 @@ mov si,.on_button_string
 ret
 
 .get_button_string_two:
-cmp [.tmp],2
+cmp word [.tmp],2
 je .string_two_switch
 mov si, .cancel_button_string
 ret
