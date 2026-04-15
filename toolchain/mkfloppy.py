@@ -3,11 +3,11 @@ import os
 def create_floppy():
     with open("fat16.img", "wb") as f:
         # Boot sector - load the actual compiled bootloader!
-        if os.path.exists("BOOT.IMG"):
-            with open("BOOT.IMG", "rb") as bf:
+        if os.path.exists("build/BOOT.IMG"):
+            with open("build/BOOT.IMG", "rb") as bf:
                 boot = bytearray(bf.read(512))
         else:
-            print("Warning: BOOT.IMG not found!")
+            print("Warning: build/BOOT.IMG not found!")
             boot = bytearray(512)
             boot[510:512] = b'\x55\xAA'
             

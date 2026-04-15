@@ -46,4 +46,4 @@ def inject_files(img_path, src_dir):
         traceback.print_exc()
 
 if __name__ == '__main__':
-    inject_files('fat16.img', 'copythis to drive')
+    inject_files('fat16.img', 'sysroot')

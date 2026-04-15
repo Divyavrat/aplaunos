@@ -1,3 +1,0 @@
-#high
-@qshell
-@end

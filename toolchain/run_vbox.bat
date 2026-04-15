@@ -1,7 +1,7 @@
 @echo off
 set VBOX="C:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
 set VMNAME="AplaunOS_Emu"
-set IMAGE="%~dp0fat16.img"
+set IMAGE="%~dp0..\fat16.img"
 
 echo Stopping VM if running...
 %VBOX% controlvm %VMNAME% poweroff >nul 2>&1
