@@ -5,6 +5,9 @@ set IMAGE="%~dp0..\fat16.img"
 
 echo Stopping VM if running...
 %VBOX% controlvm %VMNAME% poweroff >nul 2>&1
+timeout /t 2 /nobreak >nul
+taskkill /IM VirtualBoxVM.exe /F >nul 2>&1
+timeout /t 1 /nobreak >nul
 
 echo Checking if VM exists...
 %VBOX% showvminfo %VMNAME% >nul 2>&1
