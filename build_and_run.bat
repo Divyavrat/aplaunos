@@ -7,6 +7,7 @@ echo.
 echo [1/4] Compiling BOOT and Kernel...
 toolchain\nasm src\boot\BOOT.ASM -O1 -o build\BOOT.IMG || goto :error
 toolchain\nasm src\kernel\kernel.ASM -O1 -o build\kernel.COM || goto :error
+copy build\kernel.COM sysroot\kernel.com /Y || goto :error
 
 echo.
 echo [2/4] Building System Apps and Utilities...
