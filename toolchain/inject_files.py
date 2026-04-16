@@ -28,7 +28,7 @@ def inject_files(img_path, src_dir):
 
                 for fname in files:
                     src_file = os.path.join(root, fname)
-                    dest_file = f"{rel_dir}/{fname}" if rel_dir else fname
+                    dest_file = f"{rel_dir}/{fname.upper()}" if rel_dir else fname.upper()
                     if dest_file.startswith('/'):
                         dest_file = dest_file[1:]
                     
