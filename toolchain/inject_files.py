@@ -19,7 +19,7 @@ def inject_files(img_path, src_dir):
         with PyFatFS(filename=img_path) as fat_fs:
             print("Successfully opened " + img_path)
             for root, dirs, files in os.walk(src_dir):
-                rel_dir = os.path.relpath(root, src_dir).replace('\\', '/')
+                rel_dir = os.path.relpath(root, src_dir).replace('\\', '/').upper()
                 if rel_dir == '.':
                     rel_dir = ''
                 
